@@ -1,0 +1,14 @@
+addpath(pwd);
+addpath(genpath([pwd,filesep,'Controllers']));
+addpath(genpath([pwd,filesep,'Integrators']));
+%addpath(genpath([pwd,filesep,'MpcOps']));
+%addpath(genpath([pwd,filesep,'MpcOpSolvers']));
+%addpath(genpath([pwd,filesep,'Ops']));
+%addpath(genpath([pwd,filesep,'OpSolvers']));
+addpath(genpath([pwd,filesep,'Sensors']));
+addpath(genpath([pwd,filesep,'Sets']));
+addpath(genpath([pwd,filesep,'Systems']));
+addpath(genpath([pwd,filesep,'Integrator']));
+addpath(genpath([pwd,filesep,'utils']));
+%addpath(genpath([pwd,filesep,'examples']));
+savepath
