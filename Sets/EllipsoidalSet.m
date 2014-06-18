@@ -1,6 +1,6 @@
 
 
-classdef EllipsoidalSet < NonlinearSet
+classdef EllipsoidalSet < GeneralSet
     %EllipsoidalSet {x: (x-c)'*P*(x-c) <= b}
     %
     % The objects s1 and s2 defined as
@@ -68,7 +68,7 @@ classdef EllipsoidalSet < NonlinearSet
                 c = varargin{3};
             end
             
-            obj = obj@NonlinearSet(@(x) (x-c)'*P*(x-c)-b ,size(P,2),1);
+            obj = obj@GeneralSet(@(x) (x-c)'*P*(x-c)-b ,size(P,2),1);
             
             obj.P = P;
             

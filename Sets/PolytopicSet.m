@@ -1,5 +1,5 @@
 
-classdef PolytopicSet < NonlinearSet
+classdef PolytopicSet < GeneralSet
     %PolytopicSet
     %
     % The object
@@ -10,7 +10,7 @@ classdef PolytopicSet < NonlinearSet
     %
     %   s =  {x:Ax  <= b}
     %
-    %   See also BoxSet, NonlinearSet, EllipsoidalSet
+    %   See also BoxSet, GeneralSet, EllipsoidalSet
     
     
  
@@ -57,7 +57,7 @@ classdef PolytopicSet < NonlinearSet
         
         function obj = PolytopicSet(A,b)
             
-            obj = obj@NonlinearSet(@(x) A*x-b ,size(A,2),size(A,1));
+            obj = obj@GeneralSet(@(x) A*x-b ,size(A,2),size(A,1));
             
             obj.A = A;
             

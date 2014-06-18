@@ -14,41 +14,46 @@ classdef MpcController < Controller
     %       va = MpcController(par1,val1,par2,val2,...)
     %
     %   where the parameters are chosen among 'MpcOp', 'MpcOpSolver', or
-    %   'SolverParameters'
+    %   'SolverParameters', 'WarmStartMode'
+    %
+    %   where
+    %
+    %   WarmStartMode = 1 shifts the previous optimal trajectory and gives
+    %   it to MpcOpSolver as initialization to compute the next solution 
     %
     %   See also Controller, MpcOp, MpcOpSolver
     
- 
-% This file is part of VirtualArena.
-%
-% Copyright (c) 2014, Andrea Alessandretti
-% All rights reserved.
-%
-% e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
-% 
-% Redistribution and use in source and binary forms, with or without
-% modification, are permitted provided that the following conditions are met:
-% 
-% 1. Redistributions of source code must retain the above copyright notice, this
-%    list of conditions and the following disclaimer. 
-% 2. Redistributions in binary form must reproduce the above copyright notice,
-%    this list of conditions and the following disclaimer in the documentation
-%    and/or other materials provided with the distribution.
-% 
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-% ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-% WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-% DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-% ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-% (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-% ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-% 
-% The views and conclusions contained in the software and documentation are those
-% of the authors and should not be interpreted as representing official policies, 
-% either expressed or implied, of the FreeBSD Project.
+    
+    % This file is part of VirtualArena.
+    %
+    % Copyright (c) 2014, Andrea Alessandretti
+    % All rights reserved.
+    %
+    % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
+    %
+    % Redistribution and use in source and binary forms, with or without
+    % modification, are permitted provided that the following conditions are met:
+    %
+    % 1. Redistributions of source code must retain the above copyright notice, this
+    %    list of conditions and the following disclaimer.
+    % 2. Redistributions in binary form must reproduce the above copyright notice,
+    %    this list of conditions and the following disclaimer in the documentation
+    %    and/or other materials provided with the distribution.
+    %
+    % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    % ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    % DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+    % ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    % (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    % LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    % ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    % (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    %
+    % The views and conclusions contained in the software and documentation are those
+    % of the authors and should not be interpreted as representing official policies,
+    % either expressed or implied, of the FreeBSD Project.
     
     properties
         mpcOp
@@ -59,6 +64,10 @@ classdef MpcController < Controller
         %  log.stageCost(i)       - stage cost at step i
         %  log.solverTime(i)      - time to solve the Op at step i
         log
+        
+        warmStartMode = 1;
+        warmStart;
+        
     end
     
     properties(SetAccess = private)
@@ -97,6 +106,13 @@ classdef MpcController < Controller
                             obj.solverParameters = varargin{parameterPointer+1};
                             parameterPointer = parameterPointer+2;
                             
+                        case 'WarmStartMode'
+                            
+                            obj.warmStartMode = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                            
                         otherwise
                             
                             parameterPointer = parameterPointer+1;
@@ -117,12 +133,30 @@ classdef MpcController < Controller
             
             tic
             
-            sol = obj.mpcOpSolver.solve(obj.mpcOp,x,obj.solverParameters{:});
+            sol = obj.mpcOpSolver.solve(obj.mpcOp,x,obj.warmStart,obj.solverParameters{:});
             
             obj.appendVectorToLog(toc                     ,obj.i,'computationTime')
             
             u = sol.u_opt(:,1);
             
+            
+            
+            %% Warm Start
+            switch obj.warmStartMode
+                
+                case 0 % Do not warm start
+                    
+                case 1 % Warmstart with zeros
+                    
+                    ws.u = [sol.u_opt(:,2:end),sol.u_opt(:,end)];
+                    ws.x = [sol.x_opt(:,2:end),sol.x_opt(:,end)];
+                    
+                    obj.warmStart = ws;
+                case 2 % Warmstart with auxiliary law
+                    
+            end
+            
+            %% Logging
             obj.appendVectorToLog(obj.mpcOp.stageCost(x,u),obj.i,'stageCost')
             obj.appendVectorToLog(sol.solverTime          ,obj.i,'solverTime')
             obj.lastSolution = sol;

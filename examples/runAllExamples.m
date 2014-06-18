@@ -3,3 +3,4 @@ exIntegrators
 exRangeFinder
 exStateObserver
 exTrackingAlgorithmUAV
+exMpc

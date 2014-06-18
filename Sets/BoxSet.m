@@ -36,7 +36,7 @@ classdef  BoxSet < PolytopicSet
     % b = BoxSet([-1;-1],1:2,[1;1],1:2,2) %{|x|_\infty <= 1 }
     % b = [1;1] + b                       %{|x-[1;1]|_\infty <= 1 }
     %
-    % see also PolytopicSet, EllipsoidalSet, NonlinearSet
+    % see also PolytopicSet, EllipsoidalSet, GeneralSet
     
  
 % This file is part of VirtualArena.

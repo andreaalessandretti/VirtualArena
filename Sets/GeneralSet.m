@@ -1,10 +1,10 @@
 
-classdef NonlinearSet < handle
-    %NonlinearSet
+classdef GeneralSet < handle
+    %GeneralSet
     %
     % The object
     %
-    %   s = NonlinearSet(f,nx,nf)
+    %   s = GeneralSet(f,nx,nf)
     %
     % denotes the set
     %
@@ -60,7 +60,7 @@ classdef NonlinearSet < handle
     methods
         
         
-        function obj = NonlinearSet(f,nx,nf)
+        function obj = GeneralSet(f,nx,nf)
             
             obj.f = f;
             
@@ -86,11 +86,11 @@ classdef NonlinearSet < handle
             
             if ( not(obj.nx == size(A,1)) ||...
                     not(size(A,1) == size(b,1)) )
-                error(getMessage('NonlinearSet:getAffineTransformation:DimentionsMismatch'))
+                error(getMessage('GeneralSet:getAffineTransformation:DimentionsMismatch'))
             end
             
             ff = obj.f;
-            set = NonlinearSet(@(x) ff(A*x+b),size(A,2));
+            set = GeneralSet(@(x) ff(A*x+b),size(A,2));
         end
         
     end

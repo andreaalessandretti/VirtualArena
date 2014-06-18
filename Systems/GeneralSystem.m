@@ -220,6 +220,39 @@ classdef GeneralSystem < handle
             
         end
         
+        function useSymbolicEvaluation(obj)
+        %%useSymbolicEvaluation evaluates the state and output equations
+        %   with symbolic variables, simplify them, and replace them with the
+        %   simplified version. 
+        
+            x = sym('x',[obj.nx,1]);
+            x = sym(x,'real');
+            
+            u = sym('u',[obj.nu,1]);
+            u = sym(u,'real');
+            
+            if isempty(obj.Q)
+                noiseF = {};
+            else
+                w = sym('w',[length(obj.Q),1]);
+                w = sym(w,'real');
+                noiseF = {w};
+            end
+            
+            if isempty(obj.R)
+                noiseH = {};
+            else
+                v = sym('v',[length(obj.R),1]);
+                v = sym(v,'real');
+                noiseH = {v};
+            end
+            
+            fprintf(getMessage('GeneralSystem:evaluation'));
+            obj.f = matlabFunction(simplify( obj.f(x,u,noiseF{:}) ) ,'vars',{x,u,noiseF{:}});
+            obj.h = matlabFunction(simplify( obj.h(x,u,noiseH{:}) ) ,'vars',{x,u,noiseH{:}});
+            fprintf(getMessage('done'));
+        end
+        
         function computeLinearization(obj,varargin)
             
             if isempty(obj.Q)
