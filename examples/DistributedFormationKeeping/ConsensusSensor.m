@@ -1,6 +1,7 @@
 
 classdef ConsensusSensor < Sensor
     %ConsensusSensor reads the internal state of the controllers of the neighbor vehicles
+    %   which corresponds with the position of the virtual vehicles
     %
     %   See also ConsensusController, Sensor
     

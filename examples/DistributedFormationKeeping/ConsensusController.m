@@ -1,11 +1,18 @@
-
-
 classdef ConsensusController < CtSystem
-    %Vehicle
+    %%ConsensusController
+    %
+    % ConsensusController(d, Agraph, communicationDt,trackingLaw)
+    %
+    %   d(:,i)          - desired offset, x - x_i, with vehicle i
+    %   Agraph          - Row of the adjacency matrix associated with this vehicle
+    %   communicationDt - time interval between communications used to
+    %                     estimate the velocity of the neighbor vehicles
+    %   trackingLaw     - controller used to track the virtual vehicle
+    %
     
     properties
         lastReadings;
-        Agraph;          % Vector containing the weight for formation keeping control
+        Agraph;        
         communicationDt;
         d;
         trackingLaw;
@@ -37,40 +44,31 @@ classdef ConsensusController < CtSystem
         
         function xcDot = xcDot(obj,xc,readings)
            
-            xcDot = ConsensusController.computeUConsensus(xc,readings,obj.lastReadings,obj.communicationDt,obj.Agraph,obj.d,obj.trackingLaw.vehicle.n);
+            xcDot = ConsensusController.computeInputVirtualVehicle(xc,readings,obj.lastReadings,obj.communicationDt,obj.Agraph,obj.d,obj.trackingLaw.vehicle.n);
            
         end
         
         function u = computeInput(obj,xc,x,readings)
            
-             u2 = ConsensusController.computeUConsensus(xc,readings,obj.lastReadings,obj.communicationDt,obj.Agraph,obj.d,obj.trackingLaw.vehicle.n);
+             u2 = ConsensusController.computeInputVirtualVehicle(xc,readings,obj.lastReadings,obj.communicationDt,obj.Agraph,obj.d,obj.trackingLaw.vehicle.n);
              
              obj.trackingLaw.pd    = @(t)xc;
              obj.trackingLaw.dotPd = @(t)u2; 
              u = obj.trackingLaw.computeInput(x,0);
-             
-             %delta = [1 0 -obj.e(3) obj.e(2); 0 obj.e(3) 0 -obj.e(1); 0 -obj.e(2) obj.e(1) 0];
-             %deltaBar = delta'/(delta*delta');
-             %R = reshape(x(4:12),3,3);
-             %err = R'*(x(1:3)-xc)-obj.e;
-             %u = deltaBar*(R'*u2-err);
-             
-             
              obj.lastReadings = readings;
               
         end
     end
     
     methods (Static)
-        function u2 = computeUConsensus(xc,readings,lastReadings,communicationDt,Agraph,d,nSpace)
+        function u2 = computeInputVirtualVehicle(xc,readings,lastReadings,communicationDt,Agraph,d,nSpace)
             
             
             n_detect = nnz(Agraph);
             nnz_A = find(Agraph);
             eta = sum(Agraph);
             gamma = 1;
-            % computeInput of the simple integrator part of
-            % extandedUnicycle
+            
             
             u2 = zeros(nSpace,1);
             

@@ -1,3 +1,5 @@
+% For more info see
+%
 % Paper:      "A virtual vehicle approach to distributed control for formation keeping of underactuated vehicles"
 % Conference: Indian Control Conference (ICC 2015), Chennai, India
 
@@ -53,7 +55,6 @@ end
 s1 = ConsensusSensor();
 
 %% VirtualArena
-
 a = VirtualArena(v,...
     'StoppingCriteria'  ,@(i,as)i>50/dt,...
     'StepPlotFunction'  ,@(systemsList,log,oldHandles,k) consensusStepPlotFunction(systemsList,log,oldHandles,k,formationD{1},d,dt), ...
