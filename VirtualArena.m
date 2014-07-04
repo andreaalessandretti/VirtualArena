@@ -83,11 +83,11 @@ classdef VirtualArena < handle
         
         %stopPlotFunction is the function handle executed at the end of the simulation
         %
-        %	@(allLogs)
+        %	@(logAlls)
         %
         %	if simulations from different initial conditions are executed,
-        %   allLogs{i} contains the log associated with the ith initial condition,
-        %   otherwise allLogs = log
+        %   logAlls{i} contains the log associated with the ith initial condition,
+        %   otherwise logAlls = log
         stopPlotFunction
         
         stateTrajectory;
@@ -116,6 +116,8 @@ classdef VirtualArena < handle
         %   log{i}.controllerStateTrajectory contains the state vector of
         %   the dynamic controller (if any) of system i at time k.
         log;
+        
+        logAll;
         
         plottingFrequency = 1;
         
@@ -161,6 +163,21 @@ classdef VirtualArena < handle
             
         end
         
+        %%callFunctionOnSystemsOnList(functionName,targetClass)
+        %   execute the function .functionName on all the systems,
+        %   controllers, and state observers that belong to the class 
+        %   targetClass
+        function callFunctionOnSystemsOnList(obj,functionName,targetClass)
+            
+            for i = 1:length(obj.systemsList)
+                
+                if isa(obj.systemsList{i},targetClass) 
+                    obj.systemsList{i}.(functionName);
+                end
+                
+            end
+            
+        end
         
         
         function logAll = run(obj)
@@ -170,6 +187,9 @@ classdef VirtualArena < handle
             %
             %   See also VirtualArena.log
             %
+            
+            obj.callFunctionOnSystemsOnList('initSimulations','InitDeinitObject')
+             
             if isa(obj.initPlotFunction,'function_handle')
                 obj.initPlotFunction();hold on
             end
@@ -184,7 +204,7 @@ classdef VirtualArena < handle
                 end
                 
                 if isa(obj.stopPlotFunction,'function_handle')
-                    obj.stopPlotFunction(logAll); hold on
+                    obj.stopPlotFunction(logAll,obj); hold on
                 end
                 
             else
@@ -198,14 +218,14 @@ classdef VirtualArena < handle
                 
             end
             
-            
-            
+            obj.logAll = logAll;
+            obj.callFunctionOnSystemsOnList('deinitSimulations','InitDeinitObject')
             
         end
         
         function log = runOne(obj,varargin)
             
-            if nargin == 2 %Multiple initial conditions
+            if nargin == 2 %Simulate using initial condition iInitialCondition
                 
                 iInitialCondition = varargin{1};
                 
@@ -215,73 +235,23 @@ classdef VirtualArena < handle
                 
             end
             
-            nSystems = length(obj.systemsList);
+            obj.callFunctionOnSystemsOnList('initSimulation','InitDeinitObject')
             
-            obj.log = cell(1,nSystems);
-            
-            %% Initialize simulation
-            for i = 1:nSystems
-                
-                
-                if iInitialCondition
-                    % Initilize systems
-                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions{iInitialCondition};
-                    
-                    if not(isempty(obj.systemsList{i}.stateObserver))
-                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition};
-                    end
-                    
-                    % initialize systems controllers
-                    if isa(obj.systemsList{i}.controller,'CtSystem') || isa(obj.systemsList{i}.controller,'DtSystem')
-                        iCons = obj.systemsList{i}.controller.initialConditions;
-                        
-                        if not(iscell(iCons)) || length(iCons)<iInitialCondition
-                            error(getMessage('VirtualArena:NotEnoughInitialConditionsController'));
-                        end
-                        
-                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions{iInitialCondition};
-                    end
-                    
-                else
-                    % Initilize systems
-                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions;
-                    % initialize systems controllers
-                    
-                    if not(isempty(obj.systemsList{i}.stateObserver))
-                        
-                        if isempty(obj.systemsList{i}.stateObserver.initialConditions)
-                            error(getMessage('VirtualArena:InitObserver'));
-                        end
-                        
-                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions;
-                    end
-                    
-                    if isa(obj.systemsList{i}.controller,'CtSystem') || isa(obj.systemsList{i}.controller,'DtSystem')
-                        if isempty(obj.systemsList{i}.controller.initialConditions)
-                            error(getMessage('VirtualArena:InitController'));
-                        end
-                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions;
-                    end
-                end
-                
-                obj.log{i}.inputTrajectory = zeros(obj.systemsList{i}.nu,1);
-                
-            end
+            obj.logInitialConditions(iInitialCondition);
             
             i = 2;
             
-            
             plot_handles = 0;
-            
             
             if ischar(obj.videoName)
                 aviobj = avifile(strcat(obj.videoName,'.avi'),'compression','None');
             end
-            % Main Loop
             
-            %% Update vehicles and controller state
+            %% Update current state of vehicles and controllers (initialization)
             for ia = 1:length(obj.systemsList)
+                
                 obj.systemsList{ia}.x=obj.log{ia}.stateTrajectory(:,i-1);
+                
                 if isa(obj.systemsList{ia}.controller,'GeneralSystem')
                     obj.systemsList{ia}.controller.x = obj.log{ia}.controllerStateTrajectory(:,i-1);
                 end
@@ -291,18 +261,21 @@ classdef VirtualArena < handle
             
             while not( obj.stoppingCriteria(i,obj.systemsList) )
                 
-                %% Update objects state
+                %% Update current state of the systems 
                 for ia = 1:length(obj.systemsList)
+                    
                     obj.systemsList{ia}.x=obj.log{ia}.stateTrajectory(:,i-1);
+                    
                     if isa(obj.systemsList{ia}.controller,'GeneralSystem')
                         obj.systemsList{ia}.controller.x = obj.log{ia}.controllerStateTrajectory(:,i-1);
                     end
+                    
                 end
                 
-                for ia = 1:length(obj.systemsList)
+                for ia = 1:length(obj.systemsList) % Main loop for a single system
                     
                     
-                    %% State feedback vs Output feedback vs Observer feedback
+                    %% Update current state of the systems
                     if not(isempty(obj.systemsList{ia}.stateObserver))
                         
                         xObs = obj.log{ia}.observerStateTrajectory(:,i-1);
@@ -334,18 +307,17 @@ classdef VirtualArena < handle
                     %% Cv vs Dt vs Memoryless Controller
                     
                     
-                    % Compute parameter controller
-                    
+                    % Compute time
                     if isa(obj.systemsList{ia},'CtSystem')
                         timeInfo = i*obj.discretizationStep;
                     elseif isa(obj.systemsList{ia},'DtSystem')
                         timeInfo = i;
                     end
                     
+                    
                     controllerFParams = {xToController,timeInfo,netReadings{:}};
                     
-                    %-----------------------------
-                    
+                    % Compute input
                     
                     if isa(obj.systemsList{ia}.controller,'CtSystem') %CtController
                         
@@ -372,7 +344,6 @@ classdef VirtualArena < handle
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
                         
                         u = obj.systemsList{ia}.controller.computeInput(controllerFParams{:});
-                        
                         
                     else
                         
@@ -436,7 +407,7 @@ classdef VirtualArena < handle
                     
                 end
                 
-                
+                %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(i,obj.plottingFrequency)==0
                     
                     plot_handles  = obj.stepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
@@ -454,17 +425,21 @@ classdef VirtualArena < handle
                     
                 end
                 
-                
                 i = i+1;
                 
             end
             
+            obj.callFunctionOnSystemsOnList('deinitSimulation','InitDeinitObject');
             
             if ischar(obj.videoName)
                 
                 aviobj = close(aviobj);
                 
             end
+            
+            
+            obj.cutLogVector('stateTrajectory',i-1);
+            obj.cutLogVector('inputTrajectory',i-2);
             
             log = obj.log;
         end
@@ -502,6 +477,19 @@ classdef VirtualArena < handle
         
         
         
+        
+        function cutLogVector(obj,fildname,i)
+            for iAgent = 1:length(obj.systemsList)
+                if not(i>=size(obj.log{iAgent}.(fildname),2))
+                    newLog = obj.log{iAgent}.(fildname);
+
+                    obj.log{iAgent}.(fildname) =  newLog(:,1:i);
+
+                end
+            end
+            
+        end 
+            
         function appendVectorToLog(obj,v,iAgent,fildname,i)
             
             if i>=size(obj.log{iAgent}.(fildname),2) % Allocate memory
@@ -610,6 +598,67 @@ classdef VirtualArena < handle
             
         end
         
+        function logInitialConditions(obj,iInitialCondition)
+
+            nSystems = length(obj.systemsList);
+            
+            obj.log = cell(1,nSystems);
+            
+            %% Initialize simulation
+            for i = 1:nSystems
+                
+                
+                if iInitialCondition
+                    
+                    % Log initial stateof the system
+                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions{iInitialCondition};
+                    
+                    % Log initial state of the observer
+                    if not(isempty(obj.systemsList{i}.stateObserver))
+                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition};
+                    end
+                    
+                    % Log initial state of the controller
+                    if isa(obj.systemsList{i}.controller,'CtSystem') || isa(obj.systemsList{i}.controller,'DtSystem')
+                        iCons = obj.systemsList{i}.controller.initialConditions;
+                        
+                        if not(iscell(iCons)) || length(iCons)<iInitialCondition
+                            error(getMessage('VirtualArena:NotEnoughInitialConditionsController'));
+                        end
+                        
+                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions{iInitialCondition};
+                    end
+                    
+                else
+                    % Log the ith initial state of the system
+                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions;
+                    
+                    % Log initial state of the observer
+                    if not(isempty(obj.systemsList{i}.stateObserver))
+                        
+                        if isempty(obj.systemsList{i}.stateObserver.initialConditions)
+                            error(getMessage('VirtualArena:InitObserver'));
+                        end
+                        
+                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions;
+                    end
+                    
+                    % Log initial state of the controller
+                    if isa(obj.systemsList{i}.controller,'CtSystem') || isa(obj.systemsList{i}.controller,'DtSystem')
+                        if isempty(obj.systemsList{i}.controller.initialConditions)
+                            error(getMessage('VirtualArena:InitController'));
+                        end
+                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions;
+                    end
+                end
+                
+                obj.log{i}.inputTrajectory = zeros(obj.systemsList{i}.nu,1);
+                
+            end
+            
+        end
+        
+        
     end
-    
+   
 end

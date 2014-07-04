@@ -1,5 +1,5 @@
-
-clc;clear all;close all;
+%% Simulate same systems for different initial conditions
+clc; clear all; close all;
 
 mode = 1;
 %0: Simulate from a single initial condition

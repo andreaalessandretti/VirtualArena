@@ -144,6 +144,14 @@ classdef  BoxSet < PolytopicSet
                 [obj.lowerBounds(2),obj.upperBounds(2),obj.upperBounds(2),obj.lowerBounds(2),obj.lowerBounds(2)],varargin{:});
         end
         
+        
+        
+        %Note: the addition is performed only in the existing bounds
+        function ret = minus(arg1,arg2)
+            
+            ret = arg1+(-arg2);
+        end
+        
         %Note: the addition is performed only in the existing bounds
         function ret = plus(arg1,arg2)
             

@@ -1,4 +1,4 @@
-classdef FminconMpcOpSolver < MpcOpSolver
+classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
     %FminconMpcOpSolver implementation of a MpcOpSolver using matlab fmincon
     %   function.
     %
@@ -12,6 +12,8 @@ classdef FminconMpcOpSolver < MpcOpSolver
         nNonlinearTerminalConstratins
         
         nNonlinearStageConstratins
+        
+        mpcOp
         
     end
     
@@ -29,8 +31,12 @@ classdef FminconMpcOpSolver < MpcOpSolver
                     
                     switch varargin{parameterPointer}
                         
-                        
-                        
+                        case 'MpcOp'
+                            
+                            obj.mpcOp = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
                         otherwise
                             
                             parameterPointer = parameterPointer+1;
@@ -47,17 +53,17 @@ classdef FminconMpcOpSolver < MpcOpSolver
             
         end
         
-        function ret = solve(obj,mpcOP,x0,warmStart,varargin)
+        function ret = solve(obj,mpcOp,x0,warmStart,varargin)
             
             solverParameters = varargin;
             
-            N  = mpcOP.horizonLength;
+            N  = mpcOp.horizonLength;
             
-            nx = mpcOP.system.nx;
+            nx = mpcOp.system.nx;
             
-            nu = mpcOP.system.nu;
+            nu = mpcOp.system.nu;
             
-            switch class(mpcOP)
+            switch class(mpcOp)
                 
                 case 'DtMpcOp'
                     
@@ -73,7 +79,7 @@ classdef FminconMpcOpSolver < MpcOpSolver
             if not(isempty(warmStart))
                 initVal = reshape(warmStart.u,N*nu,1);
             else
-                initVal = 0.1*randn(mpcOP.system.nu*mpcOP.horizonLength,1);
+                initVal = 0.1*randn(mpcOp.system.nu*mpcOp.horizonLength,1);
             end
             
             
@@ -88,11 +94,11 @@ classdef FminconMpcOpSolver < MpcOpSolver
             A = []; b = []; Aeq = []; beq = [];
             
             [Uopt,fval,exitflag,output,lambda,grad,hessian] = fmincon(...
-                @(U) fminconCost(mpcOP,x0,U),...
+                @(U) fminconCost(mpcOp,x0,U),...
                 initVal,...
                 A, b, Aeq, beq,...
                 [],[],...
-                @(U) obj.getNonlinearConstraints(mpcOP,x0,U),...
+                @(U) obj.getNonlinearConstraints(mpcOp,x0,U),...
                 options...
                 );
             
@@ -150,7 +156,7 @@ classdef FminconMpcOpSolver < MpcOpSolver
             %ret.x_opt = reshape( xmin(1:nx*(N+1)    ,:)  ,nx,N+1);
             
             ret.u_opt = reshape(Uopt',nu,N);
-            ret.x_opt = mpcOP.system.getStateTrajectory(x0,ret.u_opt);
+            ret.x_opt = mpcOp.system.getStateTrajectory(x0,ret.u_opt);
             ret.solution = solution;
             ret.problem = not(OK);
             
@@ -161,11 +167,12 @@ classdef FminconMpcOpSolver < MpcOpSolver
             
         end
         
-        function init(obj,mpcOP)
+        function initSimulations(obj)
             
-            stageConstratins = mpcOP.stageConstraints;
+            mpcOp = obj.mpcOp;
+            stageConstratins = mpcOp.stageConstraints;
             
-            terminalConstraints = mpcOP.terminalConstraints;
+            terminalConstraints = mpcOp.terminalConstraints;
             
             %% Count constraints for memory allocation
             
@@ -219,6 +226,7 @@ classdef FminconMpcOpSolver < MpcOpSolver
             
         end
         
+        
         function faceProblem(obj,solution,mpcOp,xim1)
             error('problem');
         end
@@ -228,16 +236,16 @@ classdef FminconMpcOpSolver < MpcOpSolver
         
         
         
-        function [C,Ceq] = getNonlinearConstraints(obj,mpcOP,x0,U)
+        function [C,Ceq] = getNonlinearConstraints(obj,mpcOp,x0,U)
             
-            nu = mpcOP.system.nu;
-            N  = mpcOP.horizonLength;
+            nu = mpcOp.system.nu;
+            N  = mpcOp.horizonLength;
             
             u = reshape(U',nu,N);
-            x = mpcOP.system.getStateTrajectory(x0,u);
+            x = mpcOp.system.getStateTrajectory(x0,u);
             
-            terminalConstratins = mpcOP.terminalConstraints;
-            stageConstratins    = mpcOP.stageConstraints;
+            terminalConstratins = mpcOp.terminalConstraints;
+            stageConstratins    = mpcOp.stageConstraints;
             
             C = zeros(N*obj.sizeNonlinearStageConstratins+obj.sizeNonlinearTerminalConstratins,1);
             

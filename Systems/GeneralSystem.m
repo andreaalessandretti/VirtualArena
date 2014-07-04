@@ -1,5 +1,5 @@
 
-classdef GeneralSystem < handle
+classdef GeneralSystem < handle & InitDeinitObject
     %GeneralSystem
     %
     % x' = f(x,u,v)
@@ -90,6 +90,7 @@ classdef GeneralSystem < handle
         
         controller;      %controller used to drive the vehicle
         x;               %current state vector
+        y;               %current output vector
         
         %State and input transformation, used to solve some numerical
         %problems
@@ -220,10 +221,14 @@ classdef GeneralSystem < handle
             
         end
         
+        
         function useSymbolicEvaluation(obj)
         %%useSymbolicEvaluation evaluates the state and output equations
         %   with symbolic variables, simplify them, and replace them with the
         %   simplified version. 
+        %   
+        %   This can lead to a notable decrease of computation time for 
+        %   the case of complex models.
         
             x = sym('x',[obj.nx,1]);
             x = sym(x,'real');
@@ -254,7 +259,22 @@ classdef GeneralSystem < handle
         end
         
         function computeLinearization(obj,varargin)
-            
+        %%computeLinearization 
+        %   computeLinearization()
+        %   Computes the parametric matrices A, B, p, C, D, and q, with 
+        %   parameters (xbar,ubar), associated with the linearized system
+        %    
+        %   x(k+1)/dot(x) = A(xbar,ubar) x(k) + B(xbar,ubar) u(k) + p(xbar,ubar)
+        %   y(k)          = C(xbar,ubar) x(k) + D(xbar,ubar) u(k) + q(xbar,ubar)
+        %
+        %   By default these matrices are computed using the Symbolic
+        %   Toolbox of Matlab and stored in the object as function handles.
+        %
+        %   computeLinearization('Sampled')
+        %   In this case the matrices are computed using via sampling of
+        %   the function. This mode is advised when the computation of the
+        %   symbolic jacobians are prohibitive.
+        %
             if isempty(obj.Q)
                 noiseF = {};
             else

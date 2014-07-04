@@ -56,7 +56,7 @@ classdef EllipsoidalSet < GeneralSet
     methods
         
         
-        function obj = EllipticSet(varargin)
+        function obj = EllipsoidalSet(varargin)
             
             if nargin >= 2
                 P = varargin{1};

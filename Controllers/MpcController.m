@@ -1,5 +1,5 @@
 
-classdef MpcController < Controller
+classdef MpcController < Controller & InitDeinitObject
     %MpcController
     %
     %   MpcController properties:
@@ -67,6 +67,7 @@ classdef MpcController < Controller
         
         warmStartMode = 1;
         warmStart;
+        auxiliaryLaw;
         
     end
     
@@ -109,6 +110,12 @@ classdef MpcController < Controller
                         case 'WarmStartMode'
                             
                             obj.warmStartMode = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'AuxiliaryLaw'
+                            
+                            obj.auxiliaryLaw = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -160,7 +167,6 @@ classdef MpcController < Controller
             obj.appendVectorToLog(obj.mpcOp.stageCost(x,u),obj.i,'stageCost')
             obj.appendVectorToLog(sol.solverTime          ,obj.i,'solverTime')
             obj.lastSolution = sol;
-            
             
             obj.i = obj.i+1;
             

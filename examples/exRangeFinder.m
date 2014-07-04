@@ -1,5 +1,4 @@
-%% exRangeFinder 
-% Example of the class RangeFinder
+%% Example of a Sensor
 
 clc;clear all;close all;
 
@@ -9,9 +8,9 @@ v1.x = [0;0;0]; % Current state. Normally this variable is handled by VirtualAre
 v2 = Unicycle('Occupancy',BoxSet([-1;-1],1:2,[1;1],1:2,2));
 v2.x = [5;5;0];
 
-
 v3 = Unicycle('Occupancy',BoxSet([-1;-1],1:2,[1;1],1:2,2));
 v3.x = [-3;3;0];
+
 angles = linspace(0,2*pi,300);
 s = RangeFinder(angles,norm([4.5,4.5]));
 

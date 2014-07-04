@@ -1,6 +1,6 @@
 
 
-function h = exStepPlotFunction(agentsList,hist,plot_handles,i)
+function h = stepPlotFunctionMpc(agentsList,hist,plot_handles,i)
     
     if not(plot_handles == 0)
       delete(plot_handles)

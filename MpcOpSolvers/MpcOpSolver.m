@@ -93,9 +93,6 @@ classdef MpcOpSolver < handle
         
         faceProblem(obj,solution,mpcOp,xim1)
         
-        init(obj,MpcOP)
-        
-        close(obj)
     end
     
     methods
