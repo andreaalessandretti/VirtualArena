@@ -207,7 +207,7 @@ classdef UnderactuatedVehicle < Vehicle
              
                          
              if not(isempty(obj.mv))
-                 obj.omega = @(x,uk,d) obj.omega(x,uk,d) +obj.mv(x);
+                 obj.v = @(x,uk,d) obj.v(x,uk,d) +obj.mv(x);
              end
              
              %% compose omega
