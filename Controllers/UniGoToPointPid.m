@@ -131,7 +131,8 @@ classdef UniGoToPointPid < DtSystem
             thetaErr = atan2(err(2),err(1));
             
             
-            nextXc = [0,0;1,0]*xc+[1;0]*thetaErr;
+            nextXc = [0,0;
+                      1,0]*xc + [1;0]*thetaErr;
             
         end
         
@@ -150,6 +151,7 @@ classdef UniGoToPointPid < DtSystem
             w = kpid(1)*thetaErr+kpid(3)*(thetaErr-xc(1))+kpid(2)*(norm(xc));
             
             u = uSet.project([v;w]);
+            
             %u = [min(max(v,uSet.lowerBounds(1)),uSet.upperBounds(1));
             %     min(max(w,uSet.lowerBounds(2)),uSet.upperBounds(2))];
             

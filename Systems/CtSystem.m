@@ -45,17 +45,6 @@ classdef CtSystem < GeneralSystem
 % of the authors and should not be interpreted as representing official policies, 
 % either expressed or implied, of the FreeBSD Project.
     
-    properties (Access = private)
-        
-        % changeOfCoordinate - Variable of the change of choordinates
-        % x' = Ax+b
-        % u' = Cx+d
-        
-        cA = [];
-        cb = [];
-        cC = [];
-        cd = [];
-    end
     
     methods
         
@@ -94,73 +83,7 @@ classdef CtSystem < GeneralSystem
         end
         
         
-        function changeOfCoordinate(obj,varargin)
-            %changeOfCoordinate Perform a change of state and/or input coordinate
-            %
-            % The new system are will be expressed in the new state/input coordinate frame
-            % x' = Ax+b
-            % u' = Cu+d
-            %
-            % Calling the function:
-            %
-            % sys.changeOfCoordinate(A,b,C,d)
-            %
-            % Example:
-            % -----------------------------------------------------------------
-            % sys = CtSystem(...
-            %     'StateEquation' ,@(x,u) x+u,'nx',1,'nu',1,...
-            %     'OutputEquation',@(x,u) x-u,'ny',1);
-            %
-            % xDot = sys.f(3,7) % 10
-            % y    = sys.h(3,7) % -4
-            %
-            % % x' = x+2, u' = 2*u+4
-            %
-            % sys.changeOfCoordinate(1,2,2,4);
-            %
-            %
-            % % \dot{x'} = x+u = x'-2 + (1/2)u'-2
-            % % y        = x-u = x'-2 - (1/2)u'+2
-            %
-            % xDot = sys.f(3,7) % 3-2 + (1/2)7 -2 = 2.5
-            % y    = sys.h(3,7) % 3-2 - (1/2)7 +2 = -0.5
-            % -----------------------------------------------------------------
-            
-            A = eye(obj.nx);
-            b = zeros(obj.nx,1);
-            C = eye(obj.nu);
-            d = zeros(obj.nu,1);
-            
-            if nargin >= 2 && not(isempty(varargin{1}))
-                A = varargin{1};
-            end
-            if nargin >= 3 && not(isempty(varargin{2}))
-                b = varargin{2};
-            end
-            
-            if nargin >= 4 && not(isempty(varargin{3}))
-                C = varargin{3};
-            end
-            
-            if nargin >= 5 && not(isempty(varargin{4}))
-                d = varargin{4};
-            end
-            
-            if not(isempty(obj.f))
-                fOld = obj.f;
-                obj.f = @(x,u) A*fOld(A\(x-b),C\(u-d));
-                obj.cA = A;
-                obj.cb = b;
-            end
-            
-            if not(isempty(obj.h))
-                hOld = obj.h;
-                obj.h = @(x,u) hOld(A\(x-b),C\(u-d));
-                obj.cC = C;
-                obj.cd = d;
-            end
-            
-        end
+        
         
         
     end

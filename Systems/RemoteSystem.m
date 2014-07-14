@@ -252,7 +252,7 @@ classdef RemoteSystem < DtSystem & InitDeinitObject
             if obj.startingCommand
                 system(obj.startingCommand);
             end
-            pause(0.5);
+            pause(5);
             
             
             obj.udpObj = udp(obj.remoteIp, obj.remotePort, 'LocalPort', obj.localPort,'timeout',30,'OutputBufferSize',2048,'InputBufferSize',2048);

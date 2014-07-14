@@ -10,12 +10,12 @@ v1.useSymbolicEvaluation(); % see help GeneralSystem.useSymbolicEvaluation
 op = CtMpcOp( ...
     'System'           , v1,...
     'HorizonLength'    , 0.5,...
-    'StageConstraints' , BoxSet( -[1;pi/4],4:5,[1;pi/4],4:5,5),... % on the vatiable z=[x;u];
+    'StageConstraints' , BoxSet( -[1;pi/4],4:5,[1;pi/4],4:5,5),... % on the variable z=[x;u];
     'StageCost'        , @(x,u) x(1:2)'*x(1:2) + u'*u,...
     'TerminalCost'     , @(x) 10*x(1:2)'*x(1:2));
 
 
-mode = 1;
+mode = 2;
 switch mode
     case 1
         

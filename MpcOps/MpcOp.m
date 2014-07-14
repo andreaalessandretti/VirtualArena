@@ -210,10 +210,7 @@ classdef MpcOp < handle
                 error('MpcOp:RequiredParametersMissing',getMessage('MpcOp:RequiredParametersMissing'))
             end
            
-            
-            
         end
-        
         
         function params = getParameters(obj)
             params = {...
@@ -226,6 +223,30 @@ classdef MpcOp < handle
                 'InputDerivative', obj.inputDerivative,...
                 'AuxiliaryLaw', obj.auxiliaryLaw...
                 };
+        end
+        
+        function useSymbolicEvaluation(obj)
+        %%useSymbolicEvaluation evaluates the state and output equations
+        %   with symbolic variables, simplify them, and replace them with the
+        %   simplified version. 
+        %   
+        %   This can lead to a notable decrease of computation time for 
+        %   the case of complex models.
+        
+            obj.system.useSymbolicEvaluation();
+            
+            x = sym('x',[obj.system.nx,1]);
+            x = sym(x,'real');
+            
+            u = sym('u',[obj.system.nu,1]);
+            u = sym(u,'real');
+            
+            fprintf(getMessage('MpcOp:evaluation'));
+            
+
+            obj.stageCost    = matlabFunction(simplify( obj.stageCost(x,u) ) ,'vars',{x,u});
+            obj.terminalCost = matlabFunction(simplify( obj.terminalCost(x) ) ,'vars',{x});
+            fprintf(getMessage('done'));
         end
         
         %% TO COMMENT
@@ -468,6 +489,7 @@ classdef MpcOp < handle
             b = cs;
             
         end
+        
         
         % Precondition the optimization problem around the point
         % xHat and uHat %% TO COMMENT

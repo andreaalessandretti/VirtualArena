@@ -60,12 +60,12 @@ switch varargin{1}
         
         samples = [samples,...
             [M*ones(1,nn-2);
-            linspace(-M+M/(nn-1),M-M/(nn-1),nn-2)]];
-        
+            linspace(-M+2*M/(nn-1),M-2*M/(nn-1),nn-2)]];
         
         samples = [samples,...
             [-M*ones(1,nn-2);
-            linspace(-M+M/(nn-1),M-M/(nn-1),nn-2);]];
+            linspace(-M+2*M/(nn-1),M-2*M/(nn-1),nn-2);]];
+        
         if nargin >= 4
             offset = varargin{4};
             samples = samples + repmat(offset,1,nn*4-4);

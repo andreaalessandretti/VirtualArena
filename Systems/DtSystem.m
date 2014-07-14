@@ -49,10 +49,6 @@
 classdef DtSystem < GeneralSystem
     
     
-    properties
-        
-    end
-    
     methods
         
         function obj = DtSystem (varargin)
@@ -125,48 +121,6 @@ classdef DtSystem < GeneralSystem
             
         end
         
-        function changeOfCoordinate(obj,varargin)
-            % \bar{x} = Ax+b
-            % \bar{u} = Cx+d
-            
-            A = eye(obj.nx);
-            b = zeors(obj.nx,1);
-            C = eye(obj.nu);
-            d = zeors(obj.nu,1);
-            
-            if nargin >= 2 && not(isempty(varargin{1}))
-                A = varargin{1};
-            end
-            if nargin >= 3 && not(isempty(varargin{2}))
-                b = varargin{2};
-            end
-            
-            if nargin >= 4 && not(isempty(varargin{3}))
-                C = varargin{3};
-            end
-            
-            if nargin >= 5 && not(isempty(varargin{4}))
-                d = varargin{4};
-            end
-            
-            
-            if not(isempty(obj.f))
-                fOld = obj.f;
-                obj.f = @(x,u) A*fOld(A\(x-b),C\(u-d))+b;
-                obj.cA = A;
-                obj.cb = b;
-            end
-            
-            if not(isempty(obj.h))
-                hOld = obj.h;
-                obj.h = @(x,u) hOld(A\(x-b),C\(u-d));
-                obj.cC = C;
-                obj.cd = d;
-            end
-            
-            
-            
-        end
         
     end
 end

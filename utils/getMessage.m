@@ -1,3 +1,4 @@
+
 %
 
 
@@ -99,6 +100,30 @@ switch MessageCode
     case 'GeneralSystem:evaluation'
         
         message = 'Evaluation and simplification of state and output equations ...';
+    
+    case 'AcadoMpcOpSolver:Nanxo'
+        
+        message = 'NaN initial condition';
+        
+    case 'AcadoMpcOpSolver:CtMpcOp'
+        
+        message = 'Only CtMpcOp or DtMpcOp supported.';
+    
+    case 'AcadoMpcOpSolver:SizeMismatch'
+        
+        message =  'The of xDot different from nx';
+    
+    case 'AcadoMpcOpSolver:StageConstraintNotSupported'
+    
+        message = ['The stage costraint ''',varargin{1},''' was ignored since not supported by ''AcadoMpcOpSolver''.'];
+
+    case 'ConstraintSetSizeMismatch'
+        
+        message ='The size of the constraint set doesn''t match nx+nu';
+        
+    case 'MpcOp:evaluation'
+        
+        message = 'Symbolic evaluation and simplification of stage and terminal cost ...';
         
     otherwise
         
