@@ -169,10 +169,10 @@ classdef RemoteSystem < DtSystem & InitDeinitObject
             
            
             if obj.stateFeedback
-                obj.f = @(x,u)obj.fRemote(x,u);
+                obj.f = @(t,x,u)obj.fRemote(x,u);
             else
-                obj.f = @(x,u)zeros(obj.nx,1);
-                obj.h = @(x,u)obj.fRemote(x,u);
+                obj.f = @(t,x,u)zeros(obj.nx,1);
+                obj.h = @(t,x,u)obj.fRemote(x,u);
                 
             end
             

@@ -5,7 +5,7 @@ classdef CtSystem < GeneralSystem
     %   See help GeneralSystem
     %
     %   CtSystem methods:
-    %   CtSystem          - costructor sys = CtSystem(par1,val1,par2,val2, ...)
+    %   CtSystem          - constructor sys = CtSystem(par1,val1,par2,val2, ...)
     %                       see GeneralSystem for the explanation of the
     %                       parameters and values.
     %   getStateTrajectory - Compute a solution
@@ -57,23 +57,24 @@ classdef CtSystem < GeneralSystem
         
         
         
-        function x = getStateTrajectory(obj,x0,u,dt)
+        function x = getStateTrajectory(obj,t0,x0,u,dt)
             %getStateTrajectory Compute a solution
             %
             % Returns the state trajectory with the form [x0,x1,...]
             % obtained by solving recursively
             %
-            % x(:,i+1) = x(:,i) + dt*sys.f(x(:,i),u(:,i));
-            %
+            % x(:,i+1) = RK4.integrate(@(y)obj.f(t,y,u(:,i)),x(:,i),dt); 
+            %     t = t + dt;
             % Calling the function:
             %
             % sys.getStateTrajectory(x0,u,dt)
             
             x = zeros(length(x0),size(u,2)+1);
             x(:,1) = x0;
-            
+            t = t0;
             for i =1:size(u,2)
-                x(:,i+1) = x(:,i) + dt*obj.f(x(:,i),u(:,i));
+                 x(:,i+1) = RK4.integrate(@(y)obj.f(t,y,u(:,i)),x(:,i),dt); 
+                 t = t + dt;
             end
             
             if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0

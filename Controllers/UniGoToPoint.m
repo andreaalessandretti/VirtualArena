@@ -62,7 +62,7 @@ classdef UniGoToPoint < Controller
             
         end
         
-        function u = computeInput(obj,x,t)
+        function u = computeInput(obj,t,x)
             
             R = [cos(x(3)),-sin(x(3));
                 sin(x(3)), cos(x(3))]; % Body to inertia rotation matrix

@@ -15,6 +15,9 @@ classdef  BoxSet < PolytopicSet
     %
     % with x \in R^spaceDimension.
     %
+    % B = BoxSet([v1,v2,...]) returns the smalles BoxSet containing the
+    % points v1,v2,... .
+    %
     %
     % BoxSet methods:
     %
@@ -38,37 +41,37 @@ classdef  BoxSet < PolytopicSet
     %
     % see also PolytopicSet, EllipsoidalSet, GeneralSet
     
- 
-% This file is part of VirtualArena.
-%
-% Copyright (c) 2014, Andrea Alessandretti
-% All rights reserved.
-%
-% e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
-% 
-% Redistribution and use in source and binary forms, with or without
-% modification, are permitted provided that the following conditions are met:
-% 
-% 1. Redistributions of source code must retain the above copyright notice, this
-%    list of conditions and the following disclaimer. 
-% 2. Redistributions in binary form must reproduce the above copyright notice,
-%    this list of conditions and the following disclaimer in the documentation
-%    and/or other materials provided with the distribution.
-% 
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-% ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-% WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-% DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-% ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-% (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-% ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-% 
-% The views and conclusions contained in the software and documentation are those
-% of the authors and should not be interpreted as representing official policies, 
-% either expressed or implied, of the FreeBSD Project.
+    
+    % This file is part of VirtualArena.
+    %
+    % Copyright (c) 2014, Andrea Alessandretti
+    % All rights reserved.
+    %
+    % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
+    %
+    % Redistribution and use in source and binary forms, with or without
+    % modification, are permitted provided that the following conditions are met:
+    %
+    % 1. Redistributions of source code must retain the above copyright notice, this
+    %    list of conditions and the following disclaimer.
+    % 2. Redistributions in binary form must reproduce the above copyright notice,
+    %    this list of conditions and the following disclaimer in the documentation
+    %    and/or other materials provided with the distribution.
+    %
+    % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    % ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    % DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+    % ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    % (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    % LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    % ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    % (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    %
+    % The views and conclusions contained in the software and documentation are those
+    % of the authors and should not be interpreted as representing official policies,
+    % either expressed or implied, of the FreeBSD Project.
     
     
     properties
@@ -83,33 +86,61 @@ classdef  BoxSet < PolytopicSet
         
         
         
-        function obj = BoxSet(lowerBounds,indexesLowerBounds,upperBounds,indexesUpperBounds,spaceDimension)
+        function obj = BoxSet(varargin)
             
-            if not((length(indexesLowerBounds) == length(lowerBounds)) &&(length(indexesUpperBounds) == length(upperBounds)))
-                error('The dimention of the indexes vector does not match with the bound vector ');
+            if nargin == 5
+                [A,b] = BoxSet.cosGetAb(varargin{:});
+
+                lowerBounds        = varargin{1};
+                indexesLowerBounds = varargin{2};
+                upperBounds        = varargin{3};
+                indexesUpperBounds = varargin{4};
+                spaceDimension     = varargin{5};
+                
+            elseif nargin == 1
+                
+                points = varargin{1};
+                spaceDimension      = size(points,1);
+                indexesLowerBounds = 1:spaceDimension;
+                indexesUpperBounds = 1:spaceDimension;
+                lowerBounds =  inf*ones(spaceDimension,1);
+                upperBounds = -inf*ones(spaceDimension,1);
+
+                for i = 1:size(points,2)
+                    point = points(:,i);
+                    for j = 1:spaceDimension
+                        lowerBounds(j) = min(lowerBounds(j),point(j));
+                        upperBounds(j) = max(upperBounds(j),point(j));
+                    end
+
+                end
+                [A,b] = BoxSet.cosGetAb(lowerBounds,indexesLowerBounds,upperBounds,indexesUpperBounds,spaceDimension);
             end
             
-            I = eye(spaceDimension);
             
-            A = [I(indexesUpperBounds,:);
-                -I(indexesLowerBounds,:)];
-            
-            b =  [upperBounds;
-                -lowerBounds];
-            
-            obj = obj@PolytopicSet(A,b);
-            
-            obj.upperBounds = upperBounds;
-            
-            obj.indexesUpperBounds = indexesUpperBounds;
-            
-            obj.lowerBounds = lowerBounds;
-            
-            obj.indexesLowerBounds = indexesLowerBounds;
-            
-            obj.spaceDimension = spaceDimension;
+                obj = obj@PolytopicSet(A,b);
+
+                obj.upperBounds = upperBounds;
+
+                obj.indexesUpperBounds = indexesUpperBounds;
+
+                obj.lowerBounds = lowerBounds;
+
+                obj.indexesLowerBounds = indexesLowerBounds;
+
+                obj.spaceDimension = spaceDimension;
+
+                if not(size(obj.upperBounds,2)==1)
+                    obj.upperBounds = obj.upperBounds';
+                end
+
+                if not(size(obj.lowerBounds,2)==1)
+                    obj.lowerBounds = obj.lowerBounds';
+                end
+
             
         end
+        
         
         
         function vProjected = project(obj,v)
@@ -149,8 +180,79 @@ classdef  BoxSet < PolytopicSet
         %Note: the addition is performed only in the existing bounds
         function ret = minus(arg1,arg2)
             
+            
+            if isa(arg1,'BoxSet') && isa(arg2,'BoxSet')
+                
+                ret = minusSetSet(arg1,arg2);
+                
+            elseif (isnumeric(arg1)||isnumeric(arg2)) && (isa(arg1,'PolytopicSet')||isa(arg2,'PolytopicSet'))
+                
+                ret = minusVectorSet(arg1,arg2);
+                
+            else
+                error (getMessage('BoxSet:minus:wrongParams'));
+            end
+        end
+        
+        function ret = contains(obj,arg)
+            if isnumeric(arg)
+                ret = contains@GeneralSet(obj,arg);
+            elseif isa(arg,'BoxSet')
+                ret = obj.containsBoxSet(arg);
+            end
+        end
+        
+        function ret = containsBoxSet(obj,arg)
+            ret = 1;
+            for i=1:arg.spaceDimension
+                if obj.upperBounds(i)<arg.upperBounds(i) || ...
+                        obj.lowerBounds(i)>arg.lowerBounds(i)
+                    ret = 0;
+                    break;
+                end
+                
+            end
+            
+        end
+        
+        
+        function ret = minusSetSet(arg1,arg2)
+            
+            n = arg1.spaceDimension;
+            
+            if not(...
+                    arg2.spaceDimension ==n && ...
+                    sum(arg1.indexesUpperBounds == 1:arg1.spaceDimension)==arg1.spaceDimension &&...
+                    sum(arg2.indexesUpperBounds == 1:arg2.spaceDimension)==arg2.spaceDimension...
+                    )
+                
+                error(getMessage('BoxSet:minusSetSet:setNotFull'))
+                
+            end
+            
+            if not( arg1.contains(zeros(n,1)) && arg2.contains(zeros(n,1)))
+                
+                error(getMessage('BoxSet:minusSetSet:setNoZero'))
+                
+            end
+            
+            upperBounds = zeros(n,1);
+            lowerBounds = zeros(n,1);
+            
+            for i=1:n
+                upperBounds(i) = arg1.upperBounds(i)+arg2.lowerBounds(i);
+                lowerBounds(i) = arg1.lowerBounds(i)+arg2.upperBounds(i);
+            end
+            
+            ret = BoxSet(lowerBounds,1:n,upperBounds,1:n,n);
+            
+        end
+        
+        function ret = minusVectorSet(arg1,arg2)
+            
             ret = arg1+(-arg2);
         end
+        
         
         %Note: the addition is performed only in the existing bounds
         function ret = plus(arg1,arg2)
@@ -176,13 +278,24 @@ classdef  BoxSet < PolytopicSet
             oldSpaceDimension = set.spaceDimension;
             
             if not(length(v)==oldSpaceDimension)
-                error ('The vector has to be of the same dimention of the set');
+                error ('The vector has to be of the same dimension of the set');
             end
             
             
             ret = BoxSet(oldLowerBounds+v(oldIndexesLowerBounds),oldIndexesLowerBounds,...
                 oldUpperBounds+v(oldIndexesUpperBounds),oldIndexesUpperBounds,...
                 oldSpaceDimension);
+        end
+        
+        function  ret = subsref(arg,val)
+            
+            if length(val)==1 && strcmp(val.type,'()')
+                indexes = val.subs{:};
+
+                ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
+            else
+                ret =  builtin('subsref', arg,val);
+            end
         end
         
         function ret = mtimes(arg1,arg2)
@@ -213,7 +326,7 @@ classdef  BoxSet < PolytopicSet
                 diagP =diag(P);
                 
                 if not(length(diagP)==oldSpaceDimension)
-                    error ('The matrix has to be of the same dimention of the set');
+                    error ('The matrix has to be of the same dimension of the set');
                 end
                 
                 
@@ -340,4 +453,61 @@ classdef  BoxSet < PolytopicSet
         
         
     end
+    
+    methods (Static)
+        
+        
+        function [A,b]=cosGetAb(varargin)
+            
+                lowerBounds        = varargin{1};
+                indexesLowerBounds = varargin{2};
+                upperBounds        = varargin{3};
+                indexesUpperBounds = varargin{4};
+                spaceDimension     = varargin{5};
+                
+                
+                if not((length(indexesLowerBounds) == length(lowerBounds)) &&(length(indexesUpperBounds) == length(upperBounds)))
+                    error('The dimension of the indexes vector does not match with the bound vector ');
+                end
+
+
+                I = eye(spaceDimension);
+
+                A = [I(indexesUpperBounds,:);
+                    -I(indexesLowerBounds,:)];
+
+                b =  [upperBounds;
+                    -lowerBounds];
+        end
+        
+        function testContains
+            
+            clc;clear all;close all;
+            s1 = BoxSet(2*[-1;-1],1:2,2*[1;1],1:2,2);
+            s2 = BoxSet([-0.5;-1],1:2,[0.1;0.2],1:2,2);
+            plot(s1)
+            hold on
+            plot(s2)
+            
+            s1.contains(s2)
+            s2.contains(s1)
+            
+        end
+        
+        function testSetSetSubtraction
+            clc;clear all;close all;
+            s1 = BoxSet(2*[-1;-1],1:2,2*[1;1],1:2,2);
+            s2 = BoxSet([-0.5;-1],1:2,[0.1;0.2],1:2,2);
+            plot(s1)
+            hold on
+            plot(s2)
+            
+            s3 = s1-s2;
+            
+            plot(s3,'color','r')
+            
+        end
+        
+    end
+    
 end

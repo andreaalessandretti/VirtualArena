@@ -76,7 +76,7 @@ classdef PolytopicSet < GeneralSet
             if ( not(obj.spaceDimension == size(C,1)) ||...
                     not(size(C,1) == size(c,1)) )
                 
-                error(getMessage('PolytopicSet:getAffineTransformation:DimentionsMismatch'))
+                error(getMessage('PolytopicSet:getAffineTransformation:DimensionsMismatch'))
             end
             
             set = PolytopicSet(obj.A*C,obj.b-obj.A*c);

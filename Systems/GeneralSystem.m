@@ -2,8 +2,8 @@
 classdef GeneralSystem < handle & InitDeinitObject
     %GeneralSystem
     %
-    % x' = f(x,u,v)
-    % y  = h(x,u,w)
+    % x' = f(t,x,u) ( f(t,x,u,w) if Q not empty)
+    % y  = h(t,x)   ( h(t,x,w) if R not empty  )
     %
     % x is an nx-dimensional vector
     % u is an nu-dimensional vector
@@ -242,6 +242,9 @@ classdef GeneralSystem < handle & InitDeinitObject
             u = sym('u',[obj.nu,1]);
             u = sym(u,'real');
             
+            t = sym('t',[1,1]);
+            t = sym(t,'real');
+            
             if isempty(obj.Q)
                 noiseF = {};
             else
@@ -261,11 +264,11 @@ classdef GeneralSystem < handle & InitDeinitObject
             fprintf(getMessage('GeneralSystem:evaluation'));
             
             if not(isempty(obj.f))
-                obj.f = matlabFunction(simplify( obj.f(x,u,noiseF{:}) ) ,'vars',{x,u,noiseF{:}});
+                obj.f = matlabFunction(simplify( obj.f(t,x,u,noiseF{:}) ) ,'vars',{t,x,u,noiseF{:}});
             end
             
             if not(isempty(obj.h))
-                obj.h = matlabFunction(simplify( obj.h(x,u,noiseH{:}) ) ,'vars',{x,u,noiseH{:}});
+                obj.h = matlabFunction(simplify( obj.h(t,x,u,noiseH{:}) ) ,'vars',{t,x,u,noiseH{:}});
             end
             
             fprintf(getMessage('done'));
@@ -288,6 +291,10 @@ classdef GeneralSystem < handle & InitDeinitObject
         %   the function. This mode is advised when the computation of the
         %   symbolic jacobians are prohibitive.
         %
+        %   WARNING: At the moment this applies only to time invariant system
+        %            The linearization is evaluated at t=0 
+        
+        % TODO: time dependent linearization
             if isempty(obj.Q)
                 noiseF = {};
             else
@@ -311,11 +318,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('GeneralSystem:LinearizingStateEquationS'));
                             
-                            obj.A = @(xbar,ubar)jacobianSamples(@(x)obj.f(x,ubar,noiseF{:}),xbar);
+                            obj.A = @(xbar,ubar)jacobianSamples(@(x)obj.f(0,x,ubar,noiseF{:}),xbar);
                             
-                            obj.B = @(xbar,ubar)jacobianSamples(@(u)obj.f(xbar,u,noiseF{:}),ubar);
+                            obj.B = @(xbar,ubar)jacobianSamples(@(u)obj.f(0,xbar,u,noiseF{:}),ubar);
                             
-                            obj.p = @(x,u) (  obj.f(x,u,noiseF{:}) - jacobianSamples(@(z)obj.f(z,u,noiseF{:}),x)*x - jacobianSamples(@(z)obj.f(x,z,noiseF{:}),u)*u);
+                            obj.p = @(x,u) (  obj.f(0,x,u,noiseF{:}) - jacobianSamples(@(z)obj.f(z,u,noiseF{:}),x)*x - jacobianSamples(@(z)obj.f(0,x,z,noiseF{:}),u)*u);
                             
                             fprintf(getMessage('done'));
                             
@@ -325,11 +332,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('GeneralSystem:LinearizingOutputEquationS'));
                             
-                            obj.C = @(xbar,ubar)jacobianSamples(@(x)obj.h(x,ubar,noiseH{:}),xbar);
+                            obj.C = @(xbar,ubar)jacobianSamples(@(x)obj.h(0,x,noiseH{:}),xbar);
                             
-                            obj.D = @(xbar,ubar)jacobianSamples(@(u)obj.h(xbar,u,noiseH{:}),ubar);
+                            obj.D = @(xbar,ubar)jacobianSamples(@(u)obj.h(0,xbar,noiseH{:}),ubar);
                             
-                            obj.q = @(x,u) (  obj.h(x,u,noiseH{:}) - jacobianSamples(@(z)obj.h(z,u,noiseH{:}),x)*x - jacobianSamples(@(z)obj.h(x,z,noiseH{:}),u)*u);
+                            obj.q = @(x,u) (  obj.h(0,x,noiseH{:}) - jacobianSamples(@(z)obj.h(0,z,noiseH{:}),x)*x - jacobianSamples(@(z)obj.h(0,x,noiseH{:}),u)*u);
                             
                             
                             fprintf(getMessage('done'));
@@ -353,11 +360,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('GeneralSystem:LinearizingStateEquation'));
                             
-                            obj.A = matlabFunction(  jacobian(obj.f(x,u,noiseF{:}),x)  ,'vars',{x,u});
+                            obj.A = matlabFunction(  jacobian(obj.f(0,x,u,noiseF{:}),x)  ,'vars',{x,u});
                             
-                            obj.B = matlabFunction(  jacobian(obj.f(x,u,noiseF{:}),u)  ,'vars',{x,u});
+                            obj.B = matlabFunction(  jacobian(obj.f(0,x,u,noiseF{:}),u)  ,'vars',{x,u});
                             
-                            obj.p = matlabFunction(  obj.f(x,u,noiseF{:}) - jacobian(obj.f(x,u,noiseF{:}),x)*x - jacobian(obj.f(x,u,noiseF{:}),u)*u  ,'vars',{x,u});
+                            obj.p = matlabFunction(  obj.f(0,x,u,noiseF{:}) - jacobian(obj.f(0,x,u,noiseF{:}),x)*x - jacobian(obj.f(0,x,u,noiseF{:}),u)*u  ,'vars',{x,u});
                             
                             fprintf(getMessage('done'));
                             
@@ -367,11 +374,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('GeneralSystem:LinearizingOutputEquation'));
                             
-                            obj.C = matlabFunction(  jacobian(obj.h(x,u,noiseH{:}),x)  ,'vars',{x,u});
+                            obj.C = matlabFunction(  jacobian(obj.h(0,x,noiseH{:}),x)  ,'vars',{x,u});
                             
-                            obj.D = matlabFunction(  jacobian(obj.h(x,u,noiseH{:}),u)  ,'vars',{x,u});
+                            obj.D = matlabFunction(  jacobian(obj.h(0,x,noiseH{:}),u)  ,'vars',{x,u});
                             
-                            obj.q = matlabFunction(  obj.h(x,u,noiseH{:}) - jacobian(obj.h(x,u,noiseH{:}),x)*x - jacobian(obj.h(x,u,noiseH{:}),u)*u  ,'vars',{x,u});
+                            obj.q = matlabFunction(  obj.h(0,x,noiseH{:}) - jacobian(obj.h(0,x,noiseH{:}),x)*x - jacobian(obj.h(0,x,noiseH{:}),u)*u  ,'vars',{x,u});
                             
                             fprintf(getMessage('done'));
                             
@@ -396,11 +403,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                     
                     fprintf(getMessage('GeneralSystem:LinearizingStateEquation'));
                     
-                    obj.A = matlabFunction(  jacobian(obj.f(x,u,noiseF{:}),x)  ,'vars',{x,u});
+                    obj.A = matlabFunction(  jacobian(obj.f(0,x,u,noiseF{:}),x)  ,'vars',{x,u});
                     
-                    obj.B = matlabFunction(  jacobian(obj.f(x,u,noiseF{:}),u)  ,'vars',{x,u});
+                    obj.B = matlabFunction(  jacobian(obj.f(0,x,u,noiseF{:}),u)  ,'vars',{x,u});
                     
-                    obj.p = matlabFunction(  obj.f(x,u,noiseF{:}) - jacobian(obj.f(x,u,noiseF{:}),x)*x - jacobian(obj.f(x,u,noiseF{:}),u)*u  ,'vars',{x,u});
+                    obj.p = matlabFunction(  obj.f(0,x,u,noiseF{:}) - jacobian(obj.f(0,x,u,noiseF{:}),x)*x - jacobian(obj.f(0,x,u,noiseF{:}),u)*u  ,'vars',{x,u});
                     
                     fprintf(getMessage('done'));
                     
@@ -410,11 +417,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                     
                     fprintf(getMessage('GeneralSystem:LinearizingOutputEquation'));
                     
-                    obj.C = matlabFunction(  jacobian(obj.h(x,u,noiseH{:}),x)  ,'vars',{x,u});
+                    obj.C = matlabFunction(  jacobian(obj.h(0,x,noiseH{:}),x)  ,'vars',{x,u});
                     
-                    obj.D = matlabFunction(  jacobian(obj.h(x,u,noiseH{:}),u)  ,'vars',{x,u});
+                    obj.D = matlabFunction(  jacobian(obj.h(0,x,noiseH{:}),u)  ,'vars',{x,u});
                     
-                    obj.q = matlabFunction(  obj.h(x,u,noiseH{:}) - jacobian(obj.h(x,u,noiseH{:}),x)*x - jacobian(obj.h(x,u,noiseH{:}),u)*u  ,'vars',{x,u});
+                    obj.q = matlabFunction(  obj.h(0,x,noiseH{:}) - jacobian(obj.h(0,x,noiseH{:}),x)*x - jacobian(obj.h(0,x,noiseH{:}),u)*u  ,'vars',{x,u});
                     
                     fprintf(getMessage('done'));
                     
@@ -425,9 +432,9 @@ classdef GeneralSystem < handle & InitDeinitObject
         function stateInputTransformation(obj,Ax,Au)
             
             fOld = obj.f;
-            obj.f = @(x,u) Ax*fOld(Ax\x,Au\u);
+            obj.f = @(t,x,u) Ax*fOld(t,Ax\x,Au\u);
             hOld = obj.h;
-            obj.h = @(x,u) hOld(Ax\x,Au\u);
+            obj.h = @(t,x) hOld(t,Ax\x);
             
             obj.Ax = Ax;
             obj.Au = Au;
@@ -501,14 +508,14 @@ classdef GeneralSystem < handle & InitDeinitObject
             
             if not(isempty(obj.f))
                 fOld = obj.f;
-                obj.f = @(x,u) A*fOld(A\(x-b),C\(u-d));
+                obj.f = @(t,x,u) A*fOld(t,A\(x-b),C\(u-d));
                 obj.cA = A;
                 obj.cb = b;
             end
             
             if not(isempty(obj.h))
                 hOld = obj.h;
-                obj.h = @(x,u) hOld(A\(x-b),C\(u-d));
+                obj.h = @(t,x) hOld(t,A\(x-b),C\(u-d));
                 obj.cC = C;
                 obj.cd = d;
             end

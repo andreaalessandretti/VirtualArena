@@ -94,7 +94,8 @@ classdef InitDeinitObject < handle
         function executeOnFieldsIfInitDeinitObject(obj,functionName)
             filedsList = fields(obj);
             for i = 1:length(filedsList)
-                if isa(obj.(char(filedsList(i))),'InitDeinitObject'); 
+                if isa(obj.(char(filedsList(i))),'InitDeinitObject') && not(isa(obj.(char(filedsList(i))),'NoInitDeinitObject'))
+                    %char(filedsList(i))
                     obj.(char(filedsList(i))).(functionName);
                 end
             end

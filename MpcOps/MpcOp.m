@@ -4,17 +4,17 @@
 % optimization problem consists in finding the optimal control trajectory 
 % u^*([0,T]), defined in the interval [0,T], that solves
 % 
-% J_T^*(z) = min_u([0,T])   J_T(z,u([0,T])) 
-% s.t. dot{x}=f(x,u) ( or x+ =f(x,u) )
-%      x(0) = z
-%      x(T) \in X_a
-%      x(tau) \in X and u(tau)\in U for tau in [0,T]
+% J_T^*(t0,x0) = min_u([t0,t0+T])   J_T(x0,t0,u([t0,t0+T])) 
+% s.t. dot{x}=f(t,x,u) ( or x+ =f(t,x,u) )
+%      x(t0) = x0
+%      x(t0+T) \in X_a(t)
+%      x(tau) \in X(t) and u(tau)\in U(t) for tau in [t0,t0+T]
 %  
 % with
 %
-% J_T(x,u([0,T])) = int_0^T l(x(tau),u(tau)) dtau + m(x(T))
+% J_T(t0,x0,u([t0,t0+T])) = int_0^T l(tau,x(tau),u(tau)) dtau + m(t0+T,x(t0+T))
 % 
-% ( or J_T(x,u([1,T])) = sum_i=1^T l(x(i),u(i))  + m(x(T)) )
+% ( or J_T(t0,x0,u([t0,t0+T])) = sum_i=t0^t0+T l(i,x(i),u(i))  + m(t0+T,x(t0+T)) )
 % 
 % The finite horizon cost J_T(.) is composed of the stage cost l(.) and
 % the terminal cost m(.), which is defined over the auxiliary terminal set
@@ -27,11 +27,13 @@
 % 'System'              : CtSytem (or DtSytem)
 % 'HorizonLength'       : positive real (or integer)
 % 'StageConstraints'    : some set on the [x;u] space (child of GeneralSet)
+%                         or [t;x;u] space
 %                         e.g. GeneralSet, PolytopicSet, BoxSet
-% 'TerminalConstraints' : some set on the [x;u] space (child of GeneralSet)
+% 'TerminalConstraints' : some set on the [x] space (child of GeneralSet)
+%                         or [t;x] space
 %                       : e.g. GeneralSet, PolytopicSet, BoxSet
-% 'StageCost'           : function handle @(x,u) stage cost l(x,u)
-% 'TerminalCost'        : function handle @(x) terminal cost m(x)
+% 'StageCost'           : function handle @(t,x,u) stage cost l(t,x,u)
+% 'TerminalCost'        : function handle @(t,x) terminal cost m(t,x)
 %
 % see also GeneralSet, PolytopicSet, BoxSet, CtMpcOp, DtMpcOp
 
@@ -206,22 +208,22 @@ classdef MpcOp < handle
             end
             
             %% Check required parameters
-            if ( isempty(obj.system) || isempty(obj.horizonLength) || ( isempty(obj.stageCost) && isempty(obj.terminalCost) ) )
-                error('MpcOp:RequiredParametersMissing',getMessage('MpcOp:RequiredParametersMissing'))
-            end
+%            if ( isempty(obj.system) || isempty(obj.horizonLength) || ( isempty(obj.stageCost) && isempty(obj.terminalCost) ) )
+%                error('MpcOp:RequiredParametersMissing',getMessage('MpcOp:RequiredParametersMissing'))
+%            end
            
         end
         
         function params = getParameters(obj)
             params = {...
-                'System',obj.system, ...
-                'HorizonLength', obj.horizonLength,...
-                'StageConstraints', obj.stageConstraints,...
+                'System'             , obj.system, ...
+                'HorizonLength'      , obj.horizonLength,...
+                'StageConstraints'   , obj.stageConstraints,...
                 'TerminalConstraints', obj.terminalConstraints,...
-                'StageCost', obj.stageCost,...
-                'TerminalCost', obj.terminalCost,...
-                'InputDerivative', obj.inputDerivative,...
-                'AuxiliaryLaw', obj.auxiliaryLaw...
+                'StageCost'          , obj.stageCost,...
+                'TerminalCost'       , obj.terminalCost,...
+                'InputDerivative'    , obj.inputDerivative,...
+                'AuxiliaryLaw'       , obj.auxiliaryLaw...
                 };
         end
         
@@ -241,11 +243,14 @@ classdef MpcOp < handle
             u = sym('u',[obj.system.nu,1]);
             u = sym(u,'real');
             
+            t = sym('t',[1,1]);
+            t = sym(t,'real');
+            
             fprintf(getMessage('MpcOp:evaluation'));
             
 
-            obj.stageCost    = matlabFunction(simplify( obj.stageCost(x,u) ) ,'vars',{x,u});
-            obj.terminalCost = matlabFunction(simplify( obj.terminalCost(x) ) ,'vars',{x});
+            obj.stageCost    = matlabFunction(simplify( obj.stageCost(t,x,u) ) ,'vars',{t,x,u});
+            obj.terminalCost = matlabFunction(simplify( obj.terminalCost(t,x) ) ,'vars',{t,x});
             fprintf(getMessage('done'));
         end
         
@@ -331,15 +336,18 @@ classdef MpcOp < handle
                     u = sym('u',[nu,1]);
                     u = sym(u,'real');
                     
-                    z  = [x;u];
-                    l  = obj.stageCost(x,u);
+                    t = sym('t',[1,1]);
+                    t = sym(t,'real');
+            
+                    z  = [t;x;u];
+                    l  = obj.stageCost(t,x,u);
                     
-                    obj.Dl = matlabFunction(  jacobian(l,z)  ,'vars',{x,u} );
+                    obj.Dl = matlabFunction(  jacobian(l,z)  ,'vars',{t,x,u} );
            
             
                 case 'AA'
                     
-                    obj.Dl = @(x,u) jacobianEstimationAA(@(z)obj.stageCost(z(1:nx),z(nx+1:end)),[x;u]);
+                    obj.Dl = @(t,x,u) jacobianEstimationAA(@(z)obj.stageCost(z(1),z(2:nx+1),z(nx+2:end)),[t;x;u]);
                   
                 otherwise 
                     error('Unknown method for the approximation of the hessian');
@@ -357,18 +365,21 @@ classdef MpcOp < handle
                     u = sym('u',[nu,1]);
                     u = sym(u,'real');
                     
-                    z = [x;u];
-                    l  = obj.stageCost(x,u);
+                    t = sym('t',[1,1]);
+                    t = sym(t,'real');
                     
-                    obj.Hl = matlabFunction(  jacobian(jacobian(l,z),z)  ,'vars',{x,u} );
+                    z = [t;x;u];
+                    l  = obj.stageCost(t,x,u);
+                    
+                    obj.Hl = matlabFunction(  jacobian(jacobian(l,z),z)  ,'vars',{t,x,u} );
                     
                 case 'AA'
                     
-                    obj.Hl = @(x,u) jacobianEstimationAA(@(z)obj.Dl(z(1:nx),z(nx+1:end)),[x;u]);
+                    obj.Hl = @(t,x,u) jacobianEstimationAA(@(z)obj.Dl(z(1),z(2:nx+1),z(nx+2:end)),[t;x;u]);
                 
                 case 'Identity'
                     
-                    obj.Hl = @(x,u) eye(nx+nu);
+                    obj.Hl = @(t,x,u) eye(nx+nu+1);
                 
                 otherwise 
                     error('Unknown method for the approximation of the hessian');
@@ -381,12 +392,15 @@ classdef MpcOp < handle
                     x = sym('x',[nx,1]);
                     x = sym(x,'real');
                     
-                    m  = obj.terminalCost(x);
-                    obj.Dm = matlabFunction(jacobian(m,x),'vars',{x});
+                    t = sym('t',[1,1]);
+                    t = sym(t,'real');
+                    
+                    m  = obj.terminalCost(t,x);
+                    obj.Dm = matlabFunction(jacobian(m,x),'vars',{t,x});
             
                 case 'AA'
                     
-                    obj.Dm = @(x) jacobianEstimationAA(obj.terminalCost,x);
+                    obj.Dm = @(t,x) jacobianEstimationAA(@(z)obj.terminalCost(z(1),z(2:end)),[t;x]);
             
                 otherwise 
                     error('Unknown method for the approximation of the hessian');
@@ -399,15 +413,20 @@ classdef MpcOp < handle
                     x = sym('x',[nx,1]);
                     x = sym(x,'real');
                     
-                    m  = obj.terminalCost(x);
-                    obj.Hm = matlabFunction(jacobian(jacobian(m,x),x),'vars',{x});
+                    t = sym('t',[1,1]);
+                    t = sym(t,'real');
+                    
+                    m  = obj.terminalCost(t,x);
+                    z = [t;x];
+                    obj.Hm = matlabFunction(jacobian(jacobian(m,z),z),'vars',{t,x});
             
                 case 'AA'
-                    %obj.Hm = @(x) hessianEstimationAA(obj.Dm,x);
-                    obj.Hm = @(x) jacobianEstimationAA(obj.Dm,x);
+                    
+                    obj.Hm = @(t,x) jacobianEstimationAA(@(z)obj.Dm(z(1),z(2:end)),[t;x]);
+                    
                 case 'Identity'
                     
-                    obj.Hm = @(x) eye(nx);
+                    obj.Hm = @(t,x) eye(nx+1);
                 
                 otherwise 
                     error('Unknown method for the approximation of the hessian');
@@ -449,121 +468,5 @@ classdef MpcOp < handle
         end
         
         
-        % Sompute the matrixes A and B such that
-        % A*[x1,x2,...,xN+1,u1,u2,...,uN]'=b 
-        % denote the dynamic equation constraints of the linearized system
-        % %% TO COMMENT
-        function [A,b] = computeEqualityDynamicConstraints(obj)
-            
-             N      = obj.horizonLength;
-             nx     = obj.system.nx;
-             nu     = obj.system.nu;
-            
-            lin_x  = obj.stateTrajectoryLinearization(:,1:N+1);
-            lin_u  = obj.inputTrajectoryLinearization(:,1:N);
-            
-                cs   = zeros(nx*N,1);
-                bkAs = zeros(nx*N,nx*N);
-                bkBs = zeros(nx*N,nu*N);
-                for i = 1:N
-                    
-                    xb = lin_x(:,i);
-                    ub = lin_u(:,i);
-                    
-                    Aj = obj.system.A(xb,ub);
-                    Bj = obj.system.B(xb,ub);
-                    gj = obj.system.p(xb,ub);
-                    
-                    bkAs((i-1)*nx+[1:nx],(i-1)*nx+[1:nx]) = Aj;
-                    
-                    bkBs((i-1)*nx+[1:nx],(i-1)*nu+[1:nu]) = Bj;
-                    
-                    cs((i-1)*nx+[1:nx],1) = gj;
-                end
-            
-                 
-            A = - [bkAs,zeros(N*nx, nx+nu*N)] ...
-                + [zeros(nx*N,nx),eye(nx*N),zeros(nx*N,nu*N)]...
-                - [zeros(nx*N,nx*(N+1)),bkBs];
-            
-            b = cs;
-            
-        end
-        
-        
-        % Precondition the optimization problem around the point
-        % xHat and uHat %% TO COMMENT
-        function preCondition(obj,xBar,uBar,diagonalMode)
-            
-            %% Compute hessians
-            %TODO: use eall the stage cost
-            Qx = jacobianEstimationAA(@(xBarInner)jacobianEstimationAA(@(x)obj.stageCost(x,uBar),xBarInner),xBar);
-            Qu = jacobianEstimationAA(@(uBarInner)jacobianEstimationAA(@(u)obj.stageCost(xBar,u),uBarInner),uBar);
-            
-            %x = getSymbolicRealVariable('x',3);
-            %u = getSymbolicRealVariable('u',2);
-            %jacobian(jacobian(obj.stageCost(x,uBar),x),x)
-            
-            %% Compute conditioners
-            dimNullx = length(Qx)-rank(Qx);
-            [Ux,Sx,Vx]=svd(Qx);
-            
-            diagSx = diag(Sx);
-            diagSx(diagSx==0)= ones(size(diagSx(diagSx==0)));
-            Sx = diag(diagSx);
-            
-            
-            dimNullu = length(Qu)-rank(Qu);
-            [Uu,Su,Vu]=svd(Qu);
-            
-            diagSu = diag(Su);
-            diagSu(diagSu==0)= ones(size(diagSu(diagSu==0)));
-            Su = diag(diagSu);
-            
-            
-            Ax = sqrt(Sx)*Vx';
-            Au = sqrt(Su)*Vu';
-            
-            if (nargin ==4)&&diagonalMode
-                %Closest diagonal version (to ckeep the box sets, boxes)
-                Ax = diag(diag(chol(Ax'*Ax)));
-                Au = diag(diag(chol(Au'*Au)));
-            end
-            
-            
-            obj.conditionerX = Ax;
-            obj.conditionerU = Au;
-            
-            %% Apply conditioners
-            oldStageCost = obj.stageCost;
-            obj.stageCost = @(x,u)oldStageCost(Ax\x,Au\u);
-            
-            oldTerminalCost = obj.terminalCost;
-            obj.terminalCost = @(x)oldTerminalCost(Ax\x);
-            
-            oldStageConstraints = obj.stageConstraints;
-            
-            for i=1:length(oldStageConstraints)
-                sc = oldStageConstraints{i};
-                obj.stageConstraints{i}= blkdiag(Ax,Au)*sc;
-            end
-            
-            oldTerminalConstraints = obj.terminalConstraints;
-            
-            for i=1:length(oldTerminalConstraints)
-                sc = oldTerminalConstraints{i};
-                obj.terminalConstraints{i}= Ax*sc;
-            end
-            
-            obj.system.stateInputTransformation(Ax,Au);
-            
-            
-            if not(isempty(obj.auxiliaryLaw))
-                oldAl = obj.auxiliaryLaw;
-                
-                obj.auxiliaryLaw =@(x) Au*oldAl(Ax\x);
-            end
-            
-        end
     end
 end

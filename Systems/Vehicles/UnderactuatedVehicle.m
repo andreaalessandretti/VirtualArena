@@ -226,11 +226,13 @@ classdef UnderactuatedVehicle < Vehicle
              end
              
             if(obj.n ==2)
+                
                 fk = @(x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(x,u,obj.getd(x)),obj.omega(x,u,obj.getd(x)));
                 obj.getR = @(x)[cos(x(3)),-sin(x(3));sin(x(3)),cos(x(3))];
                 obj.getPosition = @(x)x(1:2);
                 
                 nxk = 3; %dimension kinematic component of the state vector
+                
             elseif(obj.n==3)
                 obj.getPosition = @(x)x(1:3);
                 switch obj.attitudeRepresentation 
@@ -246,22 +248,22 @@ classdef UnderactuatedVehicle < Vehicle
                 end 
             end
             
-            offsetVW = obj.nwk +obj.nvk;
+            offsetVW = obj.nwk + obj.nvk;
             if obj.nwd + obj.nvd >0
-                ff = @(x,u)[fk(x,u);...
+                ff = @(t,x,u)[fk(x,u);...
                                obj.fd(x,u(1:offsetVW))];
                            
                 if not(isempty(obj.Gd))
-                    ff = @(x,u)ff(x,u)+[zeros(nxk,1);obj.Gd*u(offsetVW+1:offsetVW+size(obj.Gd,2))];
+                    ff = @(t,x,u)ff(t,x,u)+[zeros(nxk,1);obj.Gd*u(offsetVW+1:offsetVW+size(obj.Gd,2))];
                 end
             else
-                ff = fk;
+                ff = @(t,x,u)fk(x,u);
             end
             
-            obj.f = ff;
+            obj.f = @(varargin)UnderactuatedVehicle.dotX(ff,varargin);
             
-            obj.nx = nxk + obj.nwd +obj.nvd;
-            obj.nu = obj.nwk + obj.nvk + size(obj.Gd,2);
+            obj.nx   = nxk + obj.nwd + obj.nvd;
+            obj.nu   = obj.nwk + obj.nvk + size(obj.Gd,2);
             obj.getd = @(x)x(nxk+1:nxk+ obj.nwd +obj.nvd);
             
             
@@ -270,6 +272,18 @@ classdef UnderactuatedVehicle < Vehicle
     end
     
     methods (Static)
+        
+        function dotX = dotX(ff,varargin)
+        if length(varargin{:}) == 3
+            dotX = ff(varargin{:}{:});
+        elseif length(varargin{:}) == 4
+            dotX = ff(varargin{:}{1:3})+varargin{:}{4};
+        else
+            error('?');
+        end
+        
+        end
+        
         
         function StPosQuat_dot = fk3DQuaternion(quat,v,omega) % quaternon is only for 3D case
            

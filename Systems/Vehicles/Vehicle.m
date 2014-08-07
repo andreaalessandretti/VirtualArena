@@ -2,7 +2,7 @@
 %
 % Vehicle Properties:
 %
-% n          - position space dimention (2-D or 3-D)
+% n          - position space dimension (2-D or 3-D)
 % x          - current state vector
 % controller - controller used to drive the vehicle
 % occupancy  - PolytopicSet representing occupancy of the vehicle in 2D
@@ -40,7 +40,7 @@ classdef Vehicle < CtSystem
     %Vehicle
     
     properties
-        n  = [];          %position space dimention (2-D or 3-D)
+        n  = [];          %position space dimension (2-D or 3-D)
         occupancy = [];  %PolytopicSet representing occupancy of the vehicle in 2D
     end
     

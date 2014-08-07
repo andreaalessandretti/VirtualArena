@@ -14,7 +14,7 @@ classdef MpcController < Controller & InitDeinitObject
     %       va = MpcController(par1,val1,par2,val2,...)
     %
     %   where the parameters are chosen among 'MpcOp', 'MpcOpSolver', or
-    %   'SolverParameters', 'WarmStartMode'
+    %   'WarmStartMode', MpcOpSolverParameters
     %
     %   where
     %
@@ -136,17 +136,15 @@ classdef MpcController < Controller & InitDeinitObject
             
         end
         
-        function u = computeInput(obj,x,varargin)
+        function u = computeInput(obj,t,x,varargin)
             
             tic
             
-            sol = obj.mpcOpSolver.solve(obj.mpcOp,x,obj.warmStart,obj.solverParameters{:});
+            sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,obj.warmStart,obj.solverParameters{:});
             
-            obj.appendVectorToLog(toc                     ,obj.i,'computationTime')
+            obj.appendVectorToLog(toc, obj.i, 'computationTime')
             
             u = sol.u_opt(:,1);
-            
-            
             
             %% Warm Start
             switch obj.warmStartMode
@@ -164,8 +162,8 @@ classdef MpcController < Controller & InitDeinitObject
             end
             
             %% Logging
-            obj.appendVectorToLog(obj.mpcOp.stageCost(x,u),obj.i,'stageCost')
-            obj.appendVectorToLog(sol.solverTime          ,obj.i,'solverTime')
+            obj.appendVectorToLog(obj.mpcOp.stageCost(t,x,u),obj.i,'stageCost')
+            obj.appendVectorToLog(sol.solverTime            ,obj.i,'solverTime')
             obj.lastSolution = sol;
             
             obj.i = obj.i+1;

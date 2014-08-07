@@ -18,41 +18,52 @@ classdef VirtualArena < handle
     %
     % VirtualArena Methods:
     %
-    % VirtualArena - costructor method
+    % VirtualArena - constructor method
     % run          - start the simulation
+    %
+    %
+    % Example:
+    %
+    % va = VirtualArena({v1,v2},...
+    %     'StoppingCriteria'  ,@(i,as)i>50/dt,...
+    %     'StepPlotFunction'  ,@(systemsList,log,oldHandles,k) someStepPlotFunction(systemsList,log,oldHandles,k,extraPar1,extraPar2), ...
+    %     'StopPlotFunction'  ,@(allLogs,va)someStopPlotFunction(allLogs,va,extraPar3,extraPar4),...
+    %     'SensorsNetwork'    , {s1,A},...
+    %     'DiscretizationStep',dt,...
+    %     'PlottingFrequency' ,1/dt);
     %
     % See also handle
     
-% This file is part of VirtualArena.
-%
-% Copyright (c) 2014, Andrea Alessandretti
-% All rights reserved.
-%
-% e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
-% 
-% Redistribution and use in source and binary forms, with or without
-% modification, are permitted provided that the following conditions are met:
-% 
-% 1. Redistributions of source code must retain the above copyright notice, this
-%    list of conditions and the following disclaimer. 
-% 2. Redistributions in binary form must reproduce the above copyright notice,
-%    this list of conditions and the following disclaimer in the documentation
-%    and/or other materials provided with the distribution.
-% 
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-% ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-% WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-% DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-% ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-% (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-% ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-% 
-% The views and conclusions contained in the software and documentation are those
-% of the authors and should not be interpreted as representing official policies, 
-% either expressed or implied, of the FreeBSD Project.
+    % This file is part of VirtualArena.
+    %
+    % Copyright (c) 2014, Andrea Alessandretti
+    % All rights reserved.
+    %
+    % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
+    %
+    % Redistribution and use in source and binary forms, with or without
+    % modification, are permitted provided that the following conditions are met:
+    %
+    % 1. Redistributions of source code must retain the above copyright notice, this
+    %    list of conditions and the following disclaimer.
+    % 2. Redistributions in binary form must reproduce the above copyright notice,
+    %    this list of conditions and the following disclaimer in the documentation
+    %    and/or other materials provided with the distribution.
+    %
+    % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    % ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    % DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+    % ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    % (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    % LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    % ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    % (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    %
+    % The views and conclusions contained in the software and documentation are those
+    % of the authors and should not be interpreted as representing official policies,
+    % either expressed or implied, of the FreeBSD Project.
     properties
         
         systemsList
@@ -125,6 +136,8 @@ classdef VirtualArena < handle
         %   continuous time systems (Default = RK4)
         integrator = RK4();
         
+        logObjs
+        
     end
     
     properties (SetAccess = private, GetAccess = private)
@@ -139,7 +152,7 @@ classdef VirtualArena < handle
         
         
         function obj = VirtualArena(varargin)
-            %VirtualArena is the costructor
+            %VirtualArena is the constructor
             %
             %        va = VirtualArena(par1,val1,par2,val2,...)
             %
@@ -160,18 +173,17 @@ classdef VirtualArena < handle
             
             obj.setOptions(varargin{:});
             
-            
         end
         
         %%callFunctionOnSystemsOnList(functionName,targetClass)
         %   execute the function .functionName on all the systems,
-        %   controllers, and state observers that belong to the class 
+        %   controllers, and state observers that belong to the class
         %   targetClass
         function callFunctionOnSystemsOnList(obj,functionName,targetClass)
             
             for i = 1:length(obj.systemsList)
                 
-                if isa(obj.systemsList{i},targetClass) 
+                if isa(obj.systemsList{i},targetClass)
                     obj.systemsList{i}.(functionName);
                 end
                 
@@ -189,7 +201,7 @@ classdef VirtualArena < handle
             %
             
             obj.callFunctionOnSystemsOnList('initSimulations','InitDeinitObject')
-             
+            
             if isa(obj.initPlotFunction,'function_handle')
                 obj.initPlotFunction();hold on
             end
@@ -237,7 +249,7 @@ classdef VirtualArena < handle
             
             obj.callFunctionOnSystemsOnList('initSimulation','InitDeinitObject')
             
-            obj.logInitialConditions(iInitialCondition);
+            obj.loadInitialConditions(iInitialCondition);
             
             i = 2;
             
@@ -247,44 +259,38 @@ classdef VirtualArena < handle
                 aviobj = avifile(strcat(obj.videoName,'.avi'),'compression','None');
             end
             
-            %% Update current state of vehicles and controllers (initialization)
-            for ia = 1:length(obj.systemsList)
-                
-                obj.systemsList{ia}.x=obj.log{ia}.stateTrajectory(:,i-1);
-                
-                if isa(obj.systemsList{ia}.controller,'GeneralSystem')
-                    obj.systemsList{ia}.controller.x = obj.log{ia}.controllerStateTrajectory(:,i-1);
-                end
-                
-            end
             
+            obj.initLogs();
             
             while not( obj.stoppingCriteria(i,obj.systemsList) )
                 
-                %% Update current state of the systems 
-                for ia = 1:length(obj.systemsList)
-                    
-                    obj.systemsList{ia}.x=obj.log{ia}.stateTrajectory(:,i-1);
-                    
-                    if isa(obj.systemsList{ia}.controller,'GeneralSystem')
-                        obj.systemsList{ia}.controller.x = obj.log{ia}.controllerStateTrajectory(:,i-1);
-                    end
-                    
-                end
+                
                 
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
                     
+                    %% Compute time
+                    if isa(obj.systemsList{ia},'CtSystem')
+                        timeInfo = i*obj.discretizationStep;
+                    elseif isa(obj.systemsList{ia},'DtSystem')
+                        timeInfo = i;
+                    end
+                    
                     
                     %% Update current state of the systems
-                    if not(isempty(obj.systemsList{ia}.stateObserver))
+                    if not(isempty(obj.systemsList{ia}.stateObserver)) % Observer feedback
                         
-                        xObs = obj.log{ia}.observerStateTrajectory(:,i-1);
-                        xToController = obj.systemsList{ia}.stateObserver.h(xObs);
-                        x = obj.log{ia}.stateTrajectory(:,i-1);
+                        xObs          = obj.systemsList{ia}.stateObserver.x;
+                        xToController = obj.systemsList{ia}.stateObserver.h(timeInfo,xObs);
+                        x             = obj.systemsList{ia}.x;
                         
-                    else
+                    elseif not(isempty(obj.systemsList{ia}.h)) % Output feedback
                         
-                        x = obj.log{ia}.stateTrajectory(:,i-1);
+                        x             = obj.systemsList{ia}.x;
+                        xToController = obj.systemsList{ia}.h(timeInfo,x);
+                        
+                    else % State feedback
+                        
+                        x             = obj.systemsList{ia}.x;
                         xToController = x;
                         
                     end
@@ -304,46 +310,35 @@ classdef VirtualArena < handle
                         netReadings = {};
                     end
                     
-                    %% Cv vs Dt vs Memoryless Controller
                     
+                    controllerFParams = {xToController,netReadings{:}};
                     
-                    % Compute time
-                    if isa(obj.systemsList{ia},'CtSystem')
-                        timeInfo = i*obj.discretizationStep;
-                    elseif isa(obj.systemsList{ia},'DtSystem')
-                        timeInfo = i;
-                    end
-                    
-                    
-                    controllerFParams = {xToController,timeInfo,netReadings{:}};
-                    
-                    % Compute input
+                    %% Compute input
                     
                     if isa(obj.systemsList{ia}.controller,'CtSystem') %CtController
                         
                         xc = obj.log{ia}.controllerStateTrajectory(:,i-1);
                         
-                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(xc,controllerFParams{:}),xc,obj.discretizationStep);
+                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:}),xc,obj.discretizationStep);
                         
-                        u = obj.systemsList{ia}.controller.h(xc,controllerFParams{:});
+                        u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
                         
-                        obj.appendVectorToLog(nextXc,ia,'controllerStateTrajectory',i);
-                        
+                        obj.systemsList{ia}.controller.x = nextXc;
                         
                     elseif isa(obj.systemsList{ia}.controller,'DtSystem') %DtController
+
+                        xc = obj.systemsList{ia}.controller.x;
                         
-                        xc = obj.log{ia}.controllerStateTrajectory(:,i-1);
+                        nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:});
                         
-                        nextXc = obj.systemsList{ia}.controller.f(xc,controllerFParams{:});
-                        
-                        u = obj.systemsList{ia}.controller.h(xc,controllerFParams{:});
-                        
-                        obj.appendVectorToLog(nextXc,ia,'controllerStateTrajectory',i);
+                        u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
+    
+                        obj.systemsList{ia}.controller.x = nextXc;
                         
                         
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
                         
-                        u = obj.systemsList{ia}.controller.computeInput(controllerFParams{:});
+                        u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{:});
                         
                     else
                         
@@ -366,11 +361,11 @@ classdef VirtualArena < handle
                             error(getMessage('VirtualArena:discretizationStepNotNefined'));
                         end
                         
-                        nextX = obj.integrator.integrate( @(x)obj.systemsList{ia}.f(x,parameterF{:}),x,obj.discretizationStep);
+                        nextX = obj.integrator.integrate( @(x)obj.systemsList{ia}.f(timeInfo,x,parameterF{:}),x,obj.discretizationStep);
                         
                     elseif isa(obj.systemsList{ia},'DtSystem')
                         
-                        nextX = obj.systemsList{ia}.f(x,parameterF{:});
+                        nextX = obj.systemsList{ia}.f(timeInfo,x,parameterF{:});
                         
                     else
                         error(getMessage('VirtualArena:UnknownSystemType'));
@@ -379,10 +374,10 @@ classdef VirtualArena < handle
                     if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
                         
                         if isempty(obj.systemsList{ia}.R)
-                            parameterH = {nextX,u};
+                            parameterH = {timeInfo,nextX};
                         else
                             cR = chol(obj.systemsList{ia}.R)';
-                            parameterH = {nextX,u,cR*randn(length(cR),1)};
+                            parameterH = {timeInfo,nextX,cR*randn(length(cR),1)};
                         end
                         
                         z = obj.systemsList{ia}.h(parameterH{:});
@@ -392,26 +387,27 @@ classdef VirtualArena < handle
                     %% Cv vs Dt Observer
                     if isa(obj.systemsList{ia}.stateObserver,'CtSystem')
                         
-                        xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(xObs,[u;z]),xObs,obj.discretizationStep);
-                        obj.appendVectorToLog(xObsNext,ia,'observerStateTrajectory',i);
-                        
+                        xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]),xObs,obj.discretizationStep);
+                         obj.systemsList{ia}.stateObserver.x = xObsNext;
+                 
                     elseif isa(obj.systemsList{ia}.stateObserver,'DtSystem')
                         
-                        xObsNext = obj.systemsList{ia}.stateObserver.f(xObs,[u;z]);
-                        obj.appendVectorToLog(xObsNext,ia,'observerStateTrajectory',i);
-                        
+                        xObsNext = obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]);
+                        obj.systemsList{ia}.stateObserver.x = xObsNext;
+                          
                     end
                     
-                    obj.appendVectorToLog(nextX,ia,'stateTrajectory',i);
-                    obj.appendVectorToLog(u    ,ia,'inputTrajectory',i-1);
+                    obj.systemsList{ia}.x = nextX;
                     
+                    obj.appendLogs(obj.systemsList{ia},u,ia,i);
                 end
+                
+               
                 
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(i,obj.plottingFrequency)==0
                     
                     plot_handles  = obj.stepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
-                    
                     
                     if isa(obj.handlePostFirstPlot,'function_handle')&&i==2
                         obj.handlePostFirstPlot();
@@ -424,6 +420,7 @@ classdef VirtualArena < handle
                     end
                     
                 end
+                
                 
                 i = i+1;
                 
@@ -440,7 +437,7 @@ classdef VirtualArena < handle
             
             obj.cutLogVector('stateTrajectory',i-1);
             obj.cutLogVector('inputTrajectory',i-2);
-            
+            obj.cutExtraLogVector(i-1);
             log = obj.log;
         end
         
@@ -482,14 +479,45 @@ classdef VirtualArena < handle
             for iAgent = 1:length(obj.systemsList)
                 if not(i>=size(obj.log{iAgent}.(fildname),2))
                     newLog = obj.log{iAgent}.(fildname);
-
+                    
                     obj.log{iAgent}.(fildname) =  newLog(:,1:i);
-
+                    
                 end
             end
             
-        end 
+        end
+        
+        function cutExtraLogVector(obj,i)
             
+            
+            for iAgent = 1:length(obj.systemsList)
+                
+                logObjs = obj.logObjs;
+                
+                for j = 1:length(logObjs)
+                    
+                    if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(obj.systemsList{iAgent}))
+                        
+                        fildname = logObjs{j}.name;
+                        i = i + logObjs{j}.shift;
+                        if not(i>=size(obj.log{iAgent}.(fildname),2))
+                            newLog = obj.log{iAgent}.(fildname);
+                            
+                            obj.log{iAgent}.(fildname) =  newLog(:,1:i);
+                            
+                        end
+                    end
+                    
+                    
+                end
+                
+                
+                
+                
+            end
+            
+        end
+        
         function appendVectorToLog(obj,v,iAgent,fildname,i)
             
             if i>=size(obj.log{iAgent}.(fildname),2) % Allocate memory
@@ -502,6 +530,20 @@ classdef VirtualArena < handle
             
         end
         
+        function appendLogs(obj,agent,u,iAgent,i)
+            
+            logObjs = obj.logObjs;
+            
+            for j = 1:length(logObjs)
+                
+                if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(agent,u))
+                    obj.appendVectorToLog(logObjs{j}.fun(agent,u)    ,iAgent,logObjs{j}.name,i + logObjs{j}.shift );
+                end
+                
+            end
+            
+        end
+        
         
         function setOptions(obj,varargin)
             
@@ -511,6 +553,7 @@ classdef VirtualArena < handle
                 obj.systemsList = {varargin{1}};
             end
             
+            obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog()};
             parameterPointer = 2;
             
             hasParameters = length(varargin)-parameterPointer>=0;
@@ -583,6 +626,14 @@ classdef VirtualArena < handle
                             
                             parameterPointer = parameterPointer+2;
                             
+                        case 'ExtraLogs'
+                            
+                            extraLogs   = varargin{parameterPointer+1};
+                            
+                            obj.logObjs = {obj.logObjs{:},extraLogs{:}};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
                         otherwise
                             
                             parameterPointer = parameterPointer+1;
@@ -598,8 +649,8 @@ classdef VirtualArena < handle
             
         end
         
-        function logInitialConditions(obj,iInitialCondition)
-
+        function loadInitialConditions(obj,iInitialCondition)
+            
             nSystems = length(obj.systemsList);
             
             obj.log = cell(1,nSystems);
@@ -608,14 +659,14 @@ classdef VirtualArena < handle
             for i = 1:nSystems
                 
                 
-                if iInitialCondition
+                if iInitialCondition %% Multiple initial conditions
                     
                     % Log initial stateof the system
-                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions{iInitialCondition};
+                    obj.systemsList{i}.x = obj.systemsList{i}.initialConditions{iInitialCondition};
                     
                     % Log initial state of the observer
                     if not(isempty(obj.systemsList{i}.stateObserver))
-                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition};
+                        obj.systemsList{i}.stateObserver.x = obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition};
                     end
                     
                     % Log initial state of the controller
@@ -626,12 +677,12 @@ classdef VirtualArena < handle
                             error(getMessage('VirtualArena:NotEnoughInitialConditionsController'));
                         end
                         
-                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions{iInitialCondition};
+                        obj.systemsList{i}.controller.x = obj.systemsList{i}.controller.initialConditions{iInitialCondition};
                     end
                     
                 else
                     % Log the ith initial state of the system
-                    obj.log{i}.stateTrajectory = obj.systemsList{i}.initialConditions;
+                    obj.systemsList{i}.x = obj.systemsList{i}.initialConditions;
                     
                     % Log initial state of the observer
                     if not(isempty(obj.systemsList{i}.stateObserver))
@@ -640,7 +691,7 @@ classdef VirtualArena < handle
                             error(getMessage('VirtualArena:InitObserver'));
                         end
                         
-                        obj.log{i}.observerStateTrajectory = obj.systemsList{i}.stateObserver.initialConditions;
+                        obj.systemsList{i}.stateObserver.x = obj.systemsList{i}.stateObserver.initialConditions;
                     end
                     
                     % Log initial state of the controller
@@ -648,17 +699,45 @@ classdef VirtualArena < handle
                         if isempty(obj.systemsList{i}.controller.initialConditions)
                             error(getMessage('VirtualArena:InitController'));
                         end
-                        obj.log{i}.controllerStateTrajectory = obj.systemsList{i}.controller.initialConditions;
+                        obj.systemsList{i}.controller.x = obj.systemsList{i}.controller.initialConditions;
                     end
                 end
-                
-                obj.log{i}.inputTrajectory = zeros(obj.systemsList{i}.nu,1);
                 
             end
             
         end
         
         
+        function initLogs(obj)
+            
+            
+            nSystems = length(obj.systemsList);
+            
+            %% Initialize simulation
+            for i = 1:nSystems
+                
+                logObjs = obj.logObjs;
+                if not(isempty(logObjs))
+                    for j = 1:length(logObjs)
+                        
+                        if isempty(logObjs{j}.condition) || ( not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(obj.systemsList{i}))
+                            if not(isempty(logObjs{j}.initialization))
+                                obj.log{i}.(logObjs{j}.name) = logObjs{j}.initialization;
+                            else
+                                obj.log{i}.(logObjs{j}.name) = logObjs{j}.fun(obj.systemsList{i});
+                            end
+                        end
+                        
+                    end
+                    
+                end
+                
+                
+            end
+        end
+        
+        
+        
     end
-   
+    
 end

@@ -55,7 +55,6 @@ classdef Unicycle < UnderactuatedVehicle
              obj = obj@UnderactuatedVehicle(...
                 'PositionSpaceDimension',2,...
                 'Lvk',[1;0],'Lwk',1,'nu',2,...
-                'OutputEquation',@(x,u)x(1:2),...
                 varargin{:});
           
         end
@@ -65,20 +64,20 @@ classdef Unicycle < UnderactuatedVehicle
     
      methods(Static)
       
-               
-         function xDot = stateEquation(x,u)
-            
-            R = [cos(x(3)),-sin(x(3));
-                 sin(x(3)), cos(x(3))];
-
-            xDot = [R*[u(1);0];u(2)];
-            
-         end
+%                
+%          function xDot = stateEquation(x,u)
+%             
+%             R = [cos(x(3)),-sin(x(3));
+%                  sin(x(3)), cos(x(3))];
+% 
+%             xDot = [R*[u(1);0];u(2)];
+%             
+%          end
          
-          function ret = R(x)
-               ret = [cos(x(3)),-sin(x(3));
-                      sin(x(3)), cos(x(3))];
-          end
+%           function ret = R(x)
+%                ret = [cos(x(3)),-sin(x(3));
+%                       sin(x(3)), cos(x(3))];
+%           end
     end
     
 end

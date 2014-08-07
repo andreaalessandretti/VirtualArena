@@ -124,8 +124,29 @@ switch MessageCode
     case 'MpcOp:evaluation'
         
         message = 'Symbolic evaluation and simplification of stage and terminal cost ...';
+    
+    case 'BoxSet:minus:wrongParams'
+        
+        message = 'The sum is defined for a pair numeric-BoxSet of BoxSet-BoxSet';
+        
+    case 'BoxSet:minusSetSet:setNotFull'
+        
+        message = 'The sets to subtract must have full dimension';
+        
+    case 'BoxSet:minusSetSet:setNoZero'
+        
+        message = 'At the moment only set containing the origin are supported for set subtraction';
+        
+    case 'StageSetDimensionsMismatch'
+        
+        message = 'Dimension of the stage constraint does not match nx + nu, nor nx + nu + 1(time)';
+        
+    case 'TerminalSetDimensionsMismatch'
+        
+        message = 'Dimension of the terminal constraint does not match nx, nor nx + 1(time).';   
         
     otherwise
+        
         
         message = 'Unknown message.\n';
 end

@@ -6,9 +6,8 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
     % AcadoProblemName   (Default 'acadoCode')
     % AcadoNIntervals    (Default 10)
     % DisplayAcadoCode   (Default 1)
-    % DiscretizationStep If set != 0 means that the synamic is a discrete time
-    %                    system. For this case, some ACADO functionalities are
-    %                    still under development.
+    % StepSize           Defines the acado OCP intervals as HorizonLength/StepSize
+    %
     % AcadoOptimizationAlgorithmOptions {'MAX_NUM_ITERATIONS',10,...}
     % AcadoMinimizeLSQ    if set to 1, l(x,u) = |stageCost(x,u)|^2 and the
     %                     terminal
@@ -88,15 +87,15 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         acadoMinimizeLSQ = 0;
         
-        blackBox =[];
+        stepSize;
+        
+        
         
     end
     
     methods
         
         function obj = AcadoMpcOpSolver(varargin)
-            
-            obj.discretizationStep = 0.1;
             
             parameterPointer = 1;
             
@@ -121,9 +120,9 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                             parameterPointer = parameterPointer+2;
                             
                             
-                        case 'DiscretizationStep'
+                        case 'StepSize'
                             
-                            obj.discretizationStep = varargin{parameterPointer+1};
+                            obj.stepSize = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -161,27 +160,30 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             end
         end
         
-        function ret = solve(obj,mpcOp,x0,warmStart,varargin)
+        function ret = solve(obj,mpcOp,t0,x0,warmStart,varargin)
             
             if sum(isnan(x0))>0
                 error(getMessage('AcadoMpcOpSolver:Nanxo'))
             end
             
             %Warm start
+            
+            
+            t = 0:obj.stepSize:mpcOp.horizonLength-obj.stepSize;
             if not(isempty(warmStart))
                 
-                t = 0:obj.discretizationStep:mpcOp.horizonLength-obj.discretizationStep;
                 InitControl =  [t',warmStart.u'];
                 
             else
                 
-                InitState   = zeros(1,mpcOp.system.nx+1);
+                InitState   = zeros(1,mpcOp.system.nx+2);
                 InitControl = zeros(1,mpcOp.system.nu+1);
                 
             end
             
             statesList = num2str(1:length(x0),', x0(%d)');
             statesList = statesList(2:end);
+            statesList = ['t0, ',statesList];
             tic
             
             eval(sprintf('out = %s_RUN(%s,InitControl);',obj.acadoProblemName,statesList));
@@ -191,8 +193,9 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             ret.u_opt = out.CONTROLS(1:end-1,2:end)';
             
-            %The fist colum is the time and the last one is the term L
-            ret.x_opt = out.STATES(:,2:end-1)';
+            %The fist colum is the time, the second is the virtual time
+            % and the last one is the term L
+            ret.x_opt = out.STATES(:,3:end-1)';
             
             ret.acadoSolverOutput = out;
             
@@ -224,28 +227,30 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             if(obj.displayAcadoCode) disp(sprintf('acadoSet(''problemname'', ''%s''); ',obj.acadoProblemName));end
             eval(sprintf('acadoSet(''problemname'', ''%s''); ',obj.acadoProblemName));
             
+            %--------------------------------------------------------------
             %% Differential States
-            %> DifferentialState x1;
-            %> ...
-            if not(isempty(obj.blackBox))
-                
-                for i = 1:nx+1
-                    if(obj.displayAcadoCode) disp(sprintf('DifferentialState x%d;',i)); end
-                    eval(sprintf('DifferentialState x%d;',i));
-                end
-                
-            else
-                
-                for i = 1:nx
-                    if(obj.displayAcadoCode) disp(sprintf('DifferentialState x%d;',i)); end
-                    eval(sprintf('DifferentialState x%d;',i));
-                end
-                
-                if(obj.displayAcadoCode) disp(sprintf('DifferentialState L;')); end
-                eval(sprintf('DifferentialState L;'));
+            %
+            % DifferentialState t;
+            % DifferentialState x1;
+            % ...
+            % DifferentialState xn;
+            % DifferentialState L;
+            
+            if(obj.displayAcadoCode) disp('DifferentialState t;'); end
+            eval('DifferentialState t;');
+            
+            
+            for i = 1:nx
+                if(obj.displayAcadoCode) disp(sprintf('DifferentialState x%d;',i)); end
+                eval(sprintf('DifferentialState x%d;',i));
             end
             
+            if(obj.displayAcadoCode) disp(sprintf('DifferentialState L;')); end
+            eval(sprintf('DifferentialState L;'));
             
+            %--------------------------------------------------------------
+            
+            %--------------------------------------------------------------
             %% Control Inputs
             %> Control u1;
             %> ...
@@ -254,65 +259,61 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 if(obj.displayAcadoCode) disp(sprintf('Control u%d;',i)); end
                 eval(sprintf('Control u%d;',i));
             end
+            %--------------------------------------------------------------
             
+            %--------------------------------------------------------------
             %% Initial Conditions
             %> x01=acado.MexInput
             %> ...
             %> InitState = acado.MexInputMatrix;
             %> initInput = acado.MexInputMatrix;
             
+            if(obj.displayAcadoCode) disp('t0  = acado.MexInput;'); end
+            eval('t0  = acado.MexInput;');
+            
             for i = 1:nx
-                if(obj.displayAcadoCode) disp(sprintf('x0%d=acado.MexInput;',i)); end
-                eval(sprintf('x0%d=acado.MexInput;',i));
+                if(obj.displayAcadoCode) disp(sprintf('x0%d = acado.MexInput;',i)); end
+                eval(sprintf('x0%d = acado.MexInput;',i));
             end
             
             if(obj.displayAcadoCode) disp('initInput = acado.MexInputMatrix; '); end
             
             initInput = acado.MexInputMatrix;
+            %--------------------------------------------------------------
             
-            % Obtain strings of the differential equations
-            if not(isempty(obj.blackBox))
-                
-                x = sym('x',[nx+1,1]);
-                x = sym(x,'real');
-                
-                u = sym('u',[nu,1]);
-                u = sym(u,'real');
-                
-                fsym = obj.mpcOp.system.f(x(1:end-1),u);
-                lsym = obj.mpcOp.stageCost(x(1:end-1),u);
-                msym = obj.mpcOp.terminalCost(x(1:end-1));
-                
-            else
-                
-                x = sym('x',[nx,1]);
-                x = sym(x,'real');
-                
-                u = sym('u',[nu,1]);
-                u = sym(u,'real');
-                
-                fsym = obj.mpcOp.system.f(x,u);
-                lsym = obj.mpcOp.stageCost(x,u);
-                
-                if not(size(fsym,1)==nx)
-                    error(getMessage('AcadoMpcOpSolver:SizeMismatch'));
-                end
-                
-                if not(isempty(obj.mpcOp.terminalCost))
-                    msym = obj.mpcOp.terminalCost(x);
-                else
-                    msym=[];
-                end
-                
+            %--------------------------------------------------------------
+            %% Obtain strings of the differential equations
+            
+            x = sym('x',[nx,1]);
+            x = sym(x,'real');
+            
+            u = sym('u',[nu,1]);
+            u = sym(u,'real');
+            
+            tsym = sym('t','real');
+            
+            fsym = obj.mpcOp.system.f(tsym,x,u);
+            lsym = obj.mpcOp.stageCost(tsym,x,u);
+            
+            if not(size(fsym,1)==nx)
+                error(getMessage('AcadoMpcOpSolver:SizeMismatch'));
             end
+            
+            if not(isempty(obj.mpcOp.terminalCost))
+                msym = obj.mpcOp.terminalCost(tsym,x);
+            else
+                msym=[];
+            end
+            %--------------------------------------------------------------
+            
             
             if ct
                 if(obj.displayAcadoCode) fprintf('f = acado.DifferentialEquation();\n'); end
                 f = acado.DifferentialEquation();
             else
                 
-                if(obj.displayAcadoCode) fprintf('f = acado.DiscretizedDifferentialEquation(%d);\n',obj.discretizationStep); end
-                f = acado.DiscretizedDifferentialEquation(obj.discretizationStep);
+                if(obj.displayAcadoCode) fprintf('f = acado.DiscretizedDifferentialEquation(%d);\n',obj.stepSize); end
+                f = acado.DiscretizedDifferentialEquation(obj.stepSize);
                 
             end
             
@@ -320,42 +321,9 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %> f.add(dot(x1) == ...);
             %> ...
             %> f.add(dot(L) == ...); % Dummy variable that integrate the stage cost
-            
-            if not(isempty(obj.blackBox))
-                
-                if(obj.displayAcadoCode) disp(sprintf('f.linkMatlabODE(''%s'');', obj.blackBox)); end
-                eval((sprintf('f.linkMatlabODE(''%s'');', obj.blackBox)));
-            
-            else
-                
-                for i = 1:nx
-                    
-                    if ct
-                        
-                        if(obj.displayAcadoCode) disp(sprintf('f.add(dot(x%d) == %s);', i, char(fsym(i)) )); end
-                        eval(sprintf('f.add(dot(x%d) == %s);', i, char(fsym(i)) ));
-                    
-                    else
-                        
-                        if(obj.displayAcadoCode) disp(sprintf('f.add(next(x%d) == %s);', i, char(fsym(i)) )); end
-                        eval(sprintf('f.add(next(x%d) == %s);', i, char(fsym(i)) ));
-                        
-                    end
-                end
-                
-                if ct
-                    
-                    if(obj.displayAcadoCode) disp(sprintf('f.add(dot(L) == %s);', char(lsym))); end
-                    eval(sprintf('f.add(dot(L) == %s);', char(lsym)));
-                
-                else
-                    
-                    if(obj.displayAcadoCode) disp(sprintf('f.add(next(L) == L + %s);', char(lsym*obj.discretizationStep))); end
-                    eval(sprintf('f.add(next(L) == L + %s);', char(lsym*obj.discretizationStep)));
-                    
-                end
-            end
-            
+            ret = obj.getStateEquations(ct,fsym,lsym);
+            if(obj.displayAcadoCode) disp(ret); end
+            eval(ret);
             
             %% Optimization problem
             %> ocp = acado.OCP(0, T, intervals);
@@ -363,16 +331,15 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %> ocp.subjectTo( f );
             
             if ct
-                
-                if(obj.displayAcadoCode) disp(sprintf('ocp = acado.OCP(0, %d, %d);',T,round(T/obj.discretizationStep)));end
-                ocp = acado.OCP(0, T, round(T/obj.discretizationStep)); %We have to specify the CONTROL intervals
-            
+                Tend = T;
+                nIntervals = round(T/obj.stepSize);
             else
-                
-                if(obj.displayAcadoCode) disp(sprintf('ocp = acado.OCP(0, %d, %d);',T*obj.discretizationStep,T) );end
-                ocp = acado.OCP(0,T*obj.discretizationStep,T);
-            
+                Tend = T*obj.stepSize;
+                nIntervals = T;
             end
+            
+            if(obj.displayAcadoCode) disp(sprintf('ocp = acado.OCP(0, %d, %d);',Tend, nIntervals));end
+            ocp = acado.OCP(0, Tend, nIntervals); %We have to specify the CONTROL intervals
             
             if obj.acadoMinimizeLSQ
                 
@@ -389,37 +356,15 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 eval(sprintf('ocp.minimizeLSQ(%s);',args));
                 
             else
-                if not(isempty(obj.blackBox))
-                    
-                    if not(isempty(msym))
-                        
-                        if(obj.displayAcadoCode) disp(sprintf('ocp.minimizeMayerTerm(%s + %s);',char(x(end)),char(msym)));end
-                        eval(sprintf('ocp.minimizeMayerTerm(%s + %s);',char(x(end)),char(msym)));
-                    
-                    else
-                        
-                        if(obj.displayAcadoCode) disp('ocp.minimizeMayerTerm(L);');end
-                        ocp.minimizeMayerTerm(L);
-                    
-                    end
-                else
-                    
-                    if not(isempty(msym))
-                        
-                        if(obj.displayAcadoCode) disp(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));end
-                        eval(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));
-                        
-                    else
-                        
-                        if(obj.displayAcadoCode) disp('ocp.minimizeMayerTerm(L);');end
-                        ocp.minimizeMayerTerm(L);
-                        
-                    end
-                end
                 
+                if not(isempty(msym))
+                    if(obj.displayAcadoCode) disp(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));end
+                    eval(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));
+                else
+                    if(obj.displayAcadoCode) disp('ocp.minimizeMayerTerm(L);');end
+                    ocp.minimizeMayerTerm(L);
+                end
             end
-            
-            
             
             if(obj.displayAcadoCode) disp('ocp.subjectTo( f );  '); end
             
@@ -429,178 +374,38 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %> ocp.subjectTo( 'AT_START', x1     ==  x01 );
             %> ...
             
+            if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', t    ==  t0 ); ')  ); end
+            eval(sprintf('ocp.subjectTo( ''AT_START'', t    ==  t0 ); ') );
+            
             %Initial conditions
             for i = 1:nx
                 
-                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', x%d     ==  x0%d ); ', i,i) ); end
-                eval(sprintf('ocp.subjectTo( ''AT_START'', x%d     ==  x0%d ); ', i,i) );
-           
-            end
-            
-            if isempty(obj.blackBox)
-            
-                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', L    ==  0 ); ')  ); end
-                eval(sprintf('ocp.subjectTo( ''AT_START'', L    ==  0 ); ') );
-            
-            else
+                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', x%d   ==  x0%d ); ', i,i) ); end
+                eval(sprintf('ocp.subjectTo( ''AT_START'', x%d   ==  x0%d ); ', i,i) );
                 
-                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', %s    ==  0 ); ',char(x(end)) )  ); end
-                eval(sprintf('ocp.subjectTo( ''AT_START'', %s    ==  0 ); ',char(x(end))) );
-            
             end
+            
+            
+            if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_START'', L    ==  0 ); ')  ); end
+            eval(sprintf('ocp.subjectTo( ''AT_START'', L    ==  0 ); ') );
+            
+            
             %% Stage Constraints
             %> ocp.subjectTo( x1 <=... );
             %> ...
             
-            for i =1:length(obj.mpcOp.stageConstraints)
-                
-                switch class(obj.mpcOp.stageConstraints{i})
-                    
-                    case 'BoxSet'
-                        con = obj.mpcOp.stageConstraints{i};
-                        
-                        if not(nx+nu == con.spaceDimension)
-                            error(getMessage('ForcesLinearizedMpcSolver:StageBoxSetDimentionsMismatch'));
-                        end
-                        
-                        
-                        for j = 1:nx
-                            
-                            lbp = find(con.indexesLowerBounds == j);
-                            ubp = find(con.indexesUpperBounds == j);
-                            
-                            if ( not(isempty(lbp)) && not(isempty(ubp)))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( %f <= x%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( %f <= x%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp)));
-                                
-                            elseif not(isempty(lbp))
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( %f <= x%d ); ', con.lowerBounds(lbp),j)); end
-                                eval(sprintf('ocp.subjectTo( %f <= x%d ); ', con.lowerBounds(lbp),j));
-                                
-                            elseif not(isempty(ubp))
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( x%d <= %f ); ', j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( x%d <= %f ); ', j ,con.upperBounds(lbp)));
-                            end
-                            
-                        end
-                        
-                        for j = 1:nu
-                            
-                            lbp = find(con.indexesLowerBounds == j+nx);
-                            ubp = find(con.indexesUpperBounds == j+nx);
-                            
-                            if ( not(isempty(lbp)) && not(isempty(ubp)))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( %f <= u%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( %f <= u%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp)));
-                                
-                            elseif not(isempty(lbp))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( %f <= u%d ); ', con.lowerBounds(lbp),j)); end
-                                eval(sprintf('ocp.subjectTo( %f <= u%d ); ', con.lowerBounds(lbp),j));
-                                
-                            elseif not(isempty(ubp))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( u%d <= %f ); ', j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( u%d <= %f ); ', j,con.upperBounds(lbp)));
-                            
-                            end
-                        end
-                        
-                    case 'AcadoSetHack'
-                        
-                        con = obj.mpcOp.stageConstraints{i};
-                        if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo(%s); ', con.str)); end
-                        eval(sprintf('ocp.subjectTo(%s); ', con.str) );
-                        
-                    otherwise
-                        
-                        disp(getMessage('AcadoMpcOpSolver:StageConstraintNotSupported',class(stageConstratins{i})));
-                end
-            end
+            ret = getGeneralSetConstraints(obj,obj.mpcOp.stageConstraints);
+            if(obj.displayAcadoCode) disp(ret); end
+            eval(ret);
             
             %% Terminal Constraints
             %> ocp.subjectTo( x1 <=... );
             %> ...
             
-            for i =1:length(obj.mpcOp.terminalConstraints)
-                
-                switch class(obj.mpcOp.terminalConstraints{i})
-                    
-                    case 'BoxSet'
-                        con = obj.mpcOp.terminalConstraints{i};
-                        
-                        if not(nx == con.spaceDimension)
-                            
-                            error(getMessage('ConstraintSetSizeMismatch'));
-                            
-                        end
-                        
-                        for j = 1:nx
-                            
-                            lbp = find(con.indexesLowerBounds == j);
-                            ubp = find(con.indexesUpperBounds == j);
-                            
-                            if ( not(isempty(lbp)) && not(isempty(ubp)))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_END'', %f <= x%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( ''AT_END'', %f <= x%d <= %f ); ', con.lowerBounds(lbp),j ,con.upperBounds(lbp)));
-                                
-                            elseif not(isempty(lbp))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_END'', %f <= x%d ); ', con.lowerBounds(lbp),j)); end
-                                eval(sprintf('ocp.subjectTo( ''AT_END'', %f <= x%d ); ', con.lowerBounds(lbp),j));
-                                
-                            elseif not(isempty(ubp))
-                                
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_END'', x%d <= %f ); ', j ,con.upperBounds(lbp))); end
-                                eval(sprintf('ocp.subjectTo( ''AT_END'', x%d <= %f ); ', j ,con.upperBounds(lbp)));
-                                
-                            end
-                            
-                        end
-                        
-                    case 'NonlinearSet'
-                        
-                        con = obj.mpcOp.terminalConstraints{i};
-                        if con.nf == 1
-                            
-                            ineq = strcat(char(con.f(x)),'<=0');
-                            if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_END'', %s ); ',ineq)); end
-                            eval(sprintf('ocp.subjectTo( ''AT_END'', %s ); ',ineq));
-                            
-                        else
-                            
-                            disp(getMessage('AcadoMpcOpSolver:StageConstraintNotSupported',class(obj.mpcOp.terminalConstraints{i})));
-                        
-                        end
-                        
-                    otherwise
-                        
-                        if isa(obj.mpcOp.terminalConstraints{i},'NonlinearSet')
-                            
-                            con = obj.mpcOp.terminalConstraints{i};
-                            
-                            if con.nf == 1
-                                
-                                ineq = strcat(char(con.f(x)),'<=0');
-                                if(obj.displayAcadoCode) disp(sprintf('ocp.subjectTo( ''AT_END'', %s ); ',ineq)); end
-                                eval(sprintf('ocp.subjectTo( ''AT_END'', %s ); ',ineq));
-                            
-                            else
-                                
-                                disp(getMessage('AcadoMpcOpSolver:StageConstraintNotSupported',class(obj.mpcOp.terminalConstraints{i})));
-                            
-                            end
-                            
-                        else
-                            
-                            disp(getMessage('AcadoMpcOpSolver:StageConstraintNotSupported',class(obj.mpcOp.terminalConstraints{i})));
-                        
-                        end
-                end
-            end
+            
+            ret = getGeneralSetConstraints(obj,obj.mpcOp.terminalConstraints,'''AT_END'',');
+            if(obj.displayAcadoCode) disp(ret); end
+            eval(ret);
             
             %% Optimization algorithm setting
             % algo = acado.OptimizationAlgorithm(ocp);
@@ -616,7 +421,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             for i = 1:2:length(obj.acadoOptimizationAlgorithmOptions)
                 
                 optioni = obj.acadoOptimizationAlgorithmOptions{i};
-                valuei = obj.acadoOptimizationAlgorithmOptions{i+1};
+                valuei  = obj.acadoOptimizationAlgorithmOptions{i+1};
                 
                 if isnumeric(valuei) && obj.displayAcadoCode
                     disp(sprintf('algo.set(''%s'',%d);',optioni,valuei) );
@@ -650,7 +455,111 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
         end
         
+        
+        function ret = getStateEquations(obj,ct,fsym,lsym)
+            %% State equations
+            %> f.add(dot(x1) == ...);
+            %> ...
+            %> f.add(dot(L) == ...); % Dummy variable that integrate the stage cost
+            
+            nx = obj.mpcOp.system.nx;
+            
+            ret = '% State equations';
+            
+            
+            if ct
+                ret = sprintf('%s \n f.add(dot(t) == 1);',ret);
+            else
+                ret = sprintf('%s \n f.add(next(t) == t+1);',ret);
+            end
+            
+            
+            for i = 1:nx
+                
+                if ct
+                    ret = sprintf('%s \n f.add(dot(x%d) == %s);',ret, i, char(fsym(i)));
+                else
+                    ret = sprintf('%s \n f.add(next(x%d) == %s);',ret, i, char(fsym(i)));
+                end
+            end
+            
+            if ct
+                ret = sprintf('%s \n f.add(dot(L) == %s);',ret, char(lsym));
+            else
+                ret = sprintf('%s \n f.add(next(L) == L + %s);',ret, char(lsym*obj.stepSize));
+            end
+            
+        end
+        
+        function ret = getGeneralSetConstraints(obj,stageConstraints,str)
+            
+            ret = '';
+            for j =1:length(stageConstraints)
+                
+                con = stageConstraints{j};
+                if nargin == 2
+                    str = '';
+                end
+                if strcmp(str,'''AT_END'',')
+                    ret = '% GeneralSet TerminalConstraints';
+                else
+                    ret = '% GeneralSet StageConstraints';
+                end
+                
+                nx = obj.mpcOp.system.nx;
+                nu = obj.mpcOp.system.nu;
+                
+                x = sym('x',[nx,1]);
+                x = sym(x,'real');
+                
+                u = sym('u',[nu,1]);
+                u = sym(u,'real');
+                
+                tsym = sym('t','real');
+                
+                
+                
+                
+                if strcmp(str,'') && con.nx == nx+ nu
+                    
+                    fx = con.f([x;u]);
+                    
+                elseif strcmp(str,'') && con.nx == nx+ nu + 1
+                    
+                     fx = con.f([tsym;x;u]);
+                     
+                elseif strcmp(str,'''AT_END'',') && con.nx == nx
+                    
+                    fx = con.f(x);
+                    
+                elseif strcmp(str,'''AT_END'',') && con.nx == nx + 1
+                    
+                    fx = con.f([tsym;x]);
+                    
+                else
+                    if strcmp(str,'')
+                    
+                        error(getMessage('StageSetDimensionsMismatch'));
+                    
+                    elseif strcmp(str,'''AT_END'',')
+                    
+                        error(getMessage('TerminalSetDimensionsMismatch'));
+                    
+                    end
+                end
+                
+                for i = 1:con.nf
+                    
+                    ret = sprintf('%s \n ocp.subjectTo( %s %s ); ',ret,str, strcat(char(fx(i)),'<=0'));
+                    
+                end
+                
+            end
+        end
+        
+        
     end
+    
     
     
 end

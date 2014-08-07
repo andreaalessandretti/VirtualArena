@@ -3,7 +3,7 @@ classdef InlineController < Controller
     %
     %   InlineController peoperties:
     %
-    %   law     - @(x,t) function handle of the control law
+    %   law     - @(t,x) function handle of the control law
     %
     %   InlineController methods:
     %
@@ -62,9 +62,9 @@ classdef InlineController < Controller
         end
         
         
-        function u = computeInput(obj,x,t)
+        function u = computeInput(obj,t,x)
             
-            u = obj.law(x,t);
+            u = obj.law(t,x);
             
         end
         

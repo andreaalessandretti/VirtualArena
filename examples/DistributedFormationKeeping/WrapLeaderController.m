@@ -15,7 +15,9 @@ classdef WrapLeaderController < DtSystem
     
     methods
         function obj = WrapLeaderController(controller,varargin)
+            
             n = controller.vehicle.n;
+            
             if n == 2
                 nx=2; nu=3; ny=2;
             else
@@ -23,14 +25,15 @@ classdef WrapLeaderController < DtSystem
             end
             
             obj = obj@DtSystem(...
-                    'StateEquation',@(x,u,t,net)u(1:n),...
+                    'StateEquation',@(t,x,u,net)u(1:n),...
                     'nx',nx,'nu',nu,'ny',ny,varargin{:});
            
             obj.controlLaw = controller;
             
-            obj.h = @(xc,x,t,net)obj.controlLaw.computeInput(x,t);
+            obj.h = @(t,xc,x,net)obj.controlLaw.computeInput(t,x);
             
         end
+   
         
     end
     

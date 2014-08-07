@@ -57,7 +57,7 @@ classdef MpcOpSolver < handle
     %
     % For the case of purly discrete time sistem this parameter has to be
     % set to 1, which is the defoult value
-    discretizationStep = 1
+        discretizationStep = 1
         
         Dl
         
@@ -89,7 +89,7 @@ classdef MpcOpSolver < handle
         %
         %   sol.x_opt        - optimal open loop state prediction
         %   sol.u_opt        - optimal open loop control prediction
-        solve(obj,MpcOP)
+        solve
         
         faceProblem(obj,solution,mpcOp,xim1)
         

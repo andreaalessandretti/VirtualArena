@@ -55,7 +55,7 @@ classdef UniGoToPointPid < DtSystem
     methods
         
         function obj = UniGoToPointPid(point,varargin)
-            %UniGoToPointPid costructor method
+            %UniGoToPointPid constructor method
             %
             %   c = UniGoToPointPid(point, par1, val1,...);
             %   where point is the desired position in 2-d and the
@@ -109,8 +109,8 @@ classdef UniGoToPointPid < DtSystem
             end
             
             obj = obj@DtSystem(...
-                'StateEquation',@(xc,z,t)UniGoToPointPid.nextX(xc,z,point), ...
-                'OutputEquation',@(xc,z,t)UniGoToPointPid.computeInput(xc,z,point,kpid,uSet), ...
+                'StateEquation',@(t,xc,z)UniGoToPointPid.nextX(xc,z,point), ...
+                'OutputEquation',@(t,xc,z)UniGoToPointPid.computeInput(xc,z,point,kpid,uSet), ...
                 'nx',2,'nu',3,'ny',2,varargin{:});
             
             

@@ -55,11 +55,7 @@ classdef EkfFilter < DtSystem
         
         system
     end
-    
-    properties (SetAccess = private, GetAccess = private)
-        
-        
-    end
+
     
     methods
         
@@ -73,10 +69,10 @@ classdef EkfFilter < DtSystem
                 'nx',sys.nx+sys.nx^2,...
                 'nu',sys.ny,...
                 'ny',sys.nx,...
-                'OutputEquation',@(xP)xP(1:sys.nx),varargin{:});
+                'OutputEquation',@(t,xP)xP(1:sys.nx),varargin{:});
             
             obj.system = sys;
-            obj.f=@(xP,StUz)obj.ekfEquations(StUz(1:sys.nu),xP,StUz(sys.nu+1:end));
+            obj.f      = @(t,xP,StUz)obj.ekfEquations(t,StUz(1:sys.nu),xP,StUz(sys.nu+1:end));
             
             if isempty(obj.system.A) || isempty(obj.system.B) || isempty(obj.system.p) || isempty(obj.system.q) || isempty(obj.system.C) ||isempty(obj.system.D)
                 disp('Warning: Linearization not found, computing linearization - ');
@@ -122,42 +118,37 @@ classdef EkfFilter < DtSystem
         end
         
         
-        function  xNext = ekfEquations(obj,u,xP,z) % Prediction-Update Form from i-1 to i
+        function  xNext = ekfEquations(obj,t,u,xP,z) % Prediction-Update Form from i-1 to i
             
             
             
-            sysnx = obj.system.nx;
-            
-            xim1_im1 = xP(1:sysnx);
-            
-            Pim1_im1 = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
-            
-            [xi_i,Pi_i] = obj.getUpdatedEstimate(xim1_im1,Pim1_im1,z,u);
+            sysnx       = obj.system.nx;
+            xim1_im1    = xP(1:sysnx);
+            Pim1_im1    = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
+            [xi_i,Pi_i] = obj.getUpdatedEstimate(t,xim1_im1,Pim1_im1,z,u);
             
             
             %% Update Trajectories
-            xNext = zeros(sysnx+sysnx^2,1);
-            xNext(1:sysnx) = xi_i;
+            xNext                        = zeros(sysnx+sysnx^2,1);
+            xNext(1:sysnx)               = xi_i;
             xNext(sysnx+1:sysnx+sysnx^2) = reshape(Pi_i,sysnx^2,1);
             
         end
         
-        function [xi_i,Pi_i] = getUpdatedEstimate(obj,xim1_im1,Pim1_im1,z,u)
+        function [xi_i,Pi_i] = getUpdatedEstimate(obj,t,xim1_im1,Pim1_im1,z,u)
             
             
             A = obj.system.A(xim1_im1,u);
-            
             Q = obj.Qekf;
-            
             R = obj.Rekf;
             
             %% Filter Equation
             
             % Prediction
             if isempty(obj.system.Q)
-                xi_im1 = obj.system.f(xim1_im1,u);
+                xi_im1 = obj.system.f(t,xim1_im1,u);
             else
-                xi_im1 = obj.system.f(xim1_im1,u,zeros(size(obj.system.Q,1),1) );
+                xi_im1 = obj.system.f(t,xim1_im1,u,zeros(size(obj.system.Q,1),1) );
             end
             
             Pi_im1 = A*Pim1_im1*A' + Q;
@@ -165,21 +156,15 @@ classdef EkfFilter < DtSystem
             % Update
             
             if isempty(obj.system.R)
-                inn = z-obj.system.h(xi_im1,u);
+                inn = z-obj.system.h(t,xi_im1);
             else
-                inn = z-obj.system.h(xi_im1,u,zeros(size(obj.system.R,1),1) );
+                inn = z-obj.system.h(t,xi_im1,zeros(size(obj.system.R,1),1) );
             end
             
-            
-            
-            C = obj.system.C(xi_im1,u);
-            
-            S = C*Pi_im1*C' + R;
-            
-            K = Pi_im1*C'*inv(S);
-            
+            C    = obj.system.C(xi_im1,u);
+            S    = C*Pi_im1*C' + R;
+            K    = Pi_im1*C'*/S;
             xi_i = xi_im1 + K*inn;
-            
             Pi_i = (eye(length(xi_im1)) - K*C)*Pi_im1;
             
         end

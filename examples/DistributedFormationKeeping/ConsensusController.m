@@ -33,8 +33,8 @@ classdef ConsensusController < CtSystem
             obj = obj@CtSystem('nx',nx,'nu',nu,'ny',ny);
             
             obj.trackingLaw  = trackingLaw;
-            obj.f = @(x,u,t,readings)obj.xcDot(x,readings);
-            obj.h = @(x,z,t,readings)obj.computeInput(x,z,readings);
+            obj.f = @(t,x,u,readings)obj.xcDot(x,readings);
+            obj.h = @(t,x,z,readings)obj.computeInput(x,z,readings);
             obj.d = d;
             obj.Agraph = Agraph;
             obj.communicationDt = communicationDt;
@@ -54,7 +54,7 @@ classdef ConsensusController < CtSystem
              
              obj.trackingLaw.pd    = @(t)xc;
              obj.trackingLaw.dotPd = @(t)u2; 
-             u = obj.trackingLaw.computeInput(x,0);
+             u = obj.trackingLaw.computeInput(0,x);
              obj.lastReadings = readings;
               
         end
