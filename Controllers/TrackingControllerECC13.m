@@ -118,6 +118,7 @@ classdef TrackingControllerECC13 < Controller
                             obj.epsilon = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
+                            
                         case 'pd'
                             
                             obj.pd = varargin{parameterPointer+1};
@@ -190,26 +191,27 @@ classdef TrackingControllerECC13 < Controller
         
         
         function u = computeInput(obj,t,x)
+           
+            u = obj.computeInputFromPdPdDot(obj.pd(t),obj.dotPd(t),x);
+            
+        end
+        
+        function u = computeInputFromPdPdDot(obj,pd,pdDot,x)
             
            
             p = obj.vehicle.getPosition(x);
             
             R = obj.vehicle.getR(x);
             
-            pd = obj.pd(t);
-            
-            
-            dotPd = obj.dotPd(t);
-            
             PinvE = obj.PinvE;
             
             e = R'*(p-pd)-obj.epsilon;
             
-            e = obj.computeError(t,x);
+            e = obj.computeErrorFromPd(pd,x);
             
             R = obj.vehicle.getR(x);
             
-            r= -R'*dotPd ;
+            r= -R'*pdDot ;
             
             u = PinvE*(-obj.Ke*e -r);
             
@@ -218,11 +220,17 @@ classdef TrackingControllerECC13 < Controller
         
         function e = computeError(obj,t,x)
           
+            e = obj.computeErrorFromPd(obj.pd(t),x);
+        
+        end
+        
+        function e = computeErrorFromPd(obj,pd,x)
+          
             R = obj.vehicle.getR(x);
             
             p = obj.vehicle.getPosition(x);
             
-            e = R'*(p-obj.pd(t))-obj.epsilon;
+            e = R'*(p-pd)-obj.epsilon;
             
         end
         

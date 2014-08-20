@@ -1,19 +1,17 @@
 
 
-classdef EllipsoidalSet < GeneralSet
-    %EllipsoidalSet {x: (x-c)'*P*(x-c) <= b}
+classdef BallSet < EllipsoidalSet
+    %BallSet {x \in R^n : |x| <= r}
     %
     % The objects s1 and s2 defined as
     %
-    %   s1 = EllipticSet(P,b);
-    %   s2 = EllipticSet(P,b,c);
+    %   s1 = BallSet(r,n);
     %
     % denote the sets
     %
-    %   s1 = {x: x'*P*x <= b}
-    %   s2 = {x: (x-c)'*P*(x-c) <= b}
+    %   s1 = {x  \in R^n : |x|<= r}
     %
-    %   See also BoxSet
+    %   See also BoxSet, EllipsoidalSet
     
  
 % This file is part of VirtualArena.
@@ -48,60 +46,23 @@ classdef EllipsoidalSet < GeneralSet
 % either expressed or implied, of the FreeBSD Project.
     
     properties
-        P
-        b
-        c
+        r
     end
     
     methods
         
         
-        function obj = EllipsoidalSet(varargin)
+        function obj = BallSet(varargin)
             
-            if nargin >= 2
-                P = varargin{1};
-                b = varargin{2};
-                c = zeros(length(varargin{1}),1);
-            end
+                r = varargin{1};
+                n = varargin{2};
             
-            if nargin >= 3
-                c = varargin{3};
-            end
+            obj = obj@EllipsoidalSet(eye(n),r^2);
             
-            obj = obj@GeneralSet(@(x) (x-c)'*P*(x-c)-b ,size(P,2),1);
-            
-            obj.P = P;
-            
-            obj.b = b;
-            
-            obj.c = c;
+            obj.r = r;
             
         end
         
-        
-        function plot(obj,varargin)
-            
-            s = generateSamples('EllipticCanvas',obj.P/obj.b,50);
-            s = s + repmat(obj.c,1,size(s,2));
-            plot(s(1,:),s(2,:),varargin{:});
-            
-        end
-        
-        
-        function ret = mtimes(arg1,arg2)
-            
-            if not(isnumeric(arg1) && isa(arg2,'EllipticSet'))
-                error ('The product is defined for a pair Matrix*EllipticSet');
-            end
-            
-            
-            A = arg1;
-            set = arg2;
-            
-            invA = inv(A);
-            
-            ret = EllipticSet(invA'*set.P*invA,set.b);
-        end
         
     end
 end

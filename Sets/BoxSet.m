@@ -15,6 +15,10 @@ classdef  BoxSet < PolytopicSet
     %
     % with x \in R^spaceDimension.
     %
+    % B = BoxSet(lowerBounds,upperBounds)
+    %
+    % with length(lowerBounds) = length(upperBounds) = spaceDimension.
+    %
     % B = BoxSet([v1,v2,...]) returns the smalles BoxSet containing the
     % points v1,v2,... .
     %
@@ -88,7 +92,22 @@ classdef  BoxSet < PolytopicSet
         
         function obj = BoxSet(varargin)
             
-            if nargin == 5
+            if nargin == 2
+                
+                if not(length(varargin{1}) == length(varargin{2}))
+                    error(getMessage('BoxSet:ini2sizemismatch'))
+                end
+                
+                lowerBounds        = varargin{1};
+                indexesLowerBounds = 1:length(lowerBounds);
+                upperBounds        = varargin{2};
+                indexesUpperBounds = 1:length(lowerBounds);
+                spaceDimension     = length(lowerBounds);
+
+                
+                [A,b] = BoxSet.cosGetAb(lowerBounds,indexesLowerBounds,upperBounds,indexesUpperBounds,spaceDimension);
+                
+            elseif nargin == 5
                 [A,b] = BoxSet.cosGetAb(varargin{:});
 
                 lowerBounds        = varargin{1};

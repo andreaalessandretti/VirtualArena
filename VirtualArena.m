@@ -449,7 +449,7 @@ classdef VirtualArena < handle
             readings = cell(nSensor,1);
             for i =1:nSensor
                 
-                sensor = obj.sensorsNetwork{(i-1)*2+1};
+                sensor  = obj.sensorsNetwork{(i-1)*2+1};
                 Lsensor = obj.sensorsNetwork{(i-1)*2+2};
                 
                 detectableAgents  = Lsensor(systemId,:);

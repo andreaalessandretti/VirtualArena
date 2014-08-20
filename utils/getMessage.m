@@ -145,6 +145,10 @@ switch MessageCode
         
         message = 'Dimension of the terminal constraint does not match nx, nor nx + 1(time).';   
         
+    case 'BoxSet:ini2sizemismatch'
+        
+        message = 'The size of the arguments must match.';
+        
     otherwise
         
         

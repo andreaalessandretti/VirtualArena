@@ -68,13 +68,14 @@ classdef MpcController < Controller & InitDeinitObject
         warmStartMode = 1;
         warmStart;
         auxiliaryLaw;
+        lastSolution;
         
     end
     
     properties(SetAccess = private)
         i = 1
         blockSizeAllocation = 100;
-        lastSolution = {};
+        
     end
     
     methods

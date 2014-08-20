@@ -95,6 +95,19 @@ switch varargin{1}
             end
         end
         
+    case 'BoxUniRand'
+        
+        S = varargin{2};
+        nn = varargin{3};
+        
+        samples = zeros(S.nx,nn);
+        
+        for i = 1: S.nx
+            l = S.upperBounds(i)-S.lowerBounds(i);
+            c = (S.upperBounds(i)+S.lowerBounds(i))/2;
+            samples(i,:) = l*rand(1,nn) + ones(1,nn)*(c-l/2);
+        end
+        
         
     otherwise
         error('Generation type not recognised')

@@ -188,12 +188,7 @@ classdef UnderactuatedVehicle < Vehicle
                 obj.nwd = size(obj.Lwd,2);
             end
             
-         
-            
-            %%
-
-            
-            
+   
             %% compoe v
              if(isempty(obj.Lvk) && isempty(obj.Lvd))
                 error('at least Lvk or Lvd must be defined')

@@ -1,20 +1,9 @@
-
-
-classdef EllipsoidalSet < GeneralSet
-    %EllipsoidalSet {x: (x-c)'*P*(x-c) <= b}
-    %
-    % The objects s1 and s2 defined as
-    %
-    %   s1 = EllipticSet(P,b);
-    %   s2 = EllipticSet(P,b,c);
-    %
-    % denote the sets
-    %
-    %   s1 = {x: x'*P*x <= b}
-    %   s2 = {x: (x-c)'*P*(x-c) <= b}
-    %
-    %   See also BoxSet
-    
+classdef InlineSensor < Sensor
+%InlineSensor 
+%   The observation of s1 from s2 is a vector z = h(s1,s2)
+%
+% See also Sensor
+  
  
 % This file is part of VirtualArena.
 %
@@ -46,62 +35,36 @@ classdef EllipsoidalSet < GeneralSet
 % The views and conclusions contained in the software and documentation are those
 % of the authors and should not be interpreted as representing official policies, 
 % either expressed or implied, of the FreeBSD Project.
-    
+
     properties
-        P
-        b
-        c
+       sensingFunction;
+       n;
     end
+    methods 
+        
+        function obj = InlineSensor(sensingFunction,n)
+            
+                obj.sensingFunction = sensingFunction;
+                obj.n = n;
+            
+        end
+        
+        function ret = sense(obj,agentId,agent,detectableAgentsList,detectableAgentsIds)
+            
+            nAgents = length(detectableAgentsIds);
+            
+            ret = zeros(obj.n,nAgents);
+            
+            for i = 1:nAgents
+                ai = detectableAgentsList{i};
+                ret(:,i) = obj.sensingFunction(agent,ai);
+            end
+            
+        end
+        
+    end
+    
+ 
     
-    methods
-        
-        
-        function obj = EllipsoidalSet(varargin)
-            
-            if nargin >= 2
-                P = varargin{1};
-                b = varargin{2};
-                c = zeros(length(varargin{1}),1);
-            end
-            
-            if nargin >= 3
-                c = varargin{3};
-            end
-            
-            obj = obj@GeneralSet(@(x) (x-c)'*P*(x-c)-b ,size(P,2),1);
-            
-            obj.P = P;
-            
-            obj.b = b;
-            
-            obj.c = c;
-            
-        end
-        
-        
-        function plot(obj,varargin)
-            
-            s = generateSamples('EllipticCanvas',obj.P/obj.b,50);
-            s = s + repmat(obj.c,1,size(s,2));
-            plot(s(1,:),s(2,:),varargin{:});
-            
-        end
-        
-        
-        function ret = mtimes(arg1,arg2)
-            
-            if not(isnumeric(arg1) && isa(arg2,'EllipticSet'))
-                error ('The product is defined for a pair Matrix*EllipticSet');
-            end
-            
-            
-            A = arg1;
-            set = arg2;
-            
-            invA = inv(A);
-            
-            ret = EllipticSet(invA'*set.P*invA,set.b);
-        end
-        
-    end
+    
 end
