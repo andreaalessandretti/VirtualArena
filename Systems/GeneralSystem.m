@@ -33,40 +33,49 @@ classdef GeneralSystem < handle & InitDeinitObject
     %                     DtSystem
     % x                 - current state vector
     %
+    %
+    %  sys = obj@GeneralSystem(par1,val1,par2,val2,...) % only by a subclass
+    %
+    %  where the parameters are chosen among the following
+    %
+    %   'nx', 'nu', 'ny', 'InitialConditions', 'Q', 'R', 'Controller',
+    %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
+    %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
+    %
     % See also CtSystem, DtSystem
     
     
- 
-% This file is part of VirtualArena.
-%
-% Copyright (c) 2014, Andrea Alessandretti
-% All rights reserved.
-%
-% e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
-% 
-% Redistribution and use in source and binary forms, with or without
-% modification, are permitted provided that the following conditions are met:
-% 
-% 1. Redistributions of source code must retain the above copyright notice, this
-%    list of conditions and the following disclaimer. 
-% 2. Redistributions in binary form must reproduce the above copyright notice,
-%    this list of conditions and the following disclaimer in the documentation
-%    and/or other materials provided with the distribution.
-% 
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-% ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-% WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-% DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-% ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-% (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-% LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-% ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-% 
-% The views and conclusions contained in the software and documentation are those
-% of the authors and should not be interpreted as representing official policies, 
-% either expressed or implied, of the FreeBSD Project.
+    
+    % This file is part of VirtualArena.
+    %
+    % Copyright (c) 2014, Andrea Alessandretti
+    % All rights reserved.
+    %
+    % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
+    %
+    % Redistribution and use in source and binary forms, with or without
+    % modification, are permitted provided that the following conditions are met:
+    %
+    % 1. Redistributions of source code must retain the above copyright notice, this
+    %    list of conditions and the following disclaimer.
+    % 2. Redistributions in binary form must reproduce the above copyright notice,
+    %    this list of conditions and the following disclaimer in the documentation
+    %    and/or other materials provided with the distribution.
+    %
+    % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    % ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    % DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+    % ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    % (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    % LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    % ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    % (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    %
+    % The views and conclusions contained in the software and documentation are those
+    % of the authors and should not be interpreted as representing official policies,
+    % either expressed or implied, of the FreeBSD Project.
     
     
     properties
@@ -92,12 +101,6 @@ classdef GeneralSystem < handle & InitDeinitObject
         x;               %current state vector
         y;               %current output vector
         
-        %State and input transformation, used to solve some numerical
-        %problems
-        Ax = []; %xbar = Ax*x
-        Au = []; %ubar = Au*u
-        
-        
         %% Linearization
         % x(k+1)/dot(x) = A x(k) + B u(k) + p
         % y(k)           = C x(k) + D u(k) + q
@@ -108,10 +111,11 @@ classdef GeneralSystem < handle & InitDeinitObject
         R
         
         % changeOfCoordinate - Variable of the change of choordinates
-        % x' = Ax+b
-        % u' = Cx+d
+        % x' = A x+b
+        % u' = C u+d
+        % t' = e t+f
         
-        cA, cb, cC, cd
+        cA, cb, cC, cd, ce,cf
     end
     
     
@@ -229,13 +233,13 @@ classdef GeneralSystem < handle & InitDeinitObject
         
         
         function useSymbolicEvaluation(obj)
-        %%useSymbolicEvaluation evaluates the state and output equations
-        %   with symbolic variables, simplify them, and replace them with the
-        %   simplified version. 
-        %   
-        %   This can lead to a notable decrease of computation time for 
-        %   the case of complex models.
-        
+            %%useSymbolicEvaluation evaluates the state and output equations
+            %   with symbolic variables, simplify them, and replace them with the
+            %   simplified version.
+            %
+            %   This can lead to a notable decrease of computation time for
+            %   the case of complex models.
+            
             x = sym('x',[obj.nx,1]);
             x = sym(x,'real');
             
@@ -275,26 +279,26 @@ classdef GeneralSystem < handle & InitDeinitObject
         end
         
         function computeLinearization(obj,varargin)
-        %%computeLinearization 
-        %   computeLinearization()
-        %   Computes the parametric matrices A, B, p, C, D, and q, with 
-        %   parameters (xbar,ubar), associated with the linearized system
-        %    
-        %   x(k+1)/dot(x) = A(xbar,ubar) x(k) + B(xbar,ubar) u(k) + p(xbar,ubar)
-        %   y(k)          = C(xbar,ubar) x(k) + D(xbar,ubar) u(k) + q(xbar,ubar)
-        %
-        %   By default these matrices are computed using the Symbolic
-        %   Toolbox of Matlab and stored in the object as function handles.
-        %
-        %   computeLinearization('Sampled')
-        %   In this case the matrices are computed using via sampling of
-        %   the function. This mode is advised when the computation of the
-        %   symbolic jacobians are prohibitive.
-        %
-        %   WARNING: At the moment this applies only to time invariant system
-        %            The linearization is evaluated at t=0 
-        
-        % TODO: time dependent linearization
+            %%computeLinearization
+            %   computeLinearization()
+            %   Computes the parametric matrices A, B, p, C, D, and q, with
+            %   parameters (xbar,ubar), associated with the linearized system
+            %
+            %   x(k+1)/dot(x) = A(xbar,ubar) x(k) + B(xbar,ubar) u(k) + p(xbar,ubar)
+            %   y(k)          = C(xbar,ubar) x(k) + D(xbar,ubar) u(k) + q(xbar,ubar)
+            %
+            %   By default these matrices are computed using the Symbolic
+            %   Toolbox of Matlab and stored in the object as function handles.
+            %
+            %   computeLinearization('Sampled')
+            %   In this case the matrices are computed using via sampling of
+            %   the function. This mode is advised when the computation of the
+            %   symbolic jacobians are prohibitive.
+            %
+            %   WARNING: At the moment this applies only to time invariant system
+            %            The linearization is evaluated at t=0
+            
+            % TODO: time dependent linearization
             if isempty(obj.Q)
                 noiseF = {};
             else
@@ -429,16 +433,7 @@ classdef GeneralSystem < handle & InitDeinitObject
             end
         end
         
-        function stateInputTransformation(obj,Ax,Au)
-            
-            fOld = obj.f;
-            obj.f = @(t,x,u) Ax*fOld(t,Ax\x,Au\u);
-            hOld = obj.h;
-            obj.h = @(t,x) hOld(t,Ax\x);
-            
-            obj.Ax = Ax;
-            obj.Au = Au;
-        end
+        
         
         function params = getParameters(obj)
             
@@ -449,79 +444,219 @@ classdef GeneralSystem < handle & InitDeinitObject
                 'StateEquation', obj.f, ...
                 'OutputEquation',obj.h, ...
                 'Q',obj.Q,...
-                'R',obj.R
+                'R',obj.R,...
+                'InitialConditions',obj.initialConditions...
                 ...'LinearizationMatrices',{obj.A,obj.B,obj.p,obj.C,obj.D,obj.q}...
                 };
+        end
+        
+        function preCondition(obj,tBar,xBar,uBar,diagonalMode,l)
+        %% Precondition the optimization problem for l around the point
+        % xHat and uHat   TODO:test
+        
+       
+            %% Compute hessians
+            %TODO: use eall the stage cost
+            Qx = jacobianSamples(@(xBarInner)jacobianSamples(@(x)l(tBar,x,uBar),xBarInner),xBar);
+            Qu = jacobianSamples(@(uBarInner)jacobianSamples(@(u)l(tBar,xBar,u),uBarInner),uBar);
+            Qt = jacobianSamples(@(tBarInner)jacobianSamples(@(t)l(t,xBar,uBar),tBarInner),tBar);
+            %x = getSymbolicRealVariable('x',3);
+            %u = getSymbolicRealVariable('u',2);
+            %jacobian(jacobian(obj.stageCost(x,uBar),x),x)
+            
+            %% Compute conditioners
+            dimNullx = length(Qx)-rank(Qx);
+            [Ux,Sx,Vx]=svd(Qx);
+            
+            diagSx = diag(Sx);
+            diagSx(diagSx==0) = ones(size(diagSx(diagSx==0)));
+            Sx = diag(diagSx);
+            
+            dimNullu = length(Qu)-rank(Qu);
+            [Uu,Su,Vu]=svd(Qu);
+            
+            diagSu = diag(Su);
+            diagSu(diagSu==0)= ones(size(diagSu(diagSu==0)));
+            Su = diag(diagSu);
+            
+            
+            dimNullt = length(Qt)-rank(Qt);
+            [Ut,St,Vt]=svd(Qt);
+            
+            diagSt = diag(St);
+            diagSt(diagSt==0) = ones(size(diagSt(diagSt==0)));
+            St = diag(diagSt);
+            
+            if dimNullt == 0
+                At = sqrt(St)*Vt';
+            else
+                At =[];
+            end
+            if dimNullx == 0
+                Ax = sqrt(Sx)*Vx';
+            else
+                Ax =[];
+            end
+            if dimNullu == 0
+                Au = sqrt(Su)*Vu';
+            else
+                Au =[];
+            end
+            
+%             if (nargin >3)&&diagonalMode
+%                 %Closest diagonal version (to ckeep the box sets, boxes)
+%                 Ax = diag(diag(chol(Ax'*Ax)));
+%                 Au = diag(diag(chol(Au'*Au)));
+%                 At = diag(diag(chol(At'*At)));
+%             end
+            
+            obj.changeOfCoordinate(Ax,[],Au,[],At,[]);
+            
         end
         
         function changeOfCoordinate(obj,varargin)
             %changeOfCoordinate Perform a change of state and/or input coordinate
             %
             % The new system are will be expressed in the new state/input coordinate frame
-            % x' = Ax+b
-            % u' = Cu+d
+            % x' = A x+b
+            % u' = C u+d
+            % t' = e u+f
             %
             % Calling the function:
             %
-            % sys.changeOfCoordinate(A,b,C,d)
+            % sys.changeOfCoordinate(A,b,C,d,e,f)
             %
             % Example:
             % -----------------------------------------------------------------
             % sys = CtSystem(...
-            %     'StateEquation' ,@(x,u) x+u,'nx',1,'nu',1,...
-            %     'OutputEquation',@(x,u) x-u,'ny',1);
+            %     'StateEquation' ,@(t,x,u) t + x+u,'nx',1,'nu',1,...
+            %     'OutputEquation',@(t,x) t + x,'ny',1);
             %
-            % xDot = sys.f(3,7) % 10
-            % y    = sys.h(3,7) % -4
+            % xDot = sys.f(1,3,7) % 11
+            % y    = sys.h(1,3)   % 4
             %
-            % % x' = x+2, u' = 2*u+4
+            % % x' = x+2, u' = 2*u+4, t' = 2*t-1
             %
-            % sys.changeOfCoordinate(1,2,2,4);
+            % sys.changeOfCoordinate(1,2,2,4,2,-1);
             %
             %
-            % % \dot{x'} = x+u = x'-2 + (1/2)u'-2
-            % % y        = x-u = x'-2 - (1/2)u'+2
+            % % \dot{x'} = t+x+u = (1/2)(t'+1) + x'- 2 + (1/2)u'-2
+            % % y        = t+x-u = (1/2)(t'+1) + x'- 2
             %
-            % xDot = sys.f(3,7) % 3-2 + (1/2)7 -2 = 2.5
-            % y    = sys.h(3,7) % 3-2 - (1/2)7 +2 = -0.5
+            % xDot = sys.f(1,3,7) % (1/2)(1+1) + 3-2 + (1/2)7 -2 = 3.5
+            % y    = sys.h(1,3)   % (1/2)(1+1) + 3-2  = 2
             % -----------------------------------------------------------------
             
             A = eye(obj.nx);
             b = zeros(obj.nx,1);
             C = eye(obj.nu);
             d = zeros(obj.nu,1);
+            e = 1;
+            f = 0;
             
-            if nargin >= 2 && not(isempty(varargin{1}))
+            if nargin > 1 && not(isempty(varargin{1}))
                 A = varargin{1};
             end
-            if nargin >= 3 && not(isempty(varargin{2}))
+            if nargin > 2 && not(isempty(varargin{2}))
                 b = varargin{2};
             end
             
-            if nargin >= 4 && not(isempty(varargin{3}))
+            if nargin > 3 && not(isempty(varargin{3}))
                 C = varargin{3};
             end
             
-            if nargin >= 5 && not(isempty(varargin{4}))
+            if nargin > 4 && not(isempty(varargin{4}))
                 d = varargin{4};
+            end
+            
+            if nargin > 5 && not(isempty(varargin{5}))
+                e = varargin{5};
+            end
+            
+            if nargin > 6 && not(isempty(varargin{6}))
+                f = varargin{6};
             end
             
             if not(isempty(obj.f))
                 fOld = obj.f;
-                obj.f = @(t,x,u) A*fOld(t,A\(x-b),C\(u-d));
-                obj.cA = A;
-                obj.cb = b;
+                obj.f = @(t,x,u) A*fOld(e\(t-f),A\(x-b),C\(u-d));
             end
             
             if not(isempty(obj.h))
                 hOld = obj.h;
-                obj.h = @(t,x) hOld(t,A\(x-b),C\(u-d));
-                obj.cC = C;
-                obj.cd = d;
+                obj.h = @(t,x) hOld(e\(t-f),A\(x-b));
             end
             
+            obj.cA = A;
+            obj.cb = b;
+            obj.cC = C;
+            obj.cd = d;
+            obj.ce = e;
+            obj.cf = f;
+            
         end
-        
+%% vertcat   
+% function testVertcat
+%     clc;close all; clear all;
+% 
+%     v1 = Unicycle();
+%     c1 = UniGoToPoint([1;1]);
+% 
+%     v2 = Unicycle();
+%     c2 = UniGoToPoint(-[1;1]);
+% 
+%     v12 = [v1;v2];
+%     v12.controller = InlineController(@(t,x) [c1.computeInput(t,x(1:3));
+%                                               c2.computeInput(t,x(4:6)) ] );
+%     v12.initialConditions = [0;0;0;0;0;0];
+%     dt = 0.1;
+%     va = VirtualArena(v12,...
+%           'StoppingCriteria'  ,@(i,as)i>50/dt,...
+%           'StepPlotFunction'  ,@ someStepPlotFunction, ...
+%           'DiscretizationStep',dt,...
+%           'PlottingFrequency' ,1/dt); 
+%     va.run()
+% end
+% 
+% function h = someStepPlotFunction(systemsList,log,oldHandles,k)
+%     x = log{1}.stateTrajectory(:,1:k-1);
+%     h(1) = plot(x(1,:),x(2,:)); hold on 
+%     h(2) = plot(x(4,:),x(5,:));
+% end
+        function ret = vertcat(a,b)
+            
+            if not(isa(a,'GeneralSystem') & isa(b,'GeneralSystem'))
+                error(getMessage('GeneralSystem:vercat'));
+            end
+            
+            if isa(a,'CtSystem')
+            
+            ret = CtSystem(...
+                'nx',a.nx+b.nx,...
+                'ny',a.ny+b.ny,...
+                'nu',a.nu+b.nu,...
+                'StateEquation', @(t,x,u)  [a.f(t,x(1:a.nx),u(1:a.nu));b.f(t,x(a.nx+1:a.nx+b.nx),u(a.nu+1:a.nu+b.nu))]...
+                );
+            elseif isa(a,'DtSystem')
+                ret = DtSystem(...
+                'nx',a.nx+b.nx,...
+                'ny',a.ny+b.ny,...
+                'nu',a.nu+b.nu,...
+                'StateEquation', @(t,x,u)  [a.f(t,x(1:a.nx),u(1:a.nu));b.f(t,x(a.nx+1:a.nx+b.nx),u(a.nu+1:a.nu+b.nu))]);
+            else
+                error(getMessage('GeneralSystem:vercat2'));
+            end
+            
+            if not(isempty(a.h)) && not(isempty(b.h))
+                ret.h =  @(t,x) [a.h(t,x(1:a.nx));b.h(t,x(a.nx+1:a.nx+b.nx))];
+            elseif  not(isempty(a.h)) &&  isempty(b.h)
+                ret.h =  @(t,x) a.h(t,x(1:a.nx));
+            elseif not(isempty(b.h)) &&  isempty(a.h)
+                ret.h =  @(t,x) b.h(t,x(a.nx+1:a.nx+b.nx));
+            end
+            
+
+        end
         
         
     end

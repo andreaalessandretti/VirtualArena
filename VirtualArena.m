@@ -86,6 +86,18 @@ classdef VirtualArena < handle
         %
         %   oldHandles is a vectors with the plot handles of the plots executed at
         %   previous step and newHandles contains the new plot handles.
+        %
+        %   e.g.
+        % function h = stepPlotMass(systemsList,log,oldHandles,k)
+        % 
+        %     if not(oldHandles == 0)
+        %       delete(oldHandles)
+        %     end
+        %     
+        %     x = log{1}.stateTrajectory(:,1:k-1);
+        %     h = plot(x(1,:),x(2,:));
+        % 
+        % end
         stepPlotFunction
         
         %initPlotFunction is a function handle without parameters executed at the
@@ -326,13 +338,13 @@ classdef VirtualArena < handle
                         obj.systemsList{ia}.controller.x = nextXc;
                         
                     elseif isa(obj.systemsList{ia}.controller,'DtSystem') %DtController
-
+                        
                         xc = obj.systemsList{ia}.controller.x;
                         
                         nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:});
                         
                         u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
-    
+                        
                         obj.systemsList{ia}.controller.x = nextXc;
                         
                         
@@ -388,13 +400,13 @@ classdef VirtualArena < handle
                     if isa(obj.systemsList{ia}.stateObserver,'CtSystem')
                         
                         xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]),xObs,obj.discretizationStep);
-                         obj.systemsList{ia}.stateObserver.x = xObsNext;
-                 
+                        obj.systemsList{ia}.stateObserver.x = xObsNext;
+                        
                     elseif isa(obj.systemsList{ia}.stateObserver,'DtSystem')
                         
                         xObsNext = obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]);
                         obj.systemsList{ia}.stateObserver.x = xObsNext;
-                          
+                        
                     end
                     
                     obj.systemsList{ia}.x = nextX;
@@ -402,7 +414,7 @@ classdef VirtualArena < handle
                     obj.appendLogs(obj.systemsList{ia},u,ia,i);
                 end
                 
-               
+                
                 
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(i,obj.plottingFrequency)==0
@@ -564,7 +576,6 @@ classdef VirtualArena < handle
                     
                     switch varargin{parameterPointer}
                         
-                        
                         case 'StoppingCriteria'
                             
                             obj.stoppingCriteria = varargin{parameterPointer+1};
@@ -661,12 +672,24 @@ classdef VirtualArena < handle
                 
                 if iInitialCondition %% Multiple initial conditions
                     
+                    if isempty(obj.systemsList{i}.initialConditions{iInitialCondition})
+                        error(getMessage('VA:emptyInitialCon'));
+                    end
+                    
                     % Log initial stateof the system
                     obj.systemsList{i}.x = obj.systemsList{i}.initialConditions{iInitialCondition};
                     
                     % Log initial state of the observer
                     if not(isempty(obj.systemsList{i}.stateObserver))
+                        
+                        if isempty(obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition})
+                            error(getMessage('VA:emptyInitialCon'));
+                        end
+                        
                         obj.systemsList{i}.stateObserver.x = obj.systemsList{i}.stateObserver.initialConditions{iInitialCondition};
+                        
+                        
+                        
                     end
                     
                     % Log initial state of the controller
@@ -677,10 +700,25 @@ classdef VirtualArena < handle
                             error(getMessage('VirtualArena:NotEnoughInitialConditionsController'));
                         end
                         
+                        if isempty(obj.systemsList{i}.controller.initialConditions{iInitialCondition})
+                            error(getMessage('VA:emptyInitialCon'));
+                        end
+                        
                         obj.systemsList{i}.controller.x = obj.systemsList{i}.controller.initialConditions{iInitialCondition};
+                        
+                        if isempty(obj.systemsList{i}.controller.x)
+                            error(getMessage('VA:emptyInitialCon'));
+                        end
+                        
                     end
                     
                 else
+                    
+                    if isempty(obj.systemsList{i}.initialConditions)
+                        error(getMessage('VA:emptyInitialCon'));
+                    end
+                    
+                    
                     % Log the ith initial state of the system
                     obj.systemsList{i}.x = obj.systemsList{i}.initialConditions;
                     

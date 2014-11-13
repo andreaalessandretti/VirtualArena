@@ -148,6 +148,21 @@ switch MessageCode
     case 'BoxSet:ini2sizemismatch'
         
         message = 'The size of the arguments must match.';
+     case 'GeneralSystem:vercat'
+        
+        message = 'Both elements should belong to the class GeneralSystem.';
+        
+    case 'GeneralSystem:vercat2'
+        
+        message = 'Only CtSystem and DtSystem supported for vercat.';
+       
+    case 'VA:emptyInitialCon'
+        
+        message = 'Empty initial conditions.';
+        
+    case 'FminconMpcOpSolver:NoMpcOp'
+        
+        message = 'The field MpcOp is requried.';
         
     otherwise
         

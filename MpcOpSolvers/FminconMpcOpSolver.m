@@ -2,6 +2,19 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
     %FminconMpcOpSolver implementation of a MpcOpSolver using matlab fmincon
     %   function.
     %
+    %   In order to use specific setting use the 'SolverOptions' as in the
+    %   following example:
+    %
+    %   ...
+    %   opSolver = FminconMpcOpSolver('MpcOp',op);
+    % 
+    %   sys.controller = MpcController(...
+    %       'MpcOp'                 , op,...
+    %       'MpcOpSolver'           , opSolver,...
+    %       'MpcOpSolverParameters' , {'SolverOptions', optimset('Algorithm','sqp','Display','notify','MaxIter',4)} ...
+    %     );
+    %   ...
+    %
     %   See also MpcOpSolver
     properties
         
@@ -50,6 +63,9 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
             end
             
+            if isempty(obj.mpcOp)
+                error(getMessage('FminconMpcOpSolver:NoMpcOp'));
+            end
             
         end
         

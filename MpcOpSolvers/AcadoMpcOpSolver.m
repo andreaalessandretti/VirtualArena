@@ -169,10 +169,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %Warm start
             
             
-            t = 0:obj.stepSize:mpcOp.horizonLength-obj.stepSize;
+            t = t0+0:obj.stepSize:mpcOp.horizonLength-obj.stepSize;
             if not(isempty(warmStart))
                 
-                InitControl =  [t',warmStart.u'];
+                InitControl =  [t';warmStart.u'];
                 
             else
                 
@@ -182,8 +182,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             end
             
             statesList = num2str(1:length(x0),', x0(%d)');
-            statesList = statesList(2:end);
-            statesList = ['t0, ',statesList];
+            statesList = ['t0 ',statesList];
             tic
             
             eval(sprintf('out = %s_RUN(%s,InitControl);',obj.acadoProblemName,statesList));
