@@ -1,11 +1,12 @@
-classdef EkfFilter < DtSystem
+classdef EkfFilter < DtSystem & StateObserver
     %EkfFilter Extended Kalman Filter
     %
-    % filter = EkfFiler('Property1',PropertyValue1,'Property2',PropertyValue2,...)
+    % filter = EkfFiler(sys, 'Property1',PropertyValue1,'Property2',PropertyValue2,...)
+    %
+    % where sys is the CtSystem used to design the filter.
     %
     % Properties
     %
-    % System                     - Supported systems : DtSystem
     % InitialStateEstimate
     %
     % InitialCovarianceMatrix
@@ -54,6 +55,9 @@ classdef EkfFilter < DtSystem
         Rekf
         
         system
+        
+        inputDependentOutput = 0;
+        
     end
 
     
@@ -62,7 +66,7 @@ classdef EkfFilter < DtSystem
         function obj = EkfFilter(sys,varargin)
             
             if not(isa(sys,'DtSystem'))
-                error('EkfFilter supports DtSystem only.')
+                error('EkfFilter is only for DtSystem.')
             end
             
             obj = obj@DtSystem(...
@@ -72,7 +76,7 @@ classdef EkfFilter < DtSystem
                 'OutputEquation',@(t,xP)xP(1:sys.nx),varargin{:});
             
             obj.system = sys;
-            obj.f      = @(t,xP,StUz)obj.ekfEquations(t,StUz(1:sys.nu),xP,StUz(sys.nu+1:end));
+            obj.f      = @(t,xP,StUz)obj.prediction(t,StUz(1:sys.nu),xP);
             
             if isempty(obj.system.A) || isempty(obj.system.B) || isempty(obj.system.p) || isempty(obj.system.q) || isempty(obj.system.C) ||isempty(obj.system.D)
                 disp('Warning: Linearization not found, computing linearization - ');
@@ -115,59 +119,96 @@ classdef EkfFilter < DtSystem
                 
             end
             
+            if nargin(sys.h) == 3 % The output is input dependent
+                obj.inputDependentOutput = 1;
+            end
+            
+            
         end
         
         
-        function  xNext = ekfEquations(obj,t,u,xP,z) % Prediction-Update Form from i-1 to i
+        function  xNext = prediction(obj,t,u,xP) 
+            
+            sysnx = obj.system.nx;
+            xHat  = xP(1:sysnx);
+            P     = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
+            
+            A     = obj.system.A(t,xHat,u);
+            Q     = obj.Qekf;
             
             
+            xHat = obj.system.f(t,xHat,u);
+            P    = A*P*A' + Q;
             
-            sysnx       = obj.system.nx;
-            xim1_im1    = xP(1:sysnx);
-            Pim1_im1    = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
-            [xi_i,Pi_i] = obj.getUpdatedEstimate(t,xim1_im1,Pim1_im1,z,u);
-            
-            
-            %% Update Trajectories
             xNext                        = zeros(sysnx+sysnx^2,1);
-            xNext(1:sysnx)               = xi_i;
-            xNext(sysnx+1:sysnx+sysnx^2) = reshape(Pi_i,sysnx^2,1);
+            xNext(1:sysnx)               = xHat;
+            xNext(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
             
         end
         
-        function [xi_i,Pi_i] = getUpdatedEstimate(obj,t,xim1_im1,Pim1_im1,z,u)
+        
+        function newXObs = preInputUpdate(obj,t,xP,z)
             
+            newXObs = xP;
             
-            A = obj.system.A(xim1_im1,u);
-            Q = obj.Qekf;
-            R = obj.Rekf;
-            
-            %% Filter Equation
-            
-            % Prediction
-            if isempty(obj.system.Q)
-                xi_im1 = obj.system.f(t,xim1_im1,u);
-            else
-                xi_im1 = obj.system.f(t,xim1_im1,u,zeros(size(obj.system.Q,1),1) );
+            if not(obj.inputDependentOutput)
+                
+                sysnx   = obj.system.nx;
+                sysnu   = obj.system.nu;
+                
+                R       = obj.Rekf;
+                
+                xHat    = xP(1:sysnx);
+                P       = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
+        
+                inn = z-obj.system.h(t,xHat);
+
+                % Since the output is not input dependent we can set an
+                % arbitrary value of u
+                C    = obj.system.C(t,xHat,zeros(sysnu,1)); 
+                
+                S    = C*P*C' + R;
+                K    = P*C'/S;
+                
+                xHat = xHat + K*inn;
+                P    = (eye(length(xHat)) - K*C)*P;
+                
+                newXObs                        = zeros(sysnx+sysnx^2,1);
+                newXObs(1:sysnx)               = xHat;
+                newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
             end
-            
-            Pi_im1 = A*Pim1_im1*A' + Q;
-            
-            % Update
-            
-            if isempty(obj.system.R)
-                inn = z-obj.system.h(t,xi_im1);
-            else
-                inn = z-obj.system.h(t,xi_im1,zeros(size(obj.system.R,1),1) );
-            end
-            
-            C    = obj.system.C(xi_im1,u);
-            S    = C*Pi_im1*C' + R;
-            K    = Pi_im1*C'*/S;
-            xi_i = xi_im1 + K*inn;
-            Pi_i = (eye(length(xi_im1)) - K*C)*Pi_im1;
             
         end
+        
+        function  newXObs = postInputUpdate(obj,t,xP,z,u)
+            
+            newXObs = xP;
+            R       = obj.Rekf;
+            
+            if obj.inputDependentOutput
+                
+                sysnx   = obj.system.nx;
+                xHat    = xP(1:sysnx);
+                P       = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
+
+                inn  = z-obj.system.h(t,xHat,u);
+
+                C    = obj.system.C(t,xHat,u) 
+                
+                S    = C*P*C' + R;
+                K    = P*C'/S;
+               
+                xHat = xHat + K*inn;
+                P    = (eye(length(xHat)) - K*C)*P;
+                
+                newXObs                        = zeros(sysnx+sysnx^2,1);
+                newXObs(1:sysnx)               = xHat;
+                newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
+                
+            end
+        end
+        
+        
         
     end
 end

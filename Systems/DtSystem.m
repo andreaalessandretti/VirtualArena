@@ -79,19 +79,12 @@ classdef DtSystem < GeneralSystem
                 
                 indexF = find(strcmp(superClassParameters, 'StateEquation'));
                 
-                if isempty(ctSys.Q)
                     if nargin == 3
                         superClassParameters{indexF +1} = @(t,x,u) varargin{3}.integrate(@(y)ctSys.f(t,y,u),x,dt);
                     else
                         superClassParameters{indexF +1} = @(t,x,u) RK4.integrate(@(y)ctSys.f(t,y,u),x,dt);
                     end
-                else
-                    if nargin == 3
-                        superClassParameters{indexF +1} = @(t,x,u,v) varargin{3}.integrate(@(y)ctSys.f(t,y,u,v),x,dt);
-                    else
-                        superClassParameters{indexF +1} = @(t,x,u,v) RK4.integrate(@(y)ctSys.f(t,y,u,v),x,dt);
-                    end
-                end
+               
                 
                 %superClassParameters{indexF +1} = @(x,u) RK4.integrate(@(y)ctSys.f(y,u),x,dt);
                 

@@ -55,6 +55,8 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
         
         system
         
+        inputDependentOutput = 0;
+        
     end
     
     
@@ -119,6 +121,11 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
                 
             end
             
+            if nargin(obj.system.h)==3 
+                obj.inputDependentOutput = 1;
+            end
+            
+                
         end
         
         
@@ -131,8 +138,13 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
             
             P = reshape( xP(nx+1:nx+nx^2),nx,nx);
             
-            A = obj.system.A(x,u);
-            C = obj.system.C(x,u);
+            A = obj.system.A(t,x,u);
+            if nargin(obj.system.C)== 2
+                C = obj.system.C(t,x);
+            elseif nargin(obj.system.C)== 3
+                C = obj.system.C(t,x,u);
+            end
+            
             Q = obj.Qekf;
             R = obj.Rekf;
             f = obj.system.f;
@@ -140,17 +152,15 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
             
             K    = P*C'/R;
             
-            if nargin(h)==3
-                y = h(t,x,zeros(ny,1));
+            if nargin(h)==3 
+                y = h(t,x,u);
             else
                 y = h(t,x);
             end
             
-            if nargin(f)==4
-                fx = f(t,x,u,zeros(nx,1));
-            else
-                fx = f(t,x,u);
-            end
+            
+            
+            fx = f(t,x,u);
             
             inn  = (z-y);
             xDot = fx + K*inn;

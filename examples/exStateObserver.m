@@ -3,29 +3,34 @@
 clc;clear all;close all;
 
 % System discretization
-dt  = 0.1;
+dt  = 0.05;
 
-v1 = Unicycle(...
-    'Controller'       , UniGoToPoint([5;5]),...
-    'InitialConditions', zeros(3,1),...
-    'OutputEquation'   , @(t,x,w) x + w, 'ny',3,... % Add an observation model
-    'Q', 0.1*eye(3), 'R' , 0.1*eye(3));         
+
+Qobs = 0.5*eye(3);
+Robs = 5*eye(3);
+
+
+vehicleModel = Unicycle('OutputEquation', @(t,x) x, 'ny',3 );         
+
+vehicleReal = CtSystem(...
+    'StateEquation'    , @(t,x,u) vehicleModel.f(t,x,u) + chol(Qobs)*randn(vehicleModel.nx,1),...
+    'InitialConditions', randn(3,1),...
+    'OutputEquation'   , @(t,x) x + chol(Robs)*randn(vehicleModel.ny,1), 'ny',3 ... % Add an observation model
+    );  
+
 
 
 observer = 'ebkf';
 
-Qobs = eye(3);
-Robs = 20*eye(3);
-
 switch observer
     case 'ekf' %%Extended Kalman Filter
         
-        dtV = DtSystem(v1,dt);
+        dtVehicleModel = DtSystem(vehicleModel,dt);
         
         %see help GeneralSystem.computeLinearization
-        dtV.computeLinearization('Sampled');
+        dtVehicleModel.computeLinearization('Sampled');
         
-        obs = EkfFilter(dtV,...
+        obs = EkfFilter(dtVehicleModel,...
             'StateNoiseMatrix'  , dt*Qobs,...
             'OutputNoiseMatrix' , (1/dt)*Robs,...
             'InitialConditions' , [2*ones(3,1);
@@ -34,9 +39,9 @@ switch observer
     case 'ebkf' %% Extended Bucy-Kalman Filter
         
         %see help GeneralSystem.computeLinearization
-        v1.computeLinearization('Sampled');
+        vehicleModel.computeLinearization('Sampled');
         
-        ebkf = EkbfFilter(v1,...
+        ebkf = EkbfFilter(vehicleModel,...
             'StateNoiseMatrix'  , Qobs,...
             'OutputNoiseMatrix' , Robs,...
             'InitialConditions' , [2*ones(3,1);
@@ -44,12 +49,16 @@ switch observer
         obs = ebkf;
 end
 
-v1.stateObserver = obs;
+vehicleReal.stateObserver = obs;
 
-a = VirtualArena(v1,...
+vehicleReal.controller = UniGoToPoint([50;50]);
+
+
+a = VirtualArena(vehicleReal,...
     'StoppingCriteria'   , @(i,agentsList)i>300,...
     'StepPlotFunction'   , @stepPlotFunctionEkf, ...
     'PlottingFrequency'  , 10,...
-    'DiscretizationStep' , dt);
+    'DiscretizationStep' , dt...
+    );
 
 logs = a.run();

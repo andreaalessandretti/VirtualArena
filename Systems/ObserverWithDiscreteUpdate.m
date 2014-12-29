@@ -1,14 +1,12 @@
 
-classdef StateObserver < handle
-%%StateObserver abstract class
+classdef ObserverWithDiscreteUpdate < handle
+%ObserverWithDiscreteUpdate abstract class
+% 
+% abstract method: newX = update(obj,t,x,u)
 %
-% newXObs = preInputUpdate(t,xObs,z)    Updates the state before the input is
-%                                       computed
-%
-% newXObs = postInputUpdate(t,xObs,z,u) Updates the state after the input is
-%                                       computed
-%
-
+% This method is used to update the state after the computation of the input
+% and before the input is applied to the plant.
+ 
 % This file is part of VirtualArena.
 %
 % Copyright (c) 2014, Andrea Alessandretti
@@ -49,13 +47,7 @@ classdef StateObserver < handle
     
     methods 
         
-        function newXObs = preInputUpdate(t,xObs,z)
-            newXObs = xObs;
-        end
-        
-        function newXObs = postInputUpdate(t,xObs,z,u)
-            newXObs = xObs;
-        end
+    	newX = update(obj,t,x,u)
         
     end
 end

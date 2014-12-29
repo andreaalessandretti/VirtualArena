@@ -7,6 +7,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
     % AcadoNIntervals    (Default 10)
     % DisplayAcadoCode   (Default 1)
     % StepSize           Defines the acado OCP intervals as HorizonLength/StepSize
+    % MpcOp              MpcOp to solve
     %
     % AcadoOptimizationAlgorithmOptions {'MAX_NUM_ITERATIONS',10,...}
     % AcadoMinimizeLSQ    if set to 1, l(x,u) = |stageCost(x,u)|^2 and the
@@ -169,10 +170,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %Warm start
             
             
-            t = t0+0:obj.stepSize:mpcOp.horizonLength-obj.stepSize;
+            t = t0*ones(1,(mpcOp.horizonLength-obj.stepSize)/obj.stepSize+1) + (0:obj.stepSize:(mpcOp.horizonLength-obj.stepSize));
             if not(isempty(warmStart))
                 
-                InitControl =  [t';warmStart.u'];
+                InitControl =  [t',warmStart.u'];
                 
             else
                 

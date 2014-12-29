@@ -15,6 +15,7 @@ classdef VirtualArena < handle
     % discretizationStep - discretization step used to discretize continuous
     %                      time systems, if any
     % sensorsNetwork     - definition of the sensor network
+    % integrator         - Integration method ( RKF(), EulerForward() )
     %
     % VirtualArena Methods:
     %
@@ -31,6 +32,8 @@ classdef VirtualArena < handle
     %     'SensorsNetwork'    , {s1,A},...
     %     'DiscretizationStep',dt,...
     %     'PlottingFrequency' ,1/dt);
+    %
+    %   ret = va.run();
     %
     % See also handle
     
@@ -89,14 +92,14 @@ classdef VirtualArena < handle
         %
         %   e.g.
         % function h = stepPlotMass(systemsList,log,oldHandles,k)
-        % 
+        %
         %     if not(oldHandles == 0)
         %       delete(oldHandles)
         %     end
-        %     
+        %
         %     x = log{1}.stateTrajectory(:,1:k-1);
         %     h = plot(x(1,:),x(2,:));
-        % 
+        %
         % end
         stepPlotFunction
         
@@ -360,12 +363,7 @@ classdef VirtualArena < handle
                     
                     
                     %% Cv vs Dt System
-                    if isempty(obj.systemsList{ia}.Q)
-                        parameterF = {u};
-                    else
-                        cQ = chol(obj.systemsList{ia}.Q)';
-                        parameterF = {u,cQ*randn(length(cQ),1)};
-                    end
+                    parameterF = {u};
                     
                     if isa(obj.systemsList{ia},'CtSystem')
                         
@@ -383,28 +381,45 @@ classdef VirtualArena < handle
                         error(getMessage('VirtualArena:UnknownSystemType'));
                     end
                     
+                    
+                    %% Observer updates
+                    
                     if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
                         
-                        if isempty(obj.systemsList{ia}.R)
-                            parameterH = {timeInfo,nextX};
+                        %% Update using the computed input
+                        
+                        if nargin(obj.systemsList{ia}.h)==2
+                            z = obj.systemsList{ia}.h(timeInfo,x);
+                        elseif nargin(obj.systemsList{ia}.h)==3
+                            z = obj.systemsList{ia}.h(timeInfo,x,u);
                         else
-                            cR = chol(obj.systemsList{ia}.R)';
-                            parameterH = {timeInfo,nextX,cR*randn(length(cR),1)};
+                            error('The output function takes as input (t,x) or (t,x,u)');
                         end
                         
-                        z = obj.systemsList{ia}.h(parameterH{:});
+                        if(isa(obj.systemsList{ia}.stateObserver,'StateObserver'))
+                            xObs = obj.systemsList{ia}.stateObserver.postInputUpdate(timeInfo,xObs,z,u);
+                        end
                         
-                    end
-                    
-                    %% Cv vs Dt Observer
-                    if isa(obj.systemsList{ia}.stateObserver,'CtSystem')
+                        %% Prediction
+                        if isa(obj.systemsList{ia}.stateObserver,'CtSystem')
+                            xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]),xObs,obj.discretizationStep);
+                        elseif isa(obj.systemsList{ia}.stateObserver,'DtSystem')
+                            xObsNext = obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]);
+                        end
                         
-                        xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]),xObs,obj.discretizationStep);
-                        obj.systemsList{ia}.stateObserver.x = xObsNext;
+                        %% Update of the predicted state (without using the input)
+                        if(isa(obj.systemsList{ia}.stateObserver,'StateObserver')) &&  nargin(obj.systemsList{ia}.h)==2
+                            
+                            if isa(obj.systemsList{ia},'CtSystem')
+                                timeInfoNext = (i+1)*obj.discretizationStep;
+                            elseif isa(obj.systemsList{ia},'DtSystem')
+                                timeInfoNext = i+1;
+                            end
+                            
+                            zNext    = obj.systemsList{ia}.h(timeInfoNext,nextX);
+                            xObsNext = obj.systemsList{ia}.stateObserver.preInputUpdate(timeInfoNext,xObsNext,zNext);
+                        end
                         
-                    elseif isa(obj.systemsList{ia}.stateObserver,'DtSystem')
-                        
-                        xObsNext = obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]);
                         obj.systemsList{ia}.stateObserver.x = xObsNext;
                         
                     end
