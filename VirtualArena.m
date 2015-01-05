@@ -461,9 +461,6 @@ classdef VirtualArena < handle
                 
             end
             
-            
-            obj.cutLogVector('stateTrajectory',i-1);
-            obj.cutLogVector('inputTrajectory',i-2);
             obj.cutExtraLogVector(i-1);
             log = obj.log;
         end
@@ -526,11 +523,11 @@ classdef VirtualArena < handle
                     if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(obj.systemsList{iAgent}))
                         
                         fildname = logObjs{j}.name;
-                        i = i + logObjs{j}.shift;
-                        if not(i>=size(obj.log{iAgent}.(fildname),2))
+                        iS = i + logObjs{j}.shift;
+                        if not(iS>=size(obj.log{iAgent}.(fildname),2))
                             newLog = obj.log{iAgent}.(fildname);
                             
-                            obj.log{iAgent}.(fildname) =  newLog(:,1:i);
+                            obj.log{iAgent}.(fildname) =  newLog(:,1:iS);
                             
                         end
                     end
