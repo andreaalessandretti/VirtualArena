@@ -436,7 +436,7 @@ classdef VirtualArena < handle
                     
                     plot_handles  = obj.stepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
                     
-                    if isa(obj.handlePostFirstPlot,'function_handle')&&i==2
+                    if isa(obj.handlePostFirstPlot,'function_handle') && i==2
                         obj.handlePostFirstPlot();
                     end
                     
@@ -446,6 +446,21 @@ classdef VirtualArena < handle
                         aviobj = addframe(aviobj,F);
                     end
                     
+                elseif obj.monodimentionalSystems()
+                    
+                    plot_handles  = obj.oneDStepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
+                    
+                    if isa(obj.handlePostFirstPlot,'function_handle')&&i==2
+                        obj.handlePostFirstPlot();
+                    elseif i==2
+                        obj.oneDPostFirstPlot();
+                    end
+                    
+                    drawnow
+                    if ischar(obj.videoName)
+                        F = getframe(gcf);
+                        aviobj = addframe(aviobj,F);
+                    end
                 end
                 
                 
@@ -730,6 +745,12 @@ classdef VirtualArena < handle
                         error(getMessage('VA:emptyInitialCon'));
                     end
                     
+                    if not(size(obj.systemsList{i}.initialConditions,1) == obj.systemsList{i}.nx & ...
+                        size(obj.systemsList{i}.initialConditions,2) ==1 )
+                    
+                        error(getMessage('VA:wrongSizeInitialCon'));
+                    
+                    end
                     
                     % Log the ith initial state of the system
                     obj.systemsList{i}.x = obj.systemsList{i}.initialConditions;
@@ -787,7 +808,48 @@ classdef VirtualArena < handle
         end
         
         
+
+        function h = oneDStepPlotFunction(obj,systemsList,log,oldHandles,k)
+            
+            if not(oldHandles == 0)
+                delete(oldHandles)
+            end
+            for i= length(systemsList)
+                dt = obj.discretizationStep;
+                x = log{i}.stateTrajectory(:,1:k-1);
+                h = plot(dt*(0:k-2),x);
+                hold on 
+                
+            end
+            
+            
+        end
+        
+        %%monodimentionalSystems returns one if the size of all the
+        %% systems is one, zero otherwise
+        function ret =  monodimentionalSystems(obj)
+            ret = 1;
+            for i = 1:length(obj.systemsList)
+                if not(obj.systemsList{i}.nx ==1)
+                    ret = 0;
+                    return;
+                end
+            end
+            
+        end
+        
+        function oneDPostFirstPlot(obj)
+            
+            xlabel('t [sec]');
+            ylabel('x');
+            grid on
+            setNicePlot
+            
+        end
+        
+        
         
     end
+    
     
 end

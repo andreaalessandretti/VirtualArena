@@ -159,6 +159,9 @@ switch MessageCode
     case 'VA:emptyInitialCon'
         
         message = 'Empty initial conditions.';
+    case 'VA:wrongSizeInitialCon'
+        
+        message = 'Wrong size of the initial conditions.';
         
     case 'FminconMpcOpSolver:NoMpcOp'
         
