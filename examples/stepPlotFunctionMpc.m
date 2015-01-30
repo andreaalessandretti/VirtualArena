@@ -13,7 +13,7 @@ function h = stepPlotFunctionMpc(agentsList,hist,plot_handles,i)
     
     for k = 1:nAgents
         
-        x = hist{k}.stateTrajectory(:,1:i-1); hold on;
+        x = hist{k}.stateTrajectory(:,1:i); hold on;
         
         h(indexPlots) = plot(x(1,:),x(2,:));
         indexPlots=indexPlots+1;

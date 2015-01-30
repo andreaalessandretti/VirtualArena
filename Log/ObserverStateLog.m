@@ -38,8 +38,8 @@ classdef ObserverStateLog < Log
         function obj = ObserverStateLog()
             
             obj = obj@Log(...
-                'observerStateTrajectory', @(sys,u)sys.stateObserver.x,...
-                'Condition', @(sys,u) not(isempty(sys.stateObserver)) &&  isa(sys.stateObserver,'GeneralSystem') );
+                'observerStateTrajectory', @(t,sys,u)sys.stateObserver.x,...
+                'Condition', @(t,sys,u) not(isempty(sys.stateObserver)) &&  isa(sys.stateObserver,'GeneralSystem') );
         
         end
         

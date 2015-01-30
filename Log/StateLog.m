@@ -36,7 +36,7 @@ classdef StateLog < Log
     methods
         function obj = StateLog()
             
-            obj = obj@Log('stateTrajectory', @(agent,u) agent.x);
+            obj = obj@Log('stateTrajectory', @(t,agent,u) agent.x);
         end
         
     end

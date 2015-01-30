@@ -1,5 +1,5 @@
-classdef InputLog < Log
-    %%StateLog logs the state
+classdef TimeLog < Log
+    %%TimeLog logs the time
     
     
     % This file is part of VirtualArena.
@@ -34,28 +34,12 @@ classdef InputLog < Log
     % either expressed or implied, of the FreeBSD Project.
 
     methods
-        function obj = InputLog()
+        function obj = TimeLog()
             
-            obj = obj@Log('inputTrajectory', @InputLog.logInput);
-        
+            obj = obj@Log('time', @(t,agent,u) t);
         end
         
     end
-    
-    methods (Static)
-        
-        function v = logInput(t,varargin)
-            sys = varargin{1};
-            if nargin == 2
-                v = zeros(sys.nu,1);
-            else
-                v = varargin{2};
-            end
-            
-        end
-        
-    end
-    
     
 end
 

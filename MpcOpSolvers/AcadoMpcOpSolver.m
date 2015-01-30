@@ -170,7 +170,8 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %Warm start
             
             
-            t = t0*ones(1,(mpcOp.horizonLength-obj.stepSize)/obj.stepSize+1) + (0:obj.stepSize:(mpcOp.horizonLength-obj.stepSize));
+            t = t0*ones(1,round((mpcOp.horizonLength-obj.stepSize)/obj.stepSize+1)) + (0:obj.stepSize:(mpcOp.horizonLength-obj.stepSize));
+            tx = t0*ones(1,round((mpcOp.horizonLength-obj.stepSize)/obj.stepSize+2)) + (0:obj.stepSize:(mpcOp.horizonLength));
             if not(isempty(warmStart))
                 
                 InitControl =  [t',warmStart.u'];
@@ -196,6 +197,9 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %The fist colum is the time, the second is the virtual time
             % and the last one is the term L
             ret.x_opt = out.STATES(:,3:end-1)';
+            
+            ret.tu_opt = t;
+            ret.tx_opt = tx;
             
             ret.acadoSolverOutput = out;
             

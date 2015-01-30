@@ -38,8 +38,8 @@ classdef ControllerStateLog < Log
         function obj = ControllerStateLog()
             
             obj = obj@Log(...
-                'controllerStateTrajectory', @(sys,u)sys.controller.x,...
-                'Condition', @(sys,u) isa(sys.controller,'GeneralSystem') );
+                'controllerStateTrajectory', @(t,sys,u)sys.controller.x,...
+                'Condition', @(t,sys,u) isa(sys.controller,'GeneralSystem') );
         
         end
         

@@ -266,7 +266,7 @@ classdef VirtualArena < handle
             
             obj.loadInitialConditions(iInitialCondition);
             
-            i = 2;
+            i = 1;
             
             plot_handles = 0;
             
@@ -274,21 +274,27 @@ classdef VirtualArena < handle
                 aviobj = avifile(strcat(obj.videoName,'.avi'),'compression','None');
             end
             
+            %% Compute time
+            if isa(obj.systemsList{1},'CtSystem')
+                timeInfo = i*obj.discretizationStep;
+            elseif isa(obj.systemsList{1},'DtSystem')
+                timeInfo = i;
+            end
             
-            obj.initLogs();
+            obj.initLogs(timeInfo);
             
-            while not( obj.stoppingCriteria(i,obj.systemsList) )
-                
-                
-                
-                for ia = 1:length(obj.systemsList) % Main loop for a single system
-                    
+            while not( obj.stoppingCriteria(timeInfo,obj.systemsList) )
+                               
+                 
                     %% Compute time
-                    if isa(obj.systemsList{ia},'CtSystem')
+                    if isa(obj.systemsList{1},'CtSystem')
                         timeInfo = i*obj.discretizationStep;
-                    elseif isa(obj.systemsList{ia},'DtSystem')
+                    elseif isa(obj.systemsList{1},'DtSystem')
                         timeInfo = i;
                     end
+                    
+                for ia = 1:length(obj.systemsList) % Main loop for a single system
+                   
                     
                     
                     %% Update current state of the systems
@@ -309,7 +315,6 @@ classdef VirtualArena < handle
                         xToController = x;
                         
                     end
-                    
                     
                     %% Classic vs Network control
                     if not(isempty(obj.sensorsNetwork))
@@ -401,6 +406,7 @@ classdef VirtualArena < handle
                         end
                         
                         %% Prediction
+                        
                         if isa(obj.systemsList{ia}.stateObserver,'CtSystem')
                             xObsNext = obj.integrator.integrate( @(xObs)obj.systemsList{ia}.stateObserver.f(timeInfo,xObs,[u;z]),xObs,obj.discretizationStep);
                         elseif isa(obj.systemsList{ia}.stateObserver,'DtSystem')
@@ -424,9 +430,11 @@ classdef VirtualArena < handle
                         
                     end
                     
+                    
+                    obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo);
+                    
                     obj.systemsList{ia}.x = nextX;
                     
-                    obj.appendLogs(obj.systemsList{ia},u,ia,i);
                 end
                 
                 
@@ -446,7 +454,7 @@ classdef VirtualArena < handle
                         aviobj = addframe(aviobj,F);
                     end
                     
-                elseif obj.monodimentionalSystems()
+                elseif obj.monodimentionalSystems() && mod(i,obj.plottingFrequency)==0
                     
                     plot_handles  = obj.oneDStepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
                     
@@ -476,7 +484,7 @@ classdef VirtualArena < handle
                 
             end
             
-            obj.cutExtraLogVector(i-1);
+            obj.cutExtraLogVector(i-1,timeInfo);
             log = obj.log;
         end
         
@@ -526,7 +534,7 @@ classdef VirtualArena < handle
             
         end
         
-        function cutExtraLogVector(obj,i)
+        function cutExtraLogVector(obj,i,t)
             
             
             for iAgent = 1:length(obj.systemsList)
@@ -535,7 +543,7 @@ classdef VirtualArena < handle
                 
                 for j = 1:length(logObjs)
                     
-                    if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(obj.systemsList{iAgent}))
+                    if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(t,obj.systemsList{iAgent}))
                         
                         fildname = logObjs{j}.name;
                         iS = i + logObjs{j}.shift;
@@ -569,14 +577,14 @@ classdef VirtualArena < handle
             
         end
         
-        function appendLogs(obj,agent,u,iAgent,i)
+        function appendLogs(obj,agent,u,iAgent,i,t)
             
             logObjs = obj.logObjs;
             
             for j = 1:length(logObjs)
                 
-                if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(agent,u))
-                    obj.appendVectorToLog(logObjs{j}.fun(agent,u)    ,iAgent,logObjs{j}.name,i + logObjs{j}.shift );
+                if isempty(logObjs{j}.condition) || (not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(t,agent,u))
+                    obj.appendVectorToLog(logObjs{j}.fun(t,agent,u)    ,iAgent,logObjs{j}.name,i + logObjs{j}.shift );
                 end
                 
             end
@@ -592,7 +600,7 @@ classdef VirtualArena < handle
                 obj.systemsList = {varargin{1}};
             end
             
-            obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog()};
+            obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog(),TimeLog()};
             parameterPointer = 2;
             
             hasParameters = length(varargin)-parameterPointer>=0;
@@ -746,10 +754,10 @@ classdef VirtualArena < handle
                     end
                     
                     if not(size(obj.systemsList{i}.initialConditions,1) == obj.systemsList{i}.nx & ...
-                        size(obj.systemsList{i}.initialConditions,2) ==1 )
-                    
+                            size(obj.systemsList{i}.initialConditions,2) ==1 )
+                        
                         error(getMessage('VA:wrongSizeInitialCon'));
-                    
+                        
                     end
                     
                     % Log the ith initial state of the system
@@ -779,7 +787,7 @@ classdef VirtualArena < handle
         end
         
         
-        function initLogs(obj)
+        function initLogs(obj,t0)
             
             
             nSystems = length(obj.systemsList);
@@ -791,11 +799,11 @@ classdef VirtualArena < handle
                 if not(isempty(logObjs))
                     for j = 1:length(logObjs)
                         
-                        if isempty(logObjs{j}.condition) || ( not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(obj.systemsList{i}))
+                        if isempty(logObjs{j}.condition) || ( not(isempty(logObjs{j}.condition)) && logObjs{j}.condition(t0,obj.systemsList{i}))
                             if not(isempty(logObjs{j}.initialization))
                                 obj.log{i}.(logObjs{j}.name) = logObjs{j}.initialization;
                             else
-                                obj.log{i}.(logObjs{j}.name) = logObjs{j}.fun(obj.systemsList{i});
+                                obj.log{i}.(logObjs{j}.name) = logObjs{j}.fun(t0,obj.systemsList{i});
                             end
                         end
                         
@@ -808,20 +816,42 @@ classdef VirtualArena < handle
         end
         
         
-
+        
         function h = oneDStepPlotFunction(obj,systemsList,log,oldHandles,k)
+            
+            dt = obj.discretizationStep;
             
             if not(oldHandles == 0)
                 delete(oldHandles)
             end
-            for i= length(systemsList)
-                dt = obj.discretizationStep;
-                x = log{i}.stateTrajectory(:,1:k-1);
-                h = plot(dt*(0:k-2),x);
-                hold on 
+            
+            nAgents = length(systemsList);
+            
+            h = zeros(1,nAgents);
+            
+            indexPlots = 1;
+            
+            for i= nAgents
                 
+                x = log{i}.stateTrajectory(:,1:k);
+                t = log{i}.time(:,1:k);
+                
+                h(indexPlots) = plot(t,x);
+                
+                indexPlots = indexPlots+1;
+                hold on
+                
+                if isa(systemsList{i}.controller,'MpcController')
+                    x_opt  = systemsList{i}.controller.lastSolution.x_opt;
+                    tx_opt = systemsList{i}.controller.lastSolution.tx_opt;
+                    
+                    h(indexPlots) = plot(tx_opt,x_opt,'--');hold on;
+                    indexPlots=indexPlots+1;
+                    
+                end
             end
             
+            pause
             
         end
         
