@@ -219,6 +219,8 @@ classdef VirtualArena < handle
             
             if isa(obj.initPlotFunction,'function_handle')
                 obj.initPlotFunction();hold on
+            elseif obj.monodimentionalSystems()
+                obj.oneDinitPlotFunction();hold on
             end
             
             if isa(obj.systemsList{1}.initialConditions,'cell')
@@ -271,7 +273,10 @@ classdef VirtualArena < handle
             plot_handles = 0;
             
             if ischar(obj.videoName)
-                aviobj = avifile(strcat(obj.videoName,'.avi'),'compression','None');
+                %aviobj = avifile(strcat(obj.videoName,'.avi'),'compression','None');
+                aviobj = VideoWriter(strcat(obj.videoName,'.avi'));
+                open(aviobj);
+                
             end
             
             %% Compute time
@@ -284,17 +289,17 @@ classdef VirtualArena < handle
             obj.initLogs(timeInfo);
             
             while not( obj.stoppingCriteria(timeInfo,obj.systemsList) )
-                               
-                 
-                    %% Compute time
-                    if isa(obj.systemsList{1},'CtSystem')
-                        timeInfo = i*obj.discretizationStep;
-                    elseif isa(obj.systemsList{1},'DtSystem')
-                        timeInfo = i;
-                    end
-                    
+                
+                
+                %% Compute time
+                if isa(obj.systemsList{1},'CtSystem')
+                    timeInfo = i*obj.discretizationStep;
+                elseif isa(obj.systemsList{1},'DtSystem')
+                    timeInfo = i;
+                end
+                
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
-                   
+                    
                     
                     
                     %% Update current state of the systems
@@ -337,7 +342,7 @@ classdef VirtualArena < handle
                     
                     if isa(obj.systemsList{ia}.controller,'CtSystem') %CtController
                         
-                        xc = obj.log{ia}.controllerStateTrajectory(:,i-1);
+                        xc = obj.log{ia}.controllerStateTrajectory(:,i);
                         
                         nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:}),xc,obj.discretizationStep);
                         
@@ -451,7 +456,8 @@ classdef VirtualArena < handle
                     drawnow
                     if ischar(obj.videoName)
                         F = getframe(gcf);
-                        aviobj = addframe(aviobj,F);
+                        %aviobj = addframe(aviobj,F);
+                        writeVideo(aviobj,F)
                     end
                     
                 elseif obj.monodimentionalSystems() && mod(i,obj.plottingFrequency)==0
@@ -467,7 +473,9 @@ classdef VirtualArena < handle
                     drawnow
                     if ischar(obj.videoName)
                         F = getframe(gcf);
-                        aviobj = addframe(aviobj,F);
+                        %aviobj = addframe(aviobj,F);
+                        %aviobj = addframe(aviobj,F);
+                        writeVideo(aviobj,F)
                     end
                 end
                 
@@ -816,42 +824,68 @@ classdef VirtualArena < handle
         end
         
         
+        function oneDinitPlotFunction(obj)
+            
+            
+            
+        end
         
         function h = oneDStepPlotFunction(obj,systemsList,log,oldHandles,k)
             
             dt = obj.discretizationStep;
             
-            if not(oldHandles == 0)
-                delete(oldHandles)
+            if iscell(oldHandles)
+                
+                delete(oldHandles{1})
+                delete(oldHandles{2})
+                
             end
             
             nAgents = length(systemsList);
             
-            h = zeros(1,nAgents);
+            hup   = zeros(1,nAgents);
+            hdown = zeros(1,nAgents);
             
-            indexPlots = 1;
+            indexPlotsUp = 1;
+            indexPlotsDown = 1;
             
             for i= nAgents
                 
                 x = log{i}.stateTrajectory(:,1:k);
+                u = log{i}.inputTrajectory(:,1:k);
+                
                 t = log{i}.time(:,1:k);
                 
-                h(indexPlots) = plot(t,x);
+                subplot(2,1,1);
                 
-                indexPlots = indexPlots+1;
-                hold on
+                hup(indexPlotsUp) = plot(t,x); hold on
+                
+                indexPlotsUp = indexPlotsUp+1;
+                
+                
+                subplot(2,1,2);
+                
+                hdown(indexPlotsDown) = plot(t,u);  hold on
+                
+                indexPlotsDown = indexPlotsDown+1;
                 
                 if isa(systemsList{i}.controller,'MpcController')
                     x_opt  = systemsList{i}.controller.lastSolution.x_opt;
+                    u_opt  = systemsList{i}.controller.lastSolution.u_opt;
+                    tu_opt = systemsList{i}.controller.lastSolution.tu_opt;
                     tx_opt = systemsList{i}.controller.lastSolution.tx_opt;
                     
-                    h(indexPlots) = plot(tx_opt,x_opt,'--');hold on;
-                    indexPlots=indexPlots+1;
+                    subplot(2,1,1);
+                    hup(indexPlotsUp) = plot(tx_opt,x_opt,'--');hold on;
+                    indexPlotsUp=indexPlotsUp+1;
+                    
+                    subplot(2,1,2);
+                    hdown(indexPlotsDown) = plot(tu_opt,u_opt,'--');hold on;
+                    indexPlotsDown=indexPlotsDown+1;
                     
                 end
             end
-            
-            pause
+            h={hup,hdown};
             
         end
         
@@ -870,9 +904,17 @@ classdef VirtualArena < handle
         
         function oneDPostFirstPlot(obj)
             
-            xlabel('t [sec]');
-            ylabel('x');
+            subplot(2,1,1);
+            title('State')
+            xlabel('t [sec]')
+            ylabel('x(t)')
             grid on
+            setNicePlot
+            
+            subplot(2,1,2);
+            title('Input')
+            xlabel('t [sec]')
+            ylabel('u(t)')
             setNicePlot
             
         end
