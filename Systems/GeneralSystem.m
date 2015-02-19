@@ -269,11 +269,14 @@ classdef GeneralSystem < handle & InitDeinitObject
             %   WARNING: At the moment this applies only to time invariant system
             %            The linearization is evaluated at t=0
             
-            if not(nargin>1)
+            methodNotSpecified = (nargin == 1);
+            
+            if methodNotSpecified
                 varargin{1} = 'Symbolic';
+                methodNotSpecified = 0;
             end
             
-            if nargin>1 & ischar( varargin{1})
+            if not(methodNotSpecified) & ischar( varargin{1})
                 
                 switch varargin{1}
                     case 'Sampled'
@@ -339,15 +342,15 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('GeneralSystem:LinearizingStateEquation'));
                             
-                            DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
+                            DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar), 'vars', {tbar,xbar,ubar});
                             
-                            obj.A = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),xbar)  ,'vars',{tbar,xbar,ubar});
+                            obj.A = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),xbar), 'vars', {tbar,xbar,ubar});
                             
-                            obj.B = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
+                            obj.B = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),ubar), 'vars', {tbar,xbar,ubar});
                             
                             %obj.p = @(t,x,u,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar);obj.A(tbar,xbar,ubar);obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
                             
-                            obj.p = matlabFunction( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbat;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
+                            obj.p = matlabFunction( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
                             
                             fprintf(getMessage('done'));
                             
@@ -359,13 +362,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             if nargin(obj.h)==2
                                 
-                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
+                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar),tbar)  ,'vars',{tbar,xbar});
                                 
-                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),xbar)  ,'vars',{tbar,xbar,ubar});
+                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar),xbar)  ,'vars',{tbar,xbar});
                                 
-                                obj.D = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbat;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
+                                obj.q = matlabFunction( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar]   ,'vars',{t,tbar,xbar});
                                 
                             elseif nargin(obj.h)==3
                                 
@@ -375,7 +376,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                                 
                                 obj.D = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
                                 
-                                obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbat;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
+                                obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
                                 
                             end
                             

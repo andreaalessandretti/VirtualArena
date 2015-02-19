@@ -192,6 +192,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             eval(sprintf('out = %s_RUN(%s,InitControl);',obj.acadoProblemName,statesList));
             %eval(sprintf('out = %s_RUN(%s,InitState,InitControl);',obj.acadoProblemName,statesList));
             
+            if not(out.CONVERGENCE_ACHIEVED)
+                disp('Attention convergence not achived ');
+            end
+            
             ret.solverTime = toc;
             
             ret.u_opt = out.CONTROLS(:,2:end)';

@@ -1,27 +1,73 @@
 
 classdef VirtualArena < handle
-    %VirtualArena simulated environment
+    %VirtualArena simulation environment
     %
-    % VirtualArena Properties:
+    % va   = VirtualArena(sysList,par1,val1,par2,val2,...)
+    % logs = va.run();
     %
-    % stoppingCriteria   - stopping criteria of the simulation
-    % systemsList        - cell containing the systems in the environment to simulate
-    % log                - logs of the simulation
-    % initPlotFunction   - plot executed at the beginning of the simulation
-    % stepPlotFunction   - plot executed every 'plottingFrequency' steps of the simulation
-    % stopPlotFunction   - plot executed at end of the simulation
-    % plottingFrequency  - use 'stepPlotFunction' every 'plottingFrequency' steps
-    % videoName          - record a video of the simulation under videoName.avi
-    % discretizationStep - discretization step used to discretize continuous
-    %                      time systems, if any
-    % sensorsNetwork     - definition of the sensor network
-    % integrator         - Integration method ( RKF(), EulerForward() )
+    % Parameters:
     %
-    % VirtualArena Methods:
+    %  'StoppingCriteria' :stop = @(t,sysList)
+    %   When this function returns true, the simulation terminates. 
+    %       t       : simulation time
+    %       sysList : the list of the systems
+    %   
+    %   e.g. 
+    %       'StoppingCriteria' ,@(t,sysList) t >10
+    %       'StoppingCriteria' ,@(t,sysList) norm(sysList{1}.x) <0.01
     %
-    % VirtualArena - constructor method
-    % run          - start the simulation
     %
+    %  'DiscretizationStep' : dt (double)
+    %   Fixed length discretization step for continuous time simulation
+    %
+    %  'StepPlotFunction' : newHandles = @(sysList,log,oldHandles,i);
+    %   Function called every 'PlottingStep' taking as inputs:
+    %       sysList    : the list of the systems
+    %       log        : the logs of the current simulation
+    %       oldHandles : a variable returned in the previous call of the 
+    %                    'StepPlotFunction' usually containing plot handles
+    %   
+    %  'InitPlotFunction' : @() (function with no parameters)
+    %   Function called before the StepPlotFunction function is called for 
+    %   the first time
+    %
+    %  'StopPlotFunction' : @(logSim,vaObj)
+    %   Function called at the end of the simulation that takes as input:
+    %       logSim : the simulation logs (i.e., returned by va.run()) 
+    %       vaObj  : a reference to the VirtualArena object.
+    %    
+    %  'HandlePostFirstPlot' : @() (function with no parameters)
+    %   Function called after the StepPlotFunction function is called for 
+    %   the first time
+    %
+    %  'PlottingStep' : dt
+    %   VirtualArena calls the 'StepPlotFunction' when mod(t,dt)==0
+    %
+    %  'VideoName' : videoName (Default : [])
+    %   If not empty, VA records a video of the simulation under videoName.avi
+    %
+    %
+    %  'SensorsNetwork' : {s1,A1,s2,A2,...} (Default : {})
+    %   with si belonging to the class Sensor() and Ai being the associated
+    %   Adjacency matrix. 'SensorsNetwork' Defines the communication between
+    %   systems, specifically each agent receives measurements from the
+    %   sensor si from the neighborhood  defined by the Adjacency matrix
+    %   Ai
+    %  
+    %  'Integrator' : Integrator (Default : RK4())
+    %   Object of the class Integrator defining the kind of integration
+    %   method used in the simulation
+    %
+    %   e.g.
+    %   'Integrator', EulerForward()
+    %   'Integrator', RK4()
+    %
+    %  'ExtraLogs' : {log1, log2, ...}, with logi belonging to class Log
+    %   You can add extra log to the classic ones (e.g., states, inputs, ...)
+    %   providing new object of the class Log. See helo Log
+    %
+    %   e.g.
+    %   'ExtraLogs', {Log('vLyap', @(t,sys,u) sys.controller.getVLyap(t,agent.x)) }
     %
     % Example:
     %
@@ -31,7 +77,7 @@ classdef VirtualArena < handle
     %     'StopPlotFunction'  ,@(allLogs,va)someStopPlotFunction(allLogs,va,extraPar3,extraPar4),...
     %     'SensorsNetwork'    , {s1,A},...
     %     'DiscretizationStep',dt,...
-    %     'PlottingFrequency' ,1/dt);
+    %     'PlottingStep' ,1);
     %
     %   ret = va.run();
     %
@@ -124,7 +170,7 @@ classdef VirtualArena < handle
         
         videoName = [];
         
-        discretizationStep = [];
+        discretizationStep = 1;
         
         %sensorsNetwork = {s1,L1,s2,L2,...};
         %
@@ -145,7 +191,7 @@ classdef VirtualArena < handle
         
         logAll;
         
-        plottingFrequency = 1;
+        plottingStep = [];
         
         %integrator is an oject of the class Integrator used to discretize
         %   continuous time systems (Default = RK4)
@@ -169,25 +215,13 @@ classdef VirtualArena < handle
         function obj = VirtualArena(varargin)
             %VirtualArena is the constructor
             %
-            %        va = VirtualArena(par1,val1,par2,val2,...)
-            %
-            %	where the parameters are chosen among the following
-            %
-            %	'StoppingCriteria'
-            %	'StepPlotFunction'
-            %	'InitPlotFunction'
-            %	'StopPlotFunction'
-            %	'HandlePostFirstPlot'
-            %	'VideoName'
-            %	'DiscretizationStep'
-            %	'SensorsNetwork'
-            %
-            %	see the descriptions of the associated properties.
-            %
-            %   See also VirtualArena
+            %   See help VirtualArena
             
             obj.setOptions(varargin{:});
             
+            if isempty(obj.plottingStep)
+                obj.plottingStep = obj.discretizationStep;
+            end
         end
         
         %%callFunctionOnSystemsOnList(functionName,targetClass)
@@ -279,11 +313,11 @@ classdef VirtualArena < handle
                 
             end
             
-            %% Compute time
+            %% Compute time for obj.initLogs(timeInfo);
             if isa(obj.systemsList{1},'CtSystem')
-                timeInfo = i*obj.discretizationStep;
+                timeInfo = (i-1)*obj.discretizationStep;
             elseif isa(obj.systemsList{1},'DtSystem')
-                timeInfo = i;
+                timeInfo = (i-1);
             end
             
             obj.initLogs(timeInfo);
@@ -293,14 +327,12 @@ classdef VirtualArena < handle
                 
                 %% Compute time
                 if isa(obj.systemsList{1},'CtSystem')
-                    timeInfo = i*obj.discretizationStep;
+                    timeInfo = (i-1)*obj.discretizationStep;
                 elseif isa(obj.systemsList{1},'DtSystem')
-                    timeInfo = i;
+                    timeInfo = (i-1);
                 end
                 
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
-                    
-                    
                     
                     %% Update current state of the systems
                     if not(isempty(obj.systemsList{ia}.stateObserver)) % Observer feedback
@@ -445,11 +477,11 @@ classdef VirtualArena < handle
                 
                 
                 %% Plots
-                if isa(obj.stepPlotFunction,'function_handle') && mod(i,obj.plottingFrequency)==0
+                if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
                     
                     plot_handles  = obj.stepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
                     
-                    if isa(obj.handlePostFirstPlot,'function_handle') && i==2
+                    if isa(obj.handlePostFirstPlot,'function_handle') && i==1
                         obj.handlePostFirstPlot();
                     end
                     
@@ -460,13 +492,13 @@ classdef VirtualArena < handle
                         writeVideo(aviobj,F)
                     end
                     
-                elseif obj.monodimentionalSystems() && mod(i,obj.plottingFrequency)==0
+                elseif obj.monodimentionalSystems() && mod(timeInfo,obj.plottingStep)==0
                     
                     plot_handles  = obj.oneDStepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
                     
-                    if isa(obj.handlePostFirstPlot,'function_handle')&&i==2
+                    if isa(obj.handlePostFirstPlot,'function_handle')&&i==1
                         obj.handlePostFirstPlot();
-                    elseif i==2
+                    elseif i==1
                         obj.oneDPostFirstPlot();
                     end
                     
@@ -668,9 +700,9 @@ classdef VirtualArena < handle
                             
                             parameterPointer = parameterPointer+2;
                             
-                        case 'PlottingFrequency'
+                        case 'PlottingStep'
                             
-                            obj.plottingFrequency = varargin{parameterPointer+1};
+                            obj.plottingStep = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -832,8 +864,6 @@ classdef VirtualArena < handle
         
         function h = oneDStepPlotFunction(obj,systemsList,log,oldHandles,k)
             
-            dt = obj.discretizationStep;
-            
             if iscell(oldHandles)
                 
                 delete(oldHandles{1})
@@ -886,6 +916,7 @@ classdef VirtualArena < handle
                 end
             end
             h={hup,hdown};
+            
             
         end
         

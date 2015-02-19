@@ -41,8 +41,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
  
     clearAllStaticCounters( ); 
  
-    acadoPrintf("\nACADO Toolkit for Matlab - Developed by David Ariens and Rien Quirynen, 2009-2013 \n"); 
-    acadoPrintf("Support available at http://www.acadotoolkit.org/matlab \n \n"); 
+    mexPrintf("\nACADO Toolkit for Matlab - Developed by David Ariens and Rien Quirynen, 2009-2013 \n"); 
+    mexPrintf("Support available at http://www.acadotoolkit.org/matlab \n \n"); 
 
     if (nrhs != 5){ 
       mexErrMsgTxt("This problem expects 5 right hand side argument(s) since you have defined 5 MexInput(s)");
@@ -89,7 +89,7 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
       mexErrMsgTxt("Input 4 must be a noncomplex double vector of dimension XxY.");
     } 
     mexinput4_temp = mxGetPr(prhs[4]); 
-    Matrix mexinput4(mxGetM(prhs[4]), mxGetN(prhs[4]));
+    DMatrix mexinput4(mxGetM(prhs[4]), mxGetN(prhs[4]));
     for( int i=0; i<mxGetN(prhs[4]); ++i ){ 
         for( int j=0; j<mxGetM(prhs[4]); ++j ){ 
            mexinput4(j,i) = mexinput4_temp[i*mxGetM(prhs[4]) + j];

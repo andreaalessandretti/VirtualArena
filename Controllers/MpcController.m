@@ -65,8 +65,7 @@ classdef MpcController < Controller & InitDeinitObject
         %  log.solverTime(i)      - time to solve the Op at step i
         log
         
-        warmStartMode = 1;
-        warmStart;
+        warmStarter;
         auxiliaryLaw;
         runAuxiliaryLaw = 0;
         lastSolution;
@@ -81,7 +80,7 @@ classdef MpcController < Controller & InitDeinitObject
     methods
         
         function obj = MpcController(varargin)
-            
+            obj.warmStarter = ShiftAndHoldWarmStart();
             
             parameterPointer = 1;
             
@@ -107,10 +106,9 @@ classdef MpcController < Controller & InitDeinitObject
                             
                             obj.solverParameters = varargin{parameterPointer+1};
                             parameterPointer = parameterPointer+2;
-                            
-                        case 'WarmStartMode'
-                            
-                            obj.warmStartMode = varargin{parameterPointer+1};
+                         
+                        case 'WarmStarter'
+                            obj.warmStarter  = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -147,39 +145,43 @@ classdef MpcController < Controller & InitDeinitObject
             tic
             if obj.runAuxiliaryLaw
                 u = obj.mpcOp.auxiliaryLaw.computeInput(t,x);
-            else
-                sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,obj.warmStart,obj.solverParameters{:});
-                u   = sol.u_opt(:,1);
-            end
+            else 
+                
+                if not(isempty(obj.lastSolution))
+                    warmStart = obj.warmStarter.generateWarmStarts(obj.lastSolution.t,obj.lastSolution);
+                else
+                    warmStart = [];
+                end
+                
+                if iscell(warmStart) % multiple warm starts
+                    for i=1:length(warmStart)
+                        ws = warmStart{i};
+                        sols{i}=obj.mpcOpSolver.solve(obj.mpcOp,t,x,ws,obj.solverParameters{:});
+                    end
+                    sol = obj.warmStarter.returnWinningSolution(t,sols);
+                    u   = sol.u_opt(:,1);
+                else
+                    sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,warmStart,obj.solverParameters{:});
+                    u   = sol.u_opt(:,1);
+                end
+                
+                end
             
             obj.appendVectorToLog(toc, obj.i, 'computationTime')
             
             
             %% Warm Start
             if not(obj.runAuxiliaryLaw)
-                switch obj.warmStartMode
-                    
-                    case 0 % Do not warm start
-                        
-                    case 1 % Warmstart with zeros
-                        
-                        ws.u = [sol.u_opt(:,2:end),sol.u_opt(:,end)];
-                        ws.x = [sol.x_opt(:,2:end),sol.x_opt(:,end)];
-                        
-                        obj.warmStart = ws;
-                    case 2 % Warmstart with auxiliary law
-                        
-                end
                 
                 %% Logging
                 obj.lastSolution = sol;
-                obj.appendVectorToLog(sol.solverTime            ,obj.i,'solverTime')
+                obj.lastSolution.t = t;
+                obj.appendVectorToLog(sol.solverTime ,obj.i,'solverTime')
             end
             
             %% Logging
             obj.appendVectorToLog(obj.mpcOp.stageCost(t,x,u),obj.i,'stageCost')
 
-            
             obj.i = obj.i+1;
             
         end
