@@ -252,6 +252,12 @@ classdef VirtualArena < handle
         
         
         function logAll = run(obj)
+            %run runs the simulation
+            %
+            %   log = va.run();
+            %
+            %   See also VirtualArena.log
+            %
             
             obj.callFunctionOnSystemsOnList('initSimulations','InitDeinitObject')
             
@@ -261,21 +267,62 @@ classdef VirtualArena < handle
                 obj.oneDinitPlotFunction();hold on
             end
             
-            logAll = obj.recursiveRun(obj.multiruns);
+            nMultiRuns = length(obj.multiruns);
+            recursiveRun(multirunsToDo)
             
-            obj.logAll = logAll;
+%             logAllAll = cell(1,nMultiRuns);
+%             
+%             for j = 1:nMultiRuns
+%                 obj.multiruns{j}.initFun(obj,j);
+%                 
+%                 if isa(obj.systemsList{1}.initialConditions,'cell')
+% 
+%                     nInitialConditoins = length(obj.systemsList{1}.initialConditions);
+%                     logAll = cell(1,nInitialConditoins);
+% 
+%                     for i = 1:nInitialConditoins
+%                         logAll{i} = obj.runOne(i);
+%                     end
+% 
+%                     if isa(obj.stopPlotFunction,'function_handle')
+%                         obj.stopPlotFunction(logAll,obj); hold on
+%                     end
+% 
+%                 else
+% 
+%                     logAll = obj.runOne();
+% 
+%                     if isa(obj.stopPlotFunction,'function_handle')
+% 
+%                         obj.stopPlotFunction(logAll,obj); hold on
+%                     end
+% 
+%                 end
+%                 
+%                 
+%                 logAllAll{j}= logAll;
+%             end
+%             %........
+%             
+%             %........
+%             if nMultiRuns == 1
+%                 logAllAll = logAllAll{1};
+%             end
+            
+            
+            obj.logAll = logAllAll;
             obj.callFunctionOnSystemsOnList('deinitSimulations','InitDeinitObject')
             
         end
         
-        function logAllAll = recursiveRun(obj,multirunsToDo)
+        function logAllAll = recursiveRun(multirunsToDo)
         
             if length(multirunsToDo) == 1 %% base of the recursion
                 
                 multirunToDo = multirunsToDo{1};
                 
                 for j = 1:multirunToDo.n
-                multirunToDo.initFun(obj,j);
+                multirunToDo{j}.initFun(obj,j);
                 
                 if isa(obj.systemsList{1}.initialConditions,'cell')
 
@@ -301,8 +348,8 @@ classdef VirtualArena < handle
 
                 end
                 
-                logAllAll{j} = logAll;
                 
+                logAllAll{j}= logAll;
                 end
             
             else % recursion

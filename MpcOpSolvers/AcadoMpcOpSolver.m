@@ -214,7 +214,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
         end
         
-        function initSimulations(obj)
+        function initSimulation(obj)
             
             nx = obj.mpcOp.system.nx;
             nu = obj.mpcOp.system.nu;

@@ -13,5 +13,6 @@ addpath(genpath([pwd,filesep,'Integrator']));
 addpath(genpath([pwd,filesep,'utils']));
 addpath(genpath([pwd,filesep,'extra']));
 addpath(genpath([pwd,filesep,'WarmStarters']));
+addpath(genpath([pwd,filesep,'MultiRuns']));
 %addpath(genpath([pwd,filesep,'examples']));
 savepath
