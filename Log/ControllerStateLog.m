@@ -1,4 +1,4 @@
-classdef ControllerStateLog < Log
+classdef ControllerStateLog < InlineLog
     %%ControllerStateLog logs the state of the controller, if any
     
     
@@ -37,9 +37,9 @@ classdef ControllerStateLog < Log
         
         function obj = ControllerStateLog()
             
-            obj = obj@Log(...
-                'controllerStateTrajectory', @(t,sys,u)sys.controller.x,...
-                'Condition', @(t,sys,u) isa(sys.controller,'GeneralSystem') );
+            obj = obj@InlineLog(...
+                'controllerStateTrajectory', @(t,sys,u,z)sys.controller.x,...
+                'Condition', @(t,sys,u,z) isa(sys.controller,'GeneralSystem') );
         
         end
         

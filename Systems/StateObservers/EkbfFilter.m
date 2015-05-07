@@ -1,16 +1,23 @@
-classdef EkbfFilter < CtSystem & NoInitDeinitObject
+classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
     %EkbfFilter Extended Kalman-Bucy Filter
     %
-    % filter = EkfFiler('Property1',PropertyValue1,'Property2',PropertyValue2,...)
-    %
+    % filter = EkbfFiler(sys, 'Property1',PropertyValue1,'Property2',PropertyValue2,...)
+    % where sys is the CtSystem used to design the filter.
     % Properties
     %
-    % System                     - Supported systems : DtSystem
     % InitialStateEstimate
     %
     % InitialCovarianceMatrix
     % StateNoiseMatrix
     % OutputNoiseMatrix
+    %
+    % ex:
+    % filter = EkbfFilter(model,...
+    %	'StateNoiseMatrix'  , Qobs,...
+    %	'OutputNoiseMatrix' , Robs,...
+    %	'InitialCondition' , [ 0.01*ones(nx,1);
+    %                           10  *reshape(eye(nx),nx^2,1)]);
+    %     
     %
     % demo: exStateObserver.m
     
@@ -57,6 +64,8 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
         
         inputDependentOutput = 0;
         
+        % To be changed for special errors, e.g., error between angles
+        innovationFnc = @(z,y)z-y;
     end
     
     
@@ -158,11 +167,8 @@ classdef EkbfFilter < CtSystem & NoInitDeinitObject
                 y = h(t,x);
             end
             
-            
-            
             fx = f(t,x,u);
-            
-            inn  = (z-y);
+            inn  = obj.innovationFnc(z,y);
             xDot = fx + K*inn;
             PDot = A*P + P*A' + Q - K*R*K';
             

@@ -1,5 +1,7 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
+classdef ExpectedMeasuramentLog < InlineLog
+    %%MeasurementsLog logs the observations expected by the state observer,
+    %i.e., the vector y where the observer innovation is inn=y-z where z is
+    %the observation
     
     
     % This file is part of VirtualArena.
@@ -32,14 +34,14 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-
+    
     methods
-        function obj = TimeLog()
+        function obj = ExpectedMeasuramentLog(ny)
             
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+            obj = obj@InlineLog('expMeasuraments',@(t,a,varargin)agent.stateObserver.lastY,'Initialization',zeros(ny,1));
         end
         
+        
     end
-    
 end
-
+    

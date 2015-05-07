@@ -1,4 +1,4 @@
-classdef StateLog < Log
+classdef StateLog < InlineLog
     %%StateLog logs the state
     
     
@@ -36,7 +36,7 @@ classdef StateLog < Log
     methods
         function obj = StateLog()
             
-            obj = obj@Log('stateTrajectory', @(t,agent,u) agent.x);
+            obj = obj@InlineLog('stateTrajectory', @(t,agent,u,z) agent.x);
         end
         
     end

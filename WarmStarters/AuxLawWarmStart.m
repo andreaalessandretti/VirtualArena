@@ -1,6 +1,6 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
-    
+classdef AuxLawWarmStart < WarmStart
+    %%WarmStart specifies  what to log during the simulation.
+    %
     
     % This file is part of VirtualArena.
     %
@@ -32,13 +32,44 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
+    
+    properties
+        auxiliaryLaw;
+        nextX;
+        dt;
+    end
 
+    
     methods
-        function obj = TimeLog()
-            
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+        function obj = AuxLawWarmStart(auxiliaryLaw,nextX,dt)
+            obj.auxiliaryLaw = auxiliaryLaw;
+            obj.nextX        = nextX;
+            obj.dt           = dt;
         end
         
+        function sol = generateWarmStarts(obj,t,previousSol)
+            
+            x_opt = previousSol.x_opt;
+            u_opt = previousSol.u_opt;
+            kAuc  = obj.auxiliaryLaw;
+            
+            x0     = previousSol.x_opt(:,2);
+            tx_opt = previousSol.tx_opt;
+            t      = [tx_opt(2:end),tx_opt(end)+obj.dt];
+            
+            sol.u = zeros(size(u_opt));
+            sol.x = zeros(size(x_opt));
+            
+            sol.x(:,1)=x0;
+            
+            for i=2:length(tx_opt)
+               sol.u(:,i-1) = kAuc(t(i-1),sol.x(:,i-1));
+               sol.x(:,i) = obj.nextX(t(i-1),sol.x(:,i-1),sol.u(:,i-1));
+            end
+            
+            sol.u(:,end)=kAuc(t(end),sol.x(:,end));
+        end
+     
     end
     
 end

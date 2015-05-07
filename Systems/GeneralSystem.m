@@ -37,7 +37,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %
     %  where the parameters are chosen among the following
     %
-    %   'nx', 'nu', 'ny', 'InitialConditions', 'Controller',
+    %   'nx', 'nu', 'ny', 'InitialCondition', 'Controller',
     %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
     %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
     %
@@ -112,19 +112,37 @@ classdef GeneralSystem < handle & InitDeinitObject
         % t' = e t+f
         
         cA, cb, cC, cd, ce,cf
+        
+        %% Descriptors
+        name
+        
+        stateName
+        stateUnit
+        state2d
+        state3d
+        
+        inputName
+        inputUnit
+        input2d
+        input3d
+        
+        outputName
+        outputUnit
+        output2d
+        output3d
+        
     end
     
    
     
     methods
         
-        
         function obj = GeneralSystem (varargin)
             %
             %       sys = GeneralSystem(par1,val1,par2,val2,...)
             %  where the parameters are chosen among the following
             %
-            %   'nx', 'nu', 'ny', 'InitialConditions', 'Q', 'R', 'Controller',
+            %   'nx', 'nu', 'ny', 'InitialCondition', 'Q', 'R', 'Controller',
             %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
             %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
             
@@ -169,7 +187,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             parameterPointer = parameterPointer+2;
                             
-                        case 'InitialConditions'
+                        case 'InitialCondition'
                             
                             obj.initialConditions = varargin{parameterPointer+1};
                             
@@ -178,6 +196,132 @@ classdef GeneralSystem < handle & InitDeinitObject
                         case 'StateObserver'
                             
                             obj.stateObserver = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'Name'
+                            
+                            obj.name = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'StateName'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.stateName = varargin{parameterPointer+1};
+                            else
+                                obj.stateName = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'StateUnit'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.stateUnit = varargin{parameterPointer+1};
+                            else
+                                obj.stateUnit = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'State2d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.state2d = varargin{parameterPointer+1};
+                            else
+                                obj.state2d = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'State3d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.state3d = varargin{parameterPointer+1};
+                            else
+                                obj.state3d = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'InputName'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.inputName = varargin{parameterPointer+1};
+                            else
+                                obj.inputName = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'InputUnit'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.inputUnit = varargin{parameterPointer+1};
+                            else
+                                obj.inputUnit = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'Input2d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.input2d = varargin{parameterPointer+1};
+                            else
+                                obj.input2d = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'Input3d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.input3d = varargin{parameterPointer+1};
+                            else
+                                obj.input3d = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'OutputName'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.outputName = varargin{parameterPointer+1};
+                            else
+                                obj.outputName = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'OutputUnit'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.outputUnit = varargin{parameterPointer+1};
+                            else
+                                obj.outputUnit = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'Output2d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.output2d = varargin{parameterPointer+1};
+                            else
+                                obj.output2d = {varargin{parameterPointer+1}};
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'Output3d'
+                            
+                            if iscell(varargin{parameterPointer+1})
+                                obj.output3d = varargin{parameterPointer+1};
+                            else
+                                obj.output3d = {varargin{parameterPointer+1}};
+                            end
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -398,7 +542,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                 'ny', obj.ny,...
                 'StateEquation', obj.f, ...
                 'OutputEquation',obj.h, ...
-                'InitialConditions',obj.initialConditions...
+                'InitialCondition',obj.initialConditions...
                 ...'LinearizationMatrices',{obj.A,obj.B,obj.p,obj.C,obj.D,obj.q}...
                 };
         end

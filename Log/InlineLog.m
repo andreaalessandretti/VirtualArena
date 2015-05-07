@@ -1,6 +1,18 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
-    
+
+classdef InlineLog < Log
+    %%InlineLog specifies  what to log during the simulation.
+    %
+    % InlineLog(name,fun,varargin)
+    %
+    % vectorToLog = fun(t,agent)      at initialization time t=0;
+    % vectorToLog = fun(t,agent,u,z)  at the generic tiem t
+    %
+    % You can use fun(t,agent,varargin) for a generic representation
+    %
+    % varargin can be used to spefify extra parameters in superclass Log
+    %
+    % Log(name,varargin{:});
+    %
     
     % This file is part of VirtualArena.
     %
@@ -32,12 +44,27 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-
+    properties
+        
+        fun
+        
+    end
+    
     methods
-        function obj = TimeLog()
+        
+        function obj = InlineLog(name,fun,varargin)
             
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+            obj = obj@Log(name,varargin{:});
+            
+            obj.fun  = fun;
+                        
         end
+        
+        function v = getVectorToLog(obj,varargin)
+            
+            v = obj.fun(varargin{:});
+        end
+        
         
     end
     

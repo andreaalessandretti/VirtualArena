@@ -1,6 +1,19 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
-    
+
+classdef ControllerAdapter < Controller
+    %
+    % ControllerAdapter(originalController)
+    %
+    % Properties:
+    % originalController
+    %
+    % Methods to be overwritten:
+    % originalX = x2originalX(obj,t,x)
+    % u         = originalU2newU(obj,t,x,originalU)
+    %
+    % Adapter chain:
+    % originalX = x2originalX(obj,t,x);
+    % originalU = originalController.computeInput(t,originalX);
+    % u         = originalU2newU(obj,t,x,originalU);
     
     % This file is part of VirtualArena.
     %
@@ -32,14 +45,44 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-
-    methods
-        function obj = TimeLog()
-            
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
-        end
+    properties
+        
+        originalController;
         
     end
     
+    methods
+        
+        %%
+        %
+        % ControllerAdapter(originalController)
+        %
+        % Abstract method:
+        %
+        % originalU2newU(obj,t,x,originalU)
+        %
+        function obj = ControllerAdapter(law)
+            
+            obj.originalController = law;
+            
+        end
+        
+        function  u = computeInput(obj,t,x,varargin)
+            
+            originalX = obj.x2originalX(t,x);
+            originalU = obj.originalController.computeInput(t,originalX);
+            u         = obj.originalU2newU(t,x,originalU);
+            
+        end
+        
+        function u = originalU2newU(obj,t,x,originalU)
+            u = originalU;
+        end
+        
+        
+        function originalX = x2originalX(obj,t,x)
+            originalX = x;
+        end
+        
+    end
 end
-

@@ -1,6 +1,12 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
-    
+
+classdef  InlineControllerAdapter < ControllerAdapter
+    %
+    % ControllerAdapter(originalController)
+    %
+    % Abstract method:
+    %
+    % uOriginal2newU(obj,t,x,uOriginal)
+    %
     
     % This file is part of VirtualArena.
     %
@@ -32,14 +38,40 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-
+    properties
+        
+        originalU2newUFnc;
+        x2originalXFnc;
+    end
+    
+    
     methods
-        function obj = TimeLog()
+        
+        %%
+        %
+        % InlineControllerAdapter(originalU2newU,originalController,x2originalX)
+        % 
+        % originalX = x2originalX(obj,t,x);
+        % originalU = originalController.computeInput(t,originalX);
+        % u         = originalU2newU(obj,t,x,originalU);
+        %
+        %
+        function obj = InlineControllerAdapter(originalU2newU,originalController,x2originalX)
             
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+            obj = obj@ControllerAdapter(originalController);
+            
+            obj.originalU2newUFnc = originalU2newU;
+            obj.x2originalXFnc    = x2originalX;
+            
+        end
+        
+        function  uNew = originalU2newU(obj,t,x,uOriginal)
+            uNew = obj.originalU2newUFnc(t,x,uOriginal);
+        end
+        
+        function  originalX = x2originalX(obj,t,x)
+            originalX = obj.x2originalXFnc(t,x);
         end
         
     end
-    
 end
-

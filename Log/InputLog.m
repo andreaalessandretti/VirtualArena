@@ -36,17 +36,15 @@ classdef InputLog < Log
     methods
         function obj = InputLog()
             
-            obj = obj@Log('inputTrajectory', @InputLog.logInput);
+            obj = obj@Log('inputTrajectory');
         
         end
-        
-    end
     
-    methods (Static)
-        
-        function v = logInput(t,varargin)
+        function v = getVectorToLog(obj,t,varargin)
+            
             sys = varargin{1};
-            if nargin == 2
+            
+            if nargin == 3 
                 v = zeros(sys.nu,1);
             else
                 v = varargin{2};

@@ -46,7 +46,7 @@ classdef InlineController < Controller
     properties
         
     end
-    properties (Access=private)
+    properties
         law = [];
     end
     

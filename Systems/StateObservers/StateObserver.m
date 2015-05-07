@@ -44,16 +44,21 @@ classdef StateObserver < handle
     
     properties
         
+        lastInnovation
+        lastY
+        lastZ
+        
+        downsampling  = 1 %perform the update every downsampling steps
     end
     
     
     methods 
         
-        function newXObs = preInputUpdate(t,xObs,z)
+        function newXObs = preInputUpdate(obj,t,xObs,z)
             newXObs = xObs;
         end
         
-        function newXObs = postInputUpdate(t,xObs,z,u)
+        function newXObs = postInputUpdate(obj,t,xObs,z,u)
             newXObs = xObs;
         end
         

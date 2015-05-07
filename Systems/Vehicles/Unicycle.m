@@ -41,15 +41,8 @@ classdef Unicycle < UnderactuatedVehicle
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-    properties
-    
-    end
-    
     methods
- 
-    end
-    
-    methods
+        
         function obj =  Unicycle(varargin)
 
              obj = obj@UnderactuatedVehicle(...
@@ -58,26 +51,7 @@ classdef Unicycle < UnderactuatedVehicle
                 varargin{:});
           
         end
-        
           
-    end
-    
-     methods(Static)
-      
-%                
-%          function xDot = stateEquation(x,u)
-%             
-%             R = [cos(x(3)),-sin(x(3));
-%                  sin(x(3)), cos(x(3))];
-% 
-%             xDot = [R*[u(1);0];u(2)];
-%             
-%          end
-         
-%           function ret = R(x)
-%                ret = [cos(x(3)),-sin(x(3));
-%                       sin(x(3)), cos(x(3))];
-%           end
     end
     
 end

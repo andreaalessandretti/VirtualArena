@@ -120,7 +120,6 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                             
                             parameterPointer = parameterPointer+2;
                             
-                            
                         case 'StepSize'
                             
                             obj.stepSize = varargin{parameterPointer+1};
@@ -176,12 +175,12 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             fakeTime = (0:obj.stepSize:(mpcOp.horizonLength));
             if not(isempty(warmStart))
                 
-                InitControl =  [fakeTime',warmStart.u'];
-                
+                InitControl = [fakeTime',warmStart.u'];
+                InitState   = [fakeTime',tx',warmStart.x',zeros(size(fakeTime'))];
             else
                 
-                InitState   = zeros(1,mpcOp.system.nx+2);
                 InitControl = zeros(1,mpcOp.system.nu+1);
+                InitState   = zeros(1,mpcOp.system.nx+3);
                 
             end
             
@@ -189,7 +188,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             statesList = ['t0 ',statesList];
             tic
             
-            eval(sprintf('out = %s_RUN(%s,InitControl);',obj.acadoProblemName,statesList));
+            eval(sprintf('out = %s_RUN(%s,InitControl,InitState);',obj.acadoProblemName,statesList));
             %eval(sprintf('out = %s_RUN(%s,InitState,InitControl);',obj.acadoProblemName,statesList));
             
             if not(out.CONVERGENCE_ACHIEVED)
@@ -274,7 +273,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %% Initial Conditions
             %> x01=acado.MexInput
             %> ...
-            %> InitState = acado.MexInputMatrix;
+            %> initState = acado.MexInputMatrix;
             %> initInput = acado.MexInputMatrix;
             
             if(obj.displayAcadoCode) disp('t0  = acado.MexInput;'); end
@@ -286,8 +285,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             end
             
             if(obj.displayAcadoCode) disp('initInput = acado.MexInputMatrix; '); end
-            
+            if(obj.displayAcadoCode) disp('initState = acado.MexInputMatrix; '); end
             initInput = acado.MexInputMatrix;
+            
+            initState = acado.MexInputMatrix;
             %--------------------------------------------------------------
             
             %--------------------------------------------------------------
@@ -444,13 +445,13 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             if(obj.displayAcadoCode)
                 
-                %disp('algo.initializeDifferentialStates(InitState);');
+                disp('algo.initializeDifferentialStates(initState);');
                 disp('algo.initializeControls(initInput);');
                 disp('END_ACADO;');
                 
             end
             
-            %algo.initializeDifferentialStates(InitState);
+            algo.initializeDifferentialStates(initState);
             algo.initializeControls(initInput);
             
             if(obj.displayAcadoCode) disp('END_ACADO;'); end

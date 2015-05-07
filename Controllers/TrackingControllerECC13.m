@@ -154,7 +154,23 @@ classdef TrackingControllerECC13 < Controller
                 
             end
             
-            if not(isempty(obj.vehicle.Lvd)) || not(isempty(obj.vehicle.Lwd)) || not(isempty(obj.vehicle.mw))|| not(isempty(obj.vehicle.mw))
+            if isempty(obj.epsilon)
+                error(getMessage('UtilsMsg:missingParameter','Epsilon'));
+            end
+            if isempty(obj.pd)
+                error(getMessage('UtilsMsg:missingParameter','pd'));
+            end
+            if isempty(obj.dotPd)
+                error(getMessage('UtilsMsg:missingParameter','dotPd'));
+            end
+            if isempty(obj.Ke)
+                error(getMessage('UtilsMsg:missingParameter','Ke'));
+            end
+            if isempty(obj.vehicle)
+                error(getMessage('UtilsMsg:missingParameter','vehicle'));
+            end
+            
+            if not(isempty(obj.vehicle.Lvd)) || not(isempty(obj.vehicle.Lwd)) 
                     error(getMessage('TrackingControllerECC14:wrongvehicle'));
             end
                 
@@ -165,8 +181,8 @@ classdef TrackingControllerECC13 < Controller
                     
                 case 3 % 3D case
                     Omega = @(omega) [ 0       ,-omega(3) ,  omega(2);
-                        omega(3), 0        , -omega(1);
-                        -omega(2), omega(1) ,  0];
+                                        omega(3), 0        , -omega(1);
+                                        -omega(2), omega(1) ,  0];
                     OmegaEpsilon = Omega ;
             end
           

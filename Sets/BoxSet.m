@@ -222,6 +222,11 @@ classdef  BoxSet < PolytopicSet
         end
         
         function ret = containsBoxSet(obj,arg)
+            
+            if ~(arg.spaceDimension==obj.spaceDimension)
+                error(getMessage('BoxSet:containmentMismatch'))
+            end
+            
             ret = 1;
             for i=1:arg.spaceDimension
                 if obj.upperBounds(i)<arg.upperBounds(i) || ...

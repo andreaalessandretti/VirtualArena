@@ -10,7 +10,7 @@
 
 clc; close all; clear all;
 
-v = UAV('InitialConditions',[-3*ones(3,1);reshape(eye(3),9,1)]);
+v = UAV('InitialCondition',[-3*ones(3,1);reshape(eye(3),9,1)]);
 
 v.controller = TrackingControllerECC13(...
     'Vehicle' , v,... 

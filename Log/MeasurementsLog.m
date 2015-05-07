@@ -1,5 +1,5 @@
-classdef TimeLog < InlineLog
-    %%TimeLog logs the time
+classdef MeasurementsLog < Log
+    %%MeasurementsLog logs the y
     
     
     % This file is part of VirtualArena.
@@ -32,14 +32,32 @@ classdef TimeLog < InlineLog
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-
+    
+    properties
+        ny
+    end
+    
     methods
-        function obj = TimeLog()
+        function obj = MeasurementsLog(ny)
             
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+            obj = obj@Log('measurements','Initialization',zeros(ny,1));
+            obj.ny = ny;
+        end
+        
+        function m = getVectorToLog(obj,t,agent,varargin)
+            z = varargin{2};
+            if nargin == 3 || isempty(z)
+                if isempty(obj.ny)
+                    m = [];
+                else
+                    m = NaN(obj.ny,1);
+                end
+            else
+                m = z;
+            end
+            
         end
         
     end
-    
 end
-
+    

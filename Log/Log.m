@@ -15,12 +15,12 @@ classdef Log < handle
     %
     %   where par1, par2, ... are chosen among: 'Initialization', 'Shift'
     %
-    % i ) At the beginning of the simulation the stored data is l.fun(sys),
-    %     where sys is the generic simulated syste, or the value associated 
+    % i ) At the beginning of the simulation the stored data is l.fun(t0,sys),
+    %     where sys is the generic simulated system, or the value associated 
     %     with 'Initialization', if any.
     %
     % ii) At the end of every simulation step the stored data is 
-    %     l.fun(system,u), where u is the input of sys.
+    %     l.fun(t,system,u,z), where u is the input of sys.
     %
     % The parameter 'Shift' can be used to shift the simulation time where
     % the data is stored.
@@ -73,17 +73,28 @@ classdef Log < handle
     % either expressed or implied, of the FreeBSD Project.
     properties
         name
-        fun
         initialization = [];
         shift = 0;
         condition;
+        
+        deltaStep = [];
+        deltaTime = [];
+        
+        i = 1; %Pointer to the current state to write
+    end
+    
+    methods(Abstract)
+        %vectorToLog = getVectorToLog(t,agent)      at initialization time t=0;
+        %vectorToLog = getVectorToLog(t,agent,u,z)  at the generic tiem t
+        getVectorToLog
+        
     end
     
     methods
-        function obj = Log(name,fun,varargin)
+        function obj = Log(name,varargin)
+         
             
             obj.name = name;
-            obj.fun  = fun;
             
             parameterPointer = 1;
             
@@ -94,7 +105,7 @@ classdef Log < handle
                 if (ischar(varargin{parameterPointer}))
                     
                     switch varargin{parameterPointer}
-                        
+                            
                         case 'Initialization'
                             
                             obj.initialization = varargin{parameterPointer+1};

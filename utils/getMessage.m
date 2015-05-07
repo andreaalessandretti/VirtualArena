@@ -83,13 +83,13 @@ switch MessageCode
         
     case 'VirtualArena:InitObserver'
         
-        message = 'State observer not initialized, use parameter ''InitialConditions'' at creation time.';
+        message = 'State observer not initialized, use parameter ''InitialCondition'' at creation time.';
         
     case 'VirtualArena:InitController'
         
-        message = 'Internal state of the controller not initialized, use parameter ''InitialConditions'' at creation time.';
+        message = 'Internal state of the controller not initialized, use parameter ''InitialCondition'' at creation time.';
         
-    case 'VirtualArena:NotEnoughInitialConditionsController'
+    case 'VirtualArena:NotEnoughInitialConditionController'
         
         message = 'The number of initial conditions of the controller must correspond with the number of initial conditions of the systems.';
         
@@ -148,6 +148,11 @@ switch MessageCode
     case 'BoxSet:ini2sizemismatch'
         
         message = 'The size of the arguments must match.';
+    
+    case 'BoxSet:containmentMismatch'
+        
+        message = 'The SetBox compared have different spaceDimension.';
+        
      case 'GeneralSystem:vercat'
         
         message = 'Both elements should belong to the class GeneralSystem.';
@@ -166,6 +171,14 @@ switch MessageCode
     case 'FminconMpcOpSolver:NoMpcOp'
         
         message = 'The field MpcOp is requried.';
+        
+    case 'TrackingControllerECC14:missinEpsilon'
+        
+        message = 'The parameter ''Epsilon'' is required';  
+    
+    case 'UtilsMsg:missingParameter'
+        
+        message = sprintf('The parameter ''%s'' is required',varargin{1});  
         
     otherwise
         

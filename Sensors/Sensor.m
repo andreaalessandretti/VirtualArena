@@ -46,10 +46,6 @@
 
 classdef Sensor < handle
     
-    properties
-        
-    end
-    
     methods(Abstract)
         
         % The sensor of agent agentId senses the agents

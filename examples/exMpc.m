@@ -3,7 +3,7 @@ clc; close all; clear all
 
 dt = 0.1;
 
-v1 = Unicycle('InitialConditions',[4;4;0]);
+v1 = Unicycle('InitialCondition',[4;4;0]);
 
 v1.useSymbolicEvaluation(); % see help GeneralSystem.useSymbolicEvaluation
 

@@ -67,7 +67,7 @@ classdef MpcOpSolver < handle
         
         Hm
         
-        hessianComputationMethod = 'Symbolic';
+        hessianComputationMethod  = 'Symbolic';
         
         jacobianComputationMethod = 'Symbolic';
         
