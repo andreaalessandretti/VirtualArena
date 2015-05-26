@@ -231,6 +231,8 @@ classdef UnderactuatedVehicle < Vehicle
                     case 'RotationMatrix' % Rotation matrix
                         fk = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:12),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                         nxk = 12; %dimension kinematic component of the state vector
+                    otherwise
+                        error('AttitudeRepresentation not supported')
                 end
             end
             

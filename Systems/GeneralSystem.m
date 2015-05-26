@@ -1,4 +1,3 @@
-
 classdef GeneralSystem < handle & InitDeinitObject
     %GeneralSystem
     %
@@ -611,7 +610,7 @@ classdef GeneralSystem < handle & InitDeinitObject
             
         end
         
-        function changeOfCoordinate(obj,varargin)
+        function  changeOfCoordinate(obj,varargin)
             %changeOfCoordinate Perform a change of state and/or input coordinate
             %
             % The new system are will be expressed in the new state/input coordinate frame

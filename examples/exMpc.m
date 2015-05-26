@@ -27,7 +27,9 @@ switch mode
         
     case 2
         %% Acado toolkit reuired ( see sourceforge.net/projects/acado/)
-        solver = AcadoMpcOpSolver('StepSize',dt,'MpcOp',op);
+        solver = AcadoMpcOpSolver('StepSize',dt,'MpcOp',op,'AcadoOptimizationAlgorithmOptions', {...
+            'KKT_TOLERANCE',1e-4,'MAX_NUM_ITERATIONS',30 ...
+                });
         mpcOpSolOps = {};
         
 end

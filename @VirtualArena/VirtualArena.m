@@ -383,11 +383,12 @@ classdef VirtualArena < handle
                     
                     if isa(obj.systemsList{ia}.controller,'CtSystem') %CtController
                         
-                        xc = obj.log{ia}.controllerStateTrajectory(:,i);
-                        
-                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:}),xc,obj.discretizationStep);
+                        %xc = obj.log{ia}.controllerStateTrajectory(:,i);
+                        xc = obj.systemsList{ia}.controller.x;
                         
                         u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
+                         
+                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,u,controllerFParams{:}),xc,obj.discretizationStep);
                         
                         obj.systemsList{ia}.controller.x = nextXc;
                         
@@ -395,9 +396,9 @@ classdef VirtualArena < handle
                         
                         xc = obj.systemsList{ia}.controller.x;
                         
-                        nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:});
-                        
                         u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
+                        
+                        nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,u,controllerFParams{:});
                         
                         obj.systemsList{ia}.controller.x = nextXc;
                         
@@ -859,7 +860,7 @@ classdef VirtualArena < handle
             subplot(2,1,2);
             title('Input')
             xlabel('t [sec]')
-            ylabel('u(t)')
+            ylabel('u(t)') 
             setNicePlot
             
         end

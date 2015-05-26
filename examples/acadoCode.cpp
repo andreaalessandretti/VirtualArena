@@ -44,8 +44,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
     mexPrintf("\nACADO Toolkit for Matlab - Developed by David Ariens and Rien Quirynen, 2009-2013 \n"); 
     mexPrintf("Support available at http://www.acadotoolkit.org/matlab \n \n"); 
 
-    if (nrhs != 5){ 
-      mexErrMsgTxt("This problem expects 5 right hand side argument(s) since you have defined 5 MexInput(s)");
+    if (nrhs != 6){ 
+      mexErrMsgTxt("This problem expects 6 right hand side argument(s) since you have defined 6 MexInput(s)");
     } 
  
     TIME autotime;
@@ -96,6 +96,18 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
         } 
     } 
 
+    double *mexinput5_temp = NULL; 
+    if( !mxIsDouble(prhs[5]) || mxIsComplex(prhs[5]) ) { 
+      mexErrMsgTxt("Input 5 must be a noncomplex double vector of dimension XxY.");
+    } 
+    mexinput5_temp = mxGetPr(prhs[5]); 
+    DMatrix mexinput5(mxGetM(prhs[5]), mxGetN(prhs[5]));
+    for( int i=0; i<mxGetN(prhs[5]); ++i ){ 
+        for( int j=0; j<mxGetM(prhs[5]); ++j ){ 
+           mexinput5(j,i) = mexinput5_temp[i*mxGetM(prhs[5]) + j];
+        } 
+    } 
+
     DifferentialEquation acadodata_f1;
     acadodata_f1 << dot(t) == 1.000000E+00;
     acadodata_f1 << dot(x1) == cos(x3)*u1;
@@ -124,6 +136,9 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
 
 
     OptimizationAlgorithm algo1(ocp1);
+    algo1.set( KKT_TOLERANCE, 1.000000E-04 );
+    algo1.set( MAX_NUM_ITERATIONS, 30 );
+    algo1.initializeDifferentialStates( mexinput5 );
     algo1.initializeControls( mexinput4 );
     returnValue returnvalue = algo1.solve();
 
