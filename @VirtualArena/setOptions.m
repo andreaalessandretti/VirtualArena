@@ -6,8 +6,6 @@ function setOptions(obj,varargin)
                 obj.systemsList = {varargin{1}};
             end
             
-            obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog(),TimeLog()};
-            
             parameterPointer = 2;
             
             hasParameters = length(varargin)-parameterPointer>=0;
@@ -48,6 +46,10 @@ function setOptions(obj,varargin)
                             
                             parameterPointer = parameterPointer+2;
                             
+                        case 'DisplaySelector'
+                            obj.display =varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
                             
                         case 'HandlePostFirstPlot'
                             

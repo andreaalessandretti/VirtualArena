@@ -56,6 +56,7 @@ classdef MultiRun < handle
         
         initFun %@(VirtualArenaObj,i)
         
+        
     end
     
    

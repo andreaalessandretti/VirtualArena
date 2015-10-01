@@ -14,6 +14,14 @@
                         logAll = cell(1,nInitialConditoins);
                         
                         for i = 1:nInitialConditoins
+                            
+                            if obj.display.recursiveRun
+                                
+                                fprintf('Multirun %i, Initial Condition %i\n',j,i);
+                                
+                            end
+                            
+                                
                             logAll{i} = obj.runOne(i);
                         end
                         

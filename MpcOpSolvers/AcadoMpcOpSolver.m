@@ -179,8 +179,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 InitState   = [fakeTime',tx',warmStart.x',zeros(size(fakeTime'))];
             else
                 
-                InitControl = zeros(1,mpcOp.system.nu+1);
-                InitState   = zeros(1,mpcOp.system.nx+3);
+                %InitControl = [fakeTime', zeros(length(fakeTime),mpcOp.system.nu)];
+                %InitState   = [fakeTime', zeros(length(fakeTime),mpcOp.system.nx+1)];
+                InitControl = fakeTime;
+                InitState   = fakeTime;
                 
             end
             

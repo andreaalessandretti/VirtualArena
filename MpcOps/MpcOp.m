@@ -35,6 +35,17 @@
 % 'StageCost'           : function handle @(t,x,u) stage cost l(t,x,u)
 % 'TerminalCost'        : function handle @(t,x) terminal cost m(t,x)
 %
+%
+% e.g.
+% mpcOp = CtMpcOp( ...
+%     'System'               , v1,...
+%     'HorizonLength'        , 0.5,...
+%     'StageConstraints'     , BoxSet( -[1;pi/4],4:5,[1;pi/4],4:5,5),... % on the variable z=[x;u];
+%     'StageCost'            , @(t,x,u) x(1:2)'*x(1:2) + u'*u,...
+%     'TerminalCost'         , @(t,x) 10*x(1:2)'*x(1:2),...
+%     'TerminalConstraints'  , BoxSet( -100*ones(3,1),1:3,100*ones(3,1),1:3,3)... % on the variable x(T);
+%     );
+%
 % see also GeneralSet, PolytopicSet, BoxSet, CtMpcOp, DtMpcOp
 
 % This file is part of VirtualArena.

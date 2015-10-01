@@ -221,6 +221,9 @@ classdef VirtualArena < handle
         
         profiler             = 0;
         
+        % DisplaySelector object that chooses what to display
+        display              = 0;
+        
     end
     
     properties (SetAccess = private, GetAccess = private)
@@ -239,6 +242,10 @@ classdef VirtualArena < handle
             %
             %   See help VirtualArena
             
+            % Default Settings 
+            
+            obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog(),TimeLog()};
+            obj.display = DisplayNothing();
             obj.setOptions(varargin{:});
             
             if isempty(obj.plottingStep)

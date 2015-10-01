@@ -35,10 +35,14 @@
 
 USING_NAMESPACE_ACADO
 
+#include <mex.h>
+
 
 void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) 
  { 
  
+    MatlabConsoleStreamBuf mybuf;
+    RedirectStream redirect(std::cout, mybuf);
     clearAllStaticCounters( ); 
  
     mexPrintf("\nACADO Toolkit for Matlab - Developed by David Ariens and Rien Quirynen, 2009-2013 \n"); 
