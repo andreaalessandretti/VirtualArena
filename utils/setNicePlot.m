@@ -3,7 +3,7 @@
  
 % This file is part of VirtualArena.
 %
-% Copyright (c) 2014, Andrea Alessandretti
+% Copyright (c) 1814, Andrea Alessandretti
 % All rights reserved.
 %
 % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
@@ -32,10 +32,14 @@
 % of the authors and should not be interpreted as representing official policies, 
 % either expressed or implied, of the FreeBSD Project.
 
+
 ax = gca;
+
+
 grid on
-set(get(ax,'xlabel'),'fontsize',14);
-set(get(ax,'ylabel'),'fontsize',14);
-set(get(ax,'zlabel'),'fontsize',14);
-set(get(ax,'title'),'fontsize',14);
-set(ax,'fontsize',14);
+set(get(ax,'xlabel'),'FontSize',10,'FontName','Times New Roman');
+set(get(ax,'ylabel'),'FontSize',10,'FontName','Times New Roman');
+set(get(ax,'zlabel'),'FontSize',10,'FontName','Times New Roman');
+set(get(ax,'title') ,'FontSize',10,'FontName','Times New Roman');
+
+set(ax,'fontsize',10,'FontName','Times New Roman');

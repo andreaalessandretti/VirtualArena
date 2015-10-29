@@ -84,9 +84,9 @@ classdef GeneralSystem < handle & InitDeinitObject
         
         ny % Dimension of the output space
         
-        f  % State equation ( function handle @(x,u) )
+        f  % State equation ( function handle @(t,x,u) )
         
-        h  % Output equation ( function handle @(x,u) )
+        h  % Output equation ( function handle @(t,x,u) )
         
         % it is posible to specify different initial conditions for multiple
         % simulations. In this case initialConditions(:,i) containts the

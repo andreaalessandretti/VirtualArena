@@ -1,6 +1,8 @@
 classdef ShiftAndHoldWarmStart < WarmStart
     %%WarmStart specifies  what to log during the simulation.
     %
+    % See also AuxLawWarmStart, ShiftAndAppendAuxLawWarmStart,
+    % ShiftAndAppendZeroWarmStart, WarmStart
     
     % This file is part of VirtualArena.
     %

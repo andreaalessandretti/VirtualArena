@@ -1,5 +1,3 @@
-
-
 classdef MpcOpSolver < handle
 %MpcOpSolver abstract class for and solver of MPC optimization problems
 %
@@ -91,7 +89,7 @@ classdef MpcOpSolver < handle
         %   sol.u_opt        - optimal open loop control prediction
         solve
         
-        faceProblem(obj,solution,mpcOp,xim1)
+        faceProblem(mpcController,sol,t,x,varargin)
         
     end
     

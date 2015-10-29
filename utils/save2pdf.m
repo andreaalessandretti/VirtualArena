@@ -18,7 +18,7 @@
 %   Revised 9/22/2007
 %   Revised 1/14/2007
 
-function save2pdf(pdfFileName,handle,dpi)
+function save2pdf(pdfFileName,handle,dimImg)
 
 % Verify correct number of arguments
 error(nargchk(0,3,nargin));
@@ -32,9 +32,8 @@ end
 if nargin<2
     handle = gcf;
 end
-if nargin<3
+
     dpi = 150;
-end
 
 % Backup previous settings
 prePaperType = get(handle,'PaperType');
@@ -43,18 +42,20 @@ preUnits = get(handle,'Units');
 prePaperPosition = get(handle,'PaperPosition');
 prePaperSize = get(handle,'PaperSize');
 
-% Make changing paper type possible
-set(handle,'PaperType','<custom>');
-
 % Set units to all be the same
-set(handle,'PaperUnits','inches');
-set(handle,'Units','inches');
+set(handle,'PaperUnits','centimeters');
+set(handle,'Units','centimeters');
 
 % Set the page size and position to match the figure's dimensions
 paperPosition = get(handle,'PaperPosition');
 position = get(handle,'Position');
-set(handle,'PaperPosition',[0,0,position(3:4)]);
-set(handle,'PaperSize',position(3:4));
+
+if nargin <3
+dimImg =position(3:4);
+end
+
+set(handle,'PaperPosition',[0,0,dimImg]);
+set(handle,'PaperSize',dimImg);
 
 % Save the pdf (this is the same method used by "saveas")
 print(handle,'-dpdf',pdfFileName,sprintf('-r%d',dpi))

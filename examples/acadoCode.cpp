@@ -117,7 +117,7 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
     acadodata_f1 << dot(x1) == cos(x3)*u1;
     acadodata_f1 << dot(x2) == sin(x3)*u1;
     acadodata_f1 << dot(x3) == u2;
-    acadodata_f1 << dot(L) == (pow(u1,2.000000E+00)+pow(u2,2.000000E+00)+pow(x1,2.000000E+00)+pow(x2,2.000000E+00));
+    acadodata_f1 << dot(L) == (pow(u1,2.000000E+00)+pow(u2,2.000000E+00)+pow(x1,2.000000E+00)+pow(x2,2.000000E+00)+sin(u1));
 
     OCP ocp1(0, 0.5, 5);
     ocp1.minimizeMayerTerm((1.000000E+01*pow(x1,2.000000E+00)+1.000000E+01*pow(x2,2.000000E+00)+L));

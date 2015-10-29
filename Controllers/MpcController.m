@@ -81,6 +81,7 @@ classdef MpcController < Controller & InitDeinitObject
     methods
         
         function obj = MpcController(varargin)
+            
             obj.warmStarter = ShiftAndHoldWarmStart();
             
             parameterPointer = 1;
@@ -114,6 +115,7 @@ classdef MpcController < Controller & InitDeinitObject
                             parameterPointer = parameterPointer+2;
                             
                         case 'WarmStarter'
+                            
                             obj.warmStarter  = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
@@ -143,54 +145,66 @@ classdef MpcController < Controller & InitDeinitObject
                 
             end
             
-            
         end
         
         function u = computeInput(obj,t,x,varargin)
             
+            
+            if sum(isnan(x))>0
+                disp('mmm');
+            end
+            
             runSolver = 0;
             tic
             if ~isempty(obj.initialController) && t<= obj.initialController{1}
-                u =obj.initialController{2}.computeInput(t,x)
+                
+                u = obj.initialController{2}.computeInput(t,x);
+                
             elseif obj.runAuxiliaryLaw
+                
                 u = obj.mpcOp.auxiliaryLaw.computeInput(t,x);
+                
             else
+                
                 runSolver = 1;
+                
                 if not(isempty(obj.lastSolution))
                     warmStart = obj.warmStarter.generateWarmStarts(obj.lastSolution.t,obj.lastSolution);
                 else
                     warmStart = [];
                 end
+                
                 if iscell(warmStart) % multiple warm starts
                     for i=1:length(warmStart)
                         ws = warmStart{i};
-                        sols{i}=obj.mpcOpSolver.solve(obj.mpcOp,t,x,ws,obj.solverParameters{:});
+                        sols{i} = obj.mpcOpSolver.solve(obj.mpcOp,t,x,ws,obj.solverParameters{:});
                     end
                     sol = obj.warmStarter.returnWinningSolution(t,sols);
                     u   = sol.u_opt(:,1);
                 else
                     sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,warmStart,obj.solverParameters{:});
+                    
+                    if sol.problem
+                        sol = obj.mpcOpSolver.faceProblem(obj,sol,t,x,varargin);
+                    end
+                    
                     u   = sol.u_opt(:,1);
                 end
-                
                 
             end
             
             obj.appendVectorToLog(toc, obj.i, 'computationTime')
             
-            
-            %% Warm Start
+            %% Logging
             if runSolver
                 
-                %% Logging
-                obj.lastSolution = sol;
+                obj.lastSolution   = sol;
                 obj.lastSolution.t = t;
-                obj.appendVectorToLog(sol.solverTime ,obj.i,'solverTime')
+                obj.appendVectorToLog(sol.solverTime ,obj.i,'solverTime');
+                
             end
             
-            %% Logging
             obj.appendVectorToLog(obj.mpcOp.stageCost(t,x,u),obj.i,'stageCost')
-            
             obj.i = obj.i+1;
             
         end
@@ -212,7 +226,9 @@ classdef MpcController < Controller & InitDeinitObject
             
         end
         
-        
+        function deinitSimulation(obj)
+            obj.lastSolution = [];
+        end
         
     end
     

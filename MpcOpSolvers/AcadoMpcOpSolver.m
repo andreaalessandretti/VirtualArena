@@ -166,15 +166,12 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 error(getMessage('AcadoMpcOpSolver:Nanxo'))
             end
             
-            %Warm start
-            
-            
-            t = t0*ones(1,round((mpcOp.horizonLength-obj.stepSize)/obj.stepSize+1)) + (0:obj.stepSize:(mpcOp.horizonLength-obj.stepSize));
+            t  = t0*ones(1,round((mpcOp.horizonLength-obj.stepSize)/obj.stepSize+1)) + (0:obj.stepSize:(mpcOp.horizonLength-obj.stepSize));
             tx = t0*ones(1,round((mpcOp.horizonLength-obj.stepSize)/obj.stepSize+2)) + (0:obj.stepSize:(mpcOp.horizonLength));
             
             fakeTime = (0:obj.stepSize:(mpcOp.horizonLength));
+            
             if not(isempty(warmStart))
-                
                 InitControl = [fakeTime',warmStart.u'];
                 InitState   = [fakeTime',tx',warmStart.x',zeros(size(fakeTime'))];
             else
@@ -199,21 +196,39 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             ret.solverTime = toc;
             
-            ret.u_opt = out.CONTROLS(:,2:end)';
+            ret.u_opt  = out.CONTROLS(:,2:end)';
             ret.tu_opt = out.CONTROLS(:,1)'+t0*ones(1,length(out.CONTROLS(:,1)));
             
             %The fist colum is the time, the second is the virtual time
             % and the last one is the term L
-            ret.x_opt  = out.STATES(:,3:end-1)';
+            ret.x_opt  =  out.STATES(:,3:end-1)';
             ret.tx_opt =  out.STATES(:,2)';
             
             ret.acadoSolverOutput = out;
             
             ret.problem = 0;
             
+            if sum(sum(isnan(ret.x_opt)))>0 || ...
+                    max(max(ret.u_opt.*ret.u_opt)) > 10^(2*2) || ...
+                    not(out.CONVERGENCE_ACHIEVED)
+                ret.problem = 1;
+            end
+            
             ret.solverParameters = {out};
             
         end
+        
+        function sol = faceProblem(obj,mpcController,problematicSol,t,x,varargin)
+            
+            warning('AcadoMpcOpSolver: solution problem. Facing problem...try again')
+            
+            warmStart = [];
+            
+            sol = mpcController.mpcOpSolver.solve(mpcController.mpcOp,t,x,warmStart,mpcController.solverParameters{:});
+            
+            
+        end
+        
         
         function initSimulation(obj)
             
@@ -460,13 +475,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             END_ACADO;
         end
         
-        function solution = faceProblem(obj,solution,mpcOp,xim1)
-            
-            solution.solverParameters{1}
-            error('Acado solver problem O.O')
-            
-        end
-        
+    
         
         function ret = getStateEquations(obj,ct,fsym,lsym)
             %% State equations
@@ -538,8 +547,8 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                     
                 elseif strcmp(str,'') && con.nx == nx+ nu + 1
                     
-                     fx = con.f([tsym;x;u]);
-                     
+                    fx = con.f([tsym;x;u]);
+                    
                 elseif strcmp(str,'''AT_END'',') && con.nx == nx
                     
                     fx = con.f(x);
@@ -550,13 +559,13 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                     
                 else
                     if strcmp(str,'')
-                    
+                        
                         error(getMessage('StageSetDimensionsMismatch'));
-                    
+                        
                     elseif strcmp(str,'''AT_END'',')
-                    
+                        
                         error(getMessage('TerminalSetDimensionsMismatch'));
-                    
+                        
                     end
                 end
                 
