@@ -505,7 +505,12 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             end
             
             if ct
-                ret = sprintf('%s \n f.add(dot(L) == %s);',ret, char(lsym));
+                if isnumeric(lsym) && lsym == 0
+                    clsym='0';
+                else
+                    clsym=char(lsym);
+                end
+                ret = sprintf('%s \n f.add(dot(L) == %s);',ret, clsym);
             else
                 ret = sprintf('%s \n f.add(next(L) == L + %s);',ret, char(lsym*obj.stepSize));
             end
