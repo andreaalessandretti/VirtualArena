@@ -13,9 +13,9 @@ function h = stepPlotFunctionEkf(agentsList,hist,plot_handles,i)
         
         
         x = hist{k}.stateTrajectory(:,1:i); hold on;
-        
-        h((k-1)*2+1) = plot(x(1,:),x(2,:));
-        
+        if size(x,1)>=2
+            h((k-1)*2+1) = plot(x(1,:),x(2,:));
+        end
         xHat = hist{k}.observerStateTrajectory(:,1:i); hold on;
         
         h((k-1)*2+2) = plot(xHat(1,:),xHat(2,:),'--');

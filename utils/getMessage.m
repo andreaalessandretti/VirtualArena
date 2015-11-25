@@ -180,6 +180,10 @@ switch MessageCode
         
         message = sprintf('The parameter ''%s'' is required',varargin{1});  
         
+   case 'ReplaySys:missingLos'
+        
+        message = sprintf('The parameter ''TimeLog'' and  ''MeasurementLog'' are required');  
+        
     otherwise
         
         
