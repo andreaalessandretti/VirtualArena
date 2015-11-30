@@ -1,19 +1,51 @@
-%% save2pdf2
-%  'FileName','Units','Handle','RestoreSettings', 'dpi', 'DimPlot', 'SaveFile'
+%% export2pdf
 %
-% e.g., save2pdf2('FileName','testtt','DimPlot',[10,7],'CorrectionPaperPosition',[[-0.5, -0.5, 0.5, 0.5]])
-function save2pdf2(varargin)
+% Example :
+%
+% for i=1:5
+%   subplot(5,1,i);plot(linspace(0,10,10),  rand(1,10)); 
+%   xlabel('t [s]'); ylabel(sprintf('x_%i',i));title(sprintf('Title %i',i));
+% end
+% export2pdf('FileName','fig1','DimPlot',[10,7],'CorrectionPaperPosition',[-0.5, -0.5, 0.5, 0.5])
+%
+% Parameters (optional):
+%
+% 'FileName' (by Default the name is required with a GUI)
+% 'Handle' ( Default gcf)
+% 'Units' ( Default 'centimeters')
+% 'RestoreSettings' ( Default 1) restore original settings after exporting
+% 'CorrectionPaperPosition' ( Default zeros(1,4) ) is used to reduce the
+%       margin of the figure 'PaperPosition',[0,0,dimPlot]+correctionPaperPosition
+%       see PaperPosition
+% 'dpi' (Default 150)
+% 'DimPlot' Dimention of the plot in the predefined unit
+% 'SaveFile' (Default 1), if set to 0, can be used to only apply the
+%       graphical changes without exporting the pdf
+% 'FontSize' (Default 9) Size font x-y-z-labels 
+% 'FontSizeTitle' (Default 10) Size font title
 
-handle = gcf;
-dpi = 150;
-units = 'centimeters';
-predefinedFileName = 0;
-dimPlot = [];
-parameterPointer = 1;
-saveFile = 1;
-hasParameters = length(varargin)-parameterPointer>=0;
+     
+
+    
+                
+function export2pdf(varargin)
+
+handle                 = gcf;
+dpi                    = 150;
+units                  = 'centimeters';
+fontName               = 'Times New Roman'; 
+fontSize               = 9;
+fontSizeTitle          = 10;
+predefinedFileName     = 0;
+dimPlot                = [];
+parameterPointer       = 1;
+saveFile                = 1;
 correctionPaperPosition = zeros(1,4);
-restoreSettings = 1;
+restoreSettings         = 1;
+
+hasParameters = length(varargin)-parameterPointer>=0;
+
+
 while hasParameters
     
     if (ischar(varargin{parameterPointer}))
@@ -64,6 +96,18 @@ while hasParameters
                 
                 parameterPointer = parameterPointer+2;
                 
+            case 'FontSize'
+                
+                fontSize = varargin{parameterPointer+1};
+                
+                parameterPointer = parameterPointer+2;
+            
+            case 'FontSizeTitle'
+                
+                fontSizeTitle = varargin{parameterPointer+1};
+                
+                parameterPointer = parameterPointer+2;
+                
             case 'CorrectionPaperPosition'
                 
                 correctionPaperPosition = varargin{parameterPointer+1};
@@ -84,13 +128,18 @@ while hasParameters
 end
 
 
+
+grid on
+
+
+
 if not(predefinedFileName) && saveFile
     [fileName,pathName] = uiputfile('*.pdf','Save to PDF file:');
     if fileName == 0; return; end
     fileName = [pathName,fileName];
 end
 
-
+ax = gca;
 if restoreSettings
     
     prePaperType     = get(handle,'PaperType');
@@ -98,7 +147,22 @@ if restoreSettings
     preUnits         = get(handle,'Units');
     prePaperPosition = get(handle,'PaperPosition');
     prePaperSize     = get(handle,'PaperSize');
+    preFontSize      = get(get(ax,'xlabel'),'FontSize');
+    preFontSizeTitle = get(get(ax,'title') ,'FontSize');
+    preFontName      = get(get(ax,'title') ,'FontName');
     
+end
+
+%% Labels settings
+hAllAxes = findobj(gcf,'type','axes');
+for i = 1:length(hAllAxes)
+
+    set(get(hAllAxes(i),'xlabel'),'FontSize',fontSize,'FontName',fontName);
+    set(get(hAllAxes(i),'ylabel'),'FontSize',fontSize,'FontName',fontName);
+    set(get(hAllAxes(i),'zlabel'),'FontSize',fontSize,'FontName',fontName);
+    set(get(hAllAxes(i),'title') ,'FontSize',fontSizeTitle,'FontName',fontName);
+    set(hAllAxes(i),'fontsize',fontSize,'FontName',fontName);
+    grid on
 end
 
 % Set units to all be the same
@@ -126,6 +190,14 @@ if restoreSettings
     set(handle,'Units'        ,preUnits);
     set(handle,'PaperPosition',prePaperPosition);
     set(handle,'PaperSize'    ,prePaperSize);
+    
+    
+    set(get(ax,'xlabel'),'FontSize',fontSize,'FontName',fontName);
+    
+    set(get(ax,'ylabel'),'FontSize',preFontSize,'FontName',preFontName);
+    set(get(ax,'zlabel'),'FontSize',preFontSize,'FontName',preFontName);
+    set(get(ax,'title') ,'FontSize',preFontSizeTitle,'FontName',preFontName);
+    set(ax,'FontSize',preFontSize,'FontName',preFontName);
 end
 
 
