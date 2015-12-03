@@ -206,13 +206,18 @@ classdef EkfFilter < DtSystem & StateObserver
                     C = obj.system.C(t,xHat,u);
                 end
                 
-                S    = C*P*C' + R;
-                K    = P*C'/S;
+                C   = C(not(isnan(inn)),:);
+                R   = R(not(isnan(inn)),not(isnan(inn)));
+                inn = inn(not(isnan(inn)));
                 
-                xHat = xHat + K*inn;
-                
-                P    = (eye(length(xHat)) - K*C)*P;
-                
+                if not(isempty(C))
+                    S    = C*P*C' + R;
+                    K    = P*C'/S;
+
+                    xHat = xHat + K*inn;
+
+                    P    = (eye(length(xHat)) - K*C)*P;
+                end
                 newXObs                        = zeros(sysnx+sysnx^2,1);
                 newXObs(1:sysnx)               = xHat;
                 newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
@@ -239,11 +244,19 @@ classdef EkfFilter < DtSystem & StateObserver
                 
                 C    = obj.system.C(t,xHat,u);
                 
-                S    = C*P*C' + R;
-                K    = P*C'/S;
+                C   = C(not(isnan(inn)),:);
+                R   = R(not(isnan(inn)),not(isnan(inn)));
+                inn = not(isnan(inn));
                 
-                xHat = xHat + K*inn;
-                P    = (eye(length(xHat)) - K*C)*P;
+                
+                if not(isempty(C))
+                    S    = C*P*C' + R;
+                    K    = P*C'/S;
+
+                    xHat = xHat + K*inn;
+
+                    P    = (eye(length(xHat)) - K*C)*P;
+                end
                 
                 newXObs                        = zeros(sysnx+sysnx^2,1);
                 newXObs(1:sysnx)               = xHat;
@@ -251,8 +264,6 @@ classdef EkfFilter < DtSystem & StateObserver
                 
             end
         end
-        
-        
         
     end
 end
