@@ -246,7 +246,7 @@ classdef EkfFilter < DtSystem & StateObserver
                 
                 C   = C(not(isnan(inn)),:);
                 R   = R(not(isnan(inn)),not(isnan(inn)));
-                inn = not(isnan(inn));
+                inn = inn(not(isnan(inn)));
                 
                 
                 if not(isempty(C))
