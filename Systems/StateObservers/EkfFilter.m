@@ -13,7 +13,14 @@ classdef EkfFilter < DtSystem & StateObserver
     % StateNoiseMatrix
     % OutputNoiseMatrix
     %
+    %      obs = EkfFilter(dtVehicleModel,...
+    %        'StateNoiseMatrix'  , dt*Qobs,...
+    %        'OutputNoiseMatrix' , (1/dt)*Robs,...
+    %        'InitialCondition' , [2*ones(3,1);
+    %                               10*reshape(eye(3),9,1)]);
     % demo: exStateObserver.m
+    %
+    %
     
     
     % This file is part of VirtualArena.
@@ -61,6 +68,7 @@ classdef EkfFilter < DtSystem & StateObserver
         % To be changed for special errors, e.g., error between angles
         innovationFnc = @(t,z,y)z-y;
         
+        saturateUpdate = 0; % sat(K*innovation, -saturateUpdate,saturateUpdate)
     end
     
     
@@ -81,7 +89,7 @@ classdef EkfFilter < DtSystem & StateObserver
             obj.system = sys;
             obj.f      = @(t,xP,StUz)obj.prediction(t,StUz(1:sys.nu),xP);
             
-            if isempty(obj.system.A) 
+            if isempty(obj.system.A)
                 disp('Warning: Linearization not found, computing linearization - ');
                 obj.system.computeLinearization();
             end
@@ -107,7 +115,7 @@ classdef EkfFilter < DtSystem & StateObserver
                             obj.Rekf = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
-                        
+                            
                         case 'InnovationFnc'
                             
                             obj.innovationFnc = varargin{parameterPointer+1};
@@ -139,33 +147,38 @@ classdef EkfFilter < DtSystem & StateObserver
         
         function  xNext = prediction(obj,t,u,xP)
             
+          
             sysnx = obj.system.nx;
             xHat  = xP(1:sysnx);
             h = obj.system.h;
             
             if nargin(h)==3
-                    y = h(t,xHat,u);
+                y = h(t,xHat,u);
             else
-                    y = h(t,xHat);
+                y = h(t,xHat);
             end
-                
-                
+            
+            
             obj.lastY          = y;
-                
-                
+            
+            
             P     = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
             
             A     = obj.system.A(t,xHat,u);
+            
             Q     = obj.Qekf;
             
             
             xHat = obj.system.f(t,xHat,u);
             P    = A*P*A' + Q;
             
-            
             xNext                        = zeros(sysnx+sysnx^2,1);
             xNext(1:sysnx)               = xHat;
             xNext(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
+            
+              if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0 
+                aa=1;
+            end
             
         end
         
@@ -187,9 +200,9 @@ classdef EkfFilter < DtSystem & StateObserver
                 h = obj.system.h;
                 
                 if nargin(h)==3
-                    y = h(t,xHat,u);
+                    y = h(t, xHat,u);
                 else
-                    y = h(t,xHat);
+                    y = h(t, xHat);
                 end
                 
                 inn = obj.innovationFnc(t,z,y);
@@ -210,19 +223,37 @@ classdef EkfFilter < DtSystem & StateObserver
                 R   = R(not(isnan(inn)),not(isnan(inn)));
                 inn = inn(not(isnan(inn)));
                 
+                if norm(C)== 0
+                    C = [];
+                end
+                
                 if not(isempty(C))
+                    
                     S    = C*P*C' + R;
+                    
+                    
                     K    = P*C'/S;
-
-                    xHat = xHat + K*inn;
-
+                    
+                    staVal = obj.saturateUpdate;
+                    if staVal
+                        correction =  max(min(K*inn, staVal*ones(size(K*inn))),-staVal*ones(size(K*inn)) );
+                    else
+                        correction =  K*inn;
+                    end
+                    
+                    xHat = xHat+correction;
+                    
                     P    = (eye(length(xHat)) - K*C)*P;
                 end
+                
                 newXObs                        = zeros(sysnx+sysnx^2,1);
                 newXObs(1:sysnx)               = xHat;
                 newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
             end
             
+            if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0 
+                aa=1;
+            end
         end
         
         function  newXObs = postInputUpdate(obj,t,xP,z,u)
@@ -252,9 +283,13 @@ classdef EkfFilter < DtSystem & StateObserver
                 if not(isempty(C))
                     S    = C*P*C' + R;
                     K    = P*C'/S;
-
-                    xHat = xHat + K*inn;
-
+                    
+                    staVal = obj.saturateUpdate;
+                    if staVal
+                        xHat = xHat + max(min(K*inn, staVal*ones(size(K*inn))),-staVal*ones(size(K*inn)) );
+                    else
+                        xHat = xHat + K*inn;
+                    end
                     P    = (eye(length(xHat)) - K*C)*P;
                 end
                 
@@ -263,6 +298,7 @@ classdef EkfFilter < DtSystem & StateObserver
                 newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
                 
             end
+            
         end
         
     end

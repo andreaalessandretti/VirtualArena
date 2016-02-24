@@ -1,5 +1,5 @@
 classdef MeasurementsLog < Log
-    %%MeasurementsLog logs the y
+    %%MeasurementsLog(ny) logs the y
     
     
     % This file is part of VirtualArena.
@@ -42,22 +42,34 @@ classdef MeasurementsLog < Log
             
             obj = obj@Log('measurements','Initialization',zeros(ny,1));
             obj.ny = ny;
+            
         end
         
         function m = getVectorToLog(obj,t,agent,varargin)
-            z = varargin{2};
-            if nargin == 3 || isempty(z)
+            
+            
+            if nargin == 3
                 if isempty(obj.ny)
                     m = [];
                 else
                     m = NaN(obj.ny,1);
                 end
             else
-                m = z;
+                z = varargin{2};
+                if isempty(z)
+                    if isempty(obj.ny)
+                        m = [];
+                    else
+                        m = NaN(obj.ny,1);
+                    end
+                else
+                    m = z;
+                end
+                
             end
             
         end
         
     end
 end
-    
+

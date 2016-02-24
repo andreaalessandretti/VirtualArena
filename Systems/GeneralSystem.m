@@ -25,7 +25,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %  x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
     %  y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
     %
-    % initialConditions - initial condition/conditions of the system
+    % initialCondition - initial condition/conditions of the system
     % stateObserver     - state observer (of class StateObserver)
     % controller        - system controller of class Controller, CtSystem, or
     %                     DtSystem
@@ -89,9 +89,9 @@ classdef GeneralSystem < handle & InitDeinitObject
         h  % Output equation ( function handle @(t,x,u) )
         
         % it is posible to specify different initial conditions for multiple
-        % simulations. In this case initialConditions(:,i) containts the
+        % simulations. In this case initialCondition(:,i) containts the
         % ith initial condition to simulate
-        initialConditions
+        initialCondition
         
         stateObserver
         
@@ -188,7 +188,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                         case 'InitialCondition'
                             
-                            obj.initialConditions = varargin{parameterPointer+1};
+                            obj.initialCondition = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -541,7 +541,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                 'ny', obj.ny,...
                 'StateEquation', obj.f, ...
                 'OutputEquation',obj.h, ...
-                'InitialCondition',obj.initialConditions...
+                'InitialCondition',obj.initialCondition...
                 ...'LinearizationMatrices',{obj.A,obj.B,obj.p,obj.C,obj.D,obj.q}...
                 };
         end
@@ -704,7 +704,7 @@ classdef GeneralSystem < handle & InitDeinitObject
         %     v12 = [v1;v2];
         %     v12.controller = InlineController(@(t,x) [c1.computeInput(t,x(1:3));
         %                                               c2.computeInput(t,x(4:6)) ] );
-        %     v12.initialConditions = [0;0;0;0;0;0];
+        %     v12.initialCondition = [0;0;0;0;0;0];
         %     dt = 0.1;
         %     va = VirtualArena(v12,...
         %           'StoppingCriteria'  ,@(i,as)i>50/dt,...

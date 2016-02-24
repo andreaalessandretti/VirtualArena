@@ -282,6 +282,74 @@ classdef  BoxSet < PolytopicSet
         %Note: the addition is performed only in the existing bounds
         function ret = plus(arg1,arg2)
             
+            if  isa(arg1,'BoxSet')||isa(arg2,'BoxSet')
+                
+                ret = arg1.plusMinkowski(arg1,arg2);
+                
+            elseif  (isnumeric(arg1)||isnumeric(arg2)) && (isa(arg1,'PolytopicSet')||isa(arg2,'PolytopicSet'))
+                
+                ret = arg1.plusVectorPlusSet(arg1,arg2);
+                
+            else
+                
+                error ('Wrong Arguments');
+                
+            end
+            
+        end
+        
+   
+
+        function ret = plusMinkowski(obj,boxSet1,boxSet2)
+        %% plusMinkowski
+        % Example:             
+        %         clc; close all; clear all
+        %         b1 = BoxSet([1,2],[3,4]);
+        %         b2 = BoxSet(-[0.3,0.4] , [0.5,0.6]);
+        %         b3 = b1 + b2;
+        %         b1.plot('Color','r'); hold on ;
+        %         
+        %         b2.plot('Color','g');hold on ;
+        %         b3.plot('Color','b');hold on ;
+        %         grid on    
+            if sum( boxSet1.indexesLowerBounds==boxSet2.indexesLowerBounds) ~= length(boxSet1.indexesLowerBounds) || ...
+                sum( boxSet1.indexesUpperBounds==boxSet2.indexesUpperBounds) ~= length(boxSet1.indexesUpperBounds)
+                error('set sum implemented only for set with same index sets (i.e, indexesUpperBounds, indexesLowerBounds).');
+            end
+            
+            
+            ret = BoxSet(boxSet1.lowerBounds + boxSet2.lowerBounds, boxSet1.indexesLowerBounds,...
+                boxSet1.upperBounds + boxSet2.upperBounds ,boxSet1.indexesUpperBounds,...
+                boxSet1.spaceDimension);
+            
+        end
+        
+        function ret = plusMinkowskiEllipsoidalSet(obj,bSet,eSet)
+        %% plusMinkowski
+        % Example:             
+        %         clc; close all; clear all
+        %         b1 = BoxSet([1,2],[3,4]);
+        %         b2 = Ellip(-[0.3,0.4] , [0.5,0.6]);
+        %         b3 = b1 + b2;
+        %         b1.plot('Color','r'); hold on ;
+        %         
+        %         b2.plot('Color','g');hold on ;
+        %         b3.plot('Color','b');hold on ;
+        %         grid on    
+            
+            if ( bSet.nx  ~= eSet.nx )
+                error('The sets should have the same nx.');
+            end
+            
+            
+            boxEll = BoxSet(boxSet1.lowerBounds + boxSet2.lowerBounds, boxSet1.indexesLowerBounds,...
+                            boxSet1.upperBounds + boxSet2.upperBounds ,boxSet1.indexesUpperBounds,...
+                            boxSet1.spaceDimension);
+            
+        end
+        
+        function ret = plusVectorPlusSet(arg1,arg2)
+            
             if not((isnumeric(arg1)||isnumeric(arg2)) && (isa(arg1,'PolytopicSet')||isa(arg2,'PolytopicSet')))
                 error ('The sum is defined for a pair numeric and BoxSet');
             end
@@ -292,7 +360,7 @@ classdef  BoxSet < PolytopicSet
                 v = arg1;
                 set = arg2;
             else
-                v = arg2;
+                v   = arg2;
                 set = arg1;
             end
             
@@ -311,17 +379,17 @@ classdef  BoxSet < PolytopicSet
                 oldUpperBounds+v(oldIndexesUpperBounds),oldIndexesUpperBounds,...
                 oldSpaceDimension);
         end
-        
-        function  ret = subsref(arg,val)
-            
-            if length(val)==1 && strcmp(val.type,'()')
-                indexes = val.subs{:};
-
-                ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
-            else
-                ret =  builtin('subsref', arg,val);
-            end
-        end
+%         
+%         function  ret = subsref(arg,val)
+%             
+%             if length(val)==1 && strcmp(val.type,'()')
+%                 indexes = val.subs{:};
+% 
+%                 ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
+%             else
+%                 ret =  builtin('subsref', arg,val);
+%             end
+%         end
         
         function ret = mtimes(arg1,arg2)
             

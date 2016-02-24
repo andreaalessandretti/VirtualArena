@@ -76,7 +76,7 @@ classdef VirtualArena < handle
     %   'RealTime' : 0 or 1. If 1 then the simulation time will go no
     %                faster than the real time.
     %
-    %   'DefaultPlots' : 1 (default value) to use the default plots when 
+    %   'DefaultPlots' : 1 (default value) to use the default plots when
     %                    0 otherwise
     %
     % Example:
@@ -242,7 +242,7 @@ classdef VirtualArena < handle
             %
             %   See help VirtualArena
             
-            % Default Settings 
+            % Default Settings
             
             obj.logObjs = {InputLog(),StateLog(),ControllerStateLog(),ObserverStateLog(),TimeLog()};
             obj.display = DisplayNothing();
@@ -334,7 +334,7 @@ classdef VirtualArena < handle
             end
             
             if obj.profiler
-            profile on
+                profile on
             end
             
             while not( obj.stoppingCriteria(timeInfo,obj.systemsList) )
@@ -394,7 +394,7 @@ classdef VirtualArena < handle
                         xc = obj.systemsList{ia}.controller.x;
                         
                         u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
-                         
+                        
                         nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,u,controllerFParams{:}),xc,obj.discretizationStep);
                         
                         obj.systemsList{ia}.controller.x = nextXc;
@@ -412,19 +412,23 @@ classdef VirtualArena < handle
                         
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
                         
-                        %% TO DO: to fix this exception 
+                        %% TO DO: to fix this exception
                         if isa(obj.systemsList{ia}.controller,'ControllerAdapter')
                             u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{1});
                         else
-                        
+                            
                             nInputController = nargin(sprintf('%s>%s.%s',class(obj.systemsList{ia}.controller),class(obj.systemsList{ia}.controller),'computeInput'))-1;
-
+                            
                             if nInputController==2 %does not consider network readings
                                 u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{1});
                             else
                                 u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{:});
                             end
                         end
+                        
+                    elseif isempty(obj.systemsList{ia}.controller) && (isempty(obj.systemsList{ia}.nu) || obj.systemsList{ia}.nu == 0 ) %Automnomus System
+                        
+                        u=[];
                         
                     else
                         
@@ -501,7 +505,7 @@ classdef VirtualArena < handle
                         
                         obj.defaultAfterStepPlotFunction();
                     end
-                 
+                    
                     
                     drawnow
                     if ischar(obj.videoName)
@@ -517,7 +521,7 @@ classdef VirtualArena < handle
                 
             end
             if obj.profiler
-            profile viewer
+                profile viewer
             end
             obj.callFunctionOnSystemsOnList('deinitSimulation','InitDeinitObject');
             
@@ -545,7 +549,6 @@ classdef VirtualArena < handle
         
         function cutExtraLogVector(obj,i,t)
             
-            
             for iAgent = 1:length(obj.systemsList)
                 
                 logObjs = obj.logObjs;
@@ -564,11 +567,7 @@ classdef VirtualArena < handle
                         end
                     end
                     
-                    
                 end
-                
-                
-                
                 
             end
             
@@ -579,7 +578,7 @@ classdef VirtualArena < handle
             if i>=size(obj.log{iAgent}.(fildname),2) % Allocate memory
                 
                 obj.log{iAgent}.(fildname) =  [obj.log{iAgent}.(fildname),zeros(size(v,1),obj.blockSizeAllocation)];
-          
+                
             end
             obj.log{iAgent}.(fildname)(:,i) = v;
             
@@ -684,13 +683,12 @@ classdef VirtualArena < handle
             end
             
             for i=1:size(estimate,1)
-                 if plotEstimate
+                if plotEstimate
                     subplot(nRows,nColumns,i);
                     h(iPlot) = plot(timeSignal,estimate(i,:),'--'); hold on
                     iPlot = iPlot+1;
                 end
             end
-            
             
         end
         
@@ -735,7 +733,7 @@ classdef VirtualArena < handle
             else
                 figO = 0;
             end
-                
+            
             for sysId = 1:length(systemsList)
                 
                 figure(figO+sysId)
@@ -867,7 +865,7 @@ classdef VirtualArena < handle
             subplot(2,1,2);
             title('Input')
             xlabel('t [sec]')
-            ylabel('u(t)') 
+            ylabel('u(t)')
             setNicePlot
             
         end

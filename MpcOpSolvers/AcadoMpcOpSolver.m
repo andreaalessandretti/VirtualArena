@@ -384,7 +384,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
             else
                 
-                if not(isempty(msym))
+                if not(isempty(msym)) && isa(msym,'sym') 
                     if(obj.displayAcadoCode) disp(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));end
                     eval(sprintf('ocp.minimizeMayerTerm(L + %s);',char(msym)));
                 else

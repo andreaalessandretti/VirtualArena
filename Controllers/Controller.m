@@ -19,7 +19,26 @@ classdef Controller < handle
     %      u = computeInput(t,x,readings)
     %
     %   readings{i}{j} - jth sensor reading of the ith neighborhood of
-    %   the system in the network defined in the VirtualArena
+    %   the system in the network defined in the VirtualArena.
+    %
+    %e.g.:
+    %
+%     classdef MyController < Controller
+%         
+%     properties
+%         par
+%     end
+%     
+%     methods
+%         function obj = MyController(par)
+%             obj.par = par; 
+%         end
+%         function u = computeInput(obj,t,x)
+%             par = obj.par,
+%             u = ...;
+%         end         
+%     end
+%     end
     
     % This file is part of VirtualArena.
     %

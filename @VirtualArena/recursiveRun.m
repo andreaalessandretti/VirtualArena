@@ -8,9 +8,9 @@
                 for j = 1:multirunToDo.n
                     multirunToDo.initFun(obj,j);
                     
-                    if isa(obj.systemsList{1}.initialConditions,'cell')
+                    if isa(obj.systemsList{1}.initialCondition,'cell')
                         
-                        nInitialConditoins = length(obj.systemsList{1}.initialConditions);
+                        nInitialConditoins = length(obj.systemsList{1}.initialCondition);
                         logAll = cell(1,nInitialConditoins);
                         
                         for i = 1:nInitialConditoins

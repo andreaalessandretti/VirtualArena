@@ -14,7 +14,7 @@ classdef MpcController < Controller & InitDeinitObject
     %       va = MpcController(par1,val1,par2,val2,...)
     %
     %   where the parameters are chosen among 'MpcOp', 'MpcOpSolver', or
-    %   'WarmStartMode', MpcOpSolverParameters
+    %   'WarmStarter', MpcOpSolverParameters
     %
     %   where
     %

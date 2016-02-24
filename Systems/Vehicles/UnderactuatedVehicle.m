@@ -9,7 +9,7 @@ classdef UnderactuatedVehicle < Vehicle
     %            frame R, e.g, quaternion, columns of R, ...
     % - d      : dynamic component d := [vd;wd], see model below
     %
-    % Input vector:  u =�[vk;wk;ud]
+    % Input vector:  u =[vk;wk;ud]
     %
     % - vk : actuation on the linear velocity of the vehicle
     % - wk : actuation on the angular velocity of the vehicle
@@ -19,7 +19,7 @@ classdef UnderactuatedVehicle < Vehicle
     %
     % \dot{p} = R*(Lvk*vk + Lvd*vd + vm(t,x))
     % \dot{R} = R*S(Lwk*wk + Lwd*wd + wm(t,x))
-    % \dot{d} = fd(x,uk) + Gd*ud
+    % \dot{d} = fd(t,x,uk) + Gd*ud
     %
     % Constructor :
     %
@@ -31,8 +31,8 @@ classdef UnderactuatedVehicle < Vehicle
     % 'AttitudeRepresentation' : 0 for quaternion representation,1 for StR
     %               representation, i.e., R = [r1,r2,r3], StR = [r1;r2;r3]
     %
-    % 'uModel2uReal' function @(t,x,ud) -> uReal 
-    %
+    % 'uModel2uReal' function @(t,x,ud) -> uReal
+    % 'PositionSpaceDimension'
     % Not all the parameters are needed, see e.g., Unicycle class
     %
     % See also Vehicle, Unicycle, UAV
@@ -60,26 +60,40 @@ classdef UnderactuatedVehicle < Vehicle
     % along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     properties
-        Lvk=[];
-        Lvd=[];
-        Lwk=[];
-        Lwd=[];
-        nvd=[];
-        nvk=[];
-        nwk=[];
-        nwd=[];
-        nxk=[];
         
-        fdh=[]; %h
-        vmh = []; %h
-        wmh = []; %h
-        vmDoth = []; %h
-        wmDoth = []; %h
+        %% System Matrices
+        % see help
         
-        Gd=[];
+        Lvk = [];
+        Lvd = [];
+        Lwk = [];
+        Lwd = [];
+        Gd  = [];
+        
+        %% Vector Dimentions
+        
+        nvd = [];
+        nvk = [];
+        nwd = [];
+        nwk = [];
+        nxk = []; %Dimension kinematic component of the state vector (position + heading representation)
+        nd  = []; %Dimension dynamic component of the state vector (nvd + nwd for now)
+        
+        %Function Handles
+        fdh    = [];
+        fk     = [];
+        vmh    = [];
+        wmh    = [];
+        vmDoth = [];
+        wmDoth = [];
+        
+        v      = [];
+        omega  = [];
+        
+        
         attitudeRepresentation = 'RotationMatrix'; %0 = quaternion, 1 = rotation matrix
-        v
-        omega
+        
+        
     end
     
     methods
@@ -145,7 +159,6 @@ classdef UnderactuatedVehicle < Vehicle
                             
                             parameterPointer = parameterPointer+2;
                             
-                            
                         case 'AttitudeRepresentation'
                             
                             obj.attitudeRepresentation = varargin{parameterPointer+1};
@@ -155,7 +168,6 @@ classdef UnderactuatedVehicle < Vehicle
                         otherwise
                             
                             parameterPointer = parameterPointer+1;
-                            
                             
                     end
                     
@@ -167,46 +179,29 @@ classdef UnderactuatedVehicle < Vehicle
                 
             end
             
-            if isempty(obj.Lvk)
-                obj.nvk = 0;
-            else
-                obj.nvk = size(obj.Lvk,2);
-            end
+            obj.nvk = iff( isempty(obj.Lvk), 0, size(obj.Lvk,2));
             
-            if isempty(obj.Lvd)
-                obj.nvd = 0;
-            else
-                obj.nvd = size(obj.Lvd,2);
-            end
+            obj.nvd = iff( isempty(obj.Lvd), 0, size(obj.Lvd,2));
             
-            if isempty(obj.Lwk)
-                obj.nwk = 0;
-            else
-                obj.nwk = size(obj.Lwk,2);
-            end
+            obj.nwk = iff( isempty(obj.Lwk), 0, size(obj.Lwk,2));
             
-            if isempty(obj.Lwd)
-                obj.nwd = 0;
-            else
-                obj.nwd = size(obj.Lwd,2);
-            end
+            obj.nwd = iff( isempty(obj.Lwd), 0, size(obj.Lwd,2));
             
             
-            %% compoe v
+            %% Compose v
             if(isempty(obj.Lvk) && isempty(obj.Lvd))
-                error('at least Lvk or Lvd must be defined')
+                error('Either Lvk or Lvd must be defined.')
             elseif(isempty(obj.Lvk) && not(isempty(obj.Lvd)))
-                obj.v = @(t,x,uk,d)obj.Lvd*d(1:size(obj.Lvd,2))+obj.vm(t,x);
+                obj.v = @(t,x,uk,d)obj.Lvd*d(1:obj.nvd)+obj.vm(t,x);
             elseif(not(isempty(obj.Lvk)) && isempty(obj.Lvd))
                 obj.v = @(t,x,uk,d)obj.Lvk*uk(1:obj.nvk)+obj.vm(t,x);
             elseif(not(isempty(obj.Lvk)) && not(isempty(obj.Lvd)))
                 obj.v = @(t,x,uk,d)obj.Lvk*uk(1:obj.nvk)+obj.Lvd*d(1:size(obj.Lvd,2))+obj.vm(t,x);
             end
             
-            
-            %% compose omega
+            %% Compose omega
             if(isempty(obj.Lwk) && isempty(obj.Lwd))
-                error('at least Lwk or Lwd must be defined')
+                error('Either Lwk or Lwd must be defined.')
             elseif(isempty(obj.Lwk) && not(isempty(obj.Lwd)))
                 obj.omega = @(t,x,uk,d)obj.Lwd*d(obj.nvd+1:obj.nvd+obj.nwd)+obj.wm(t,x);
             elseif(not(isempty(obj.Lwk)) && isempty(obj.Lwd))
@@ -215,53 +210,72 @@ classdef UnderactuatedVehicle < Vehicle
                 obj.omega = @(t,x,uk,d)obj.Lwk*uk(obj.nvk+1:obj.nvk+obj.nwk)+obj.Lwd*d(obj.nvd+1:obj.nvd+obj.nwd)+obj.wm(t,x);
             end
             
-            
-            if(obj.n ==2)
+            %% Build Kinematic Component of the state vector including attitude parametrization
+            if(obj.n == 2)
                 
-                fk = @(t,x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
-               
-                nxk = 3; %dimension kinematic component of the state vector
+                fk  = @(t,x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                nxk = 3;
                 
             elseif(obj.n==3)
+                
                 switch obj.attitudeRepresentation
                     
                     case 'Quaternion' % Quaternions
-                        fk = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:7),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
-                        nxk = 7; %dimension kinematic component of the state vector
+                        
+                        nxk = 7; 
+                        fk  = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        
                     case 'RotationMatrix' % Rotation matrix
-                        fk = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:12),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
-                        nxk = 12; %dimension kinematic component of the state vector
+                        
+                        nxk = 12; 
+                        fk  = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        
                     otherwise
-                        error('AttitudeRepresentation not supported')
+                        
+                        error('Given AttitudeRepresentation not supported.');
+                        
                 end
+                
             end
             
-            offsetVW = obj.nwk + obj.nvk;
-            if obj.nwd + obj.nvd >0
-                ff = @(t,x,u)[fk(t,x,u);...
-                              obj.fd(t,x,u(1:offsetVW))];
+            obj.fk   = fk;
+            
+            nuk = obj.nwk + obj.nvk;
+            nd  = obj.nwd + obj.nvd;
+            
+            %% Compose f (merge kinematic and dynamic)
+            if nd >0
+                
+                ff = @(t,x,u)[fk(t,x,u); obj.fd(t,x,u(1:nuk))];
                 
                 if not(isempty(obj.Gd))
-                    ff = @(t,x,u)ff(t,x,u)+[zeros(nxk,1);obj.Gd*u(offsetVW+1:offsetVW+size(obj.Gd,2))];
+                    ff = @(t,x,u)ff(t,x,u)+[zeros(nxk,1);obj.Gd*u(nuk+1:nuk+size(obj.Gd,2))];
                 end
+                
             else
+                
                 ff = @(t,x,u)fk(t,x,u);
+                
             end
             
             obj.f = @(varargin)UnderactuatedVehicle.dotX(ff,varargin);
             
             %% InputTransformation
-            ff = obj.f;
-            obj.f = @(t,x,u)ff(t,x,obj.Phi(t,x,u));
-            
-            obj.nx   = nxk + size(obj.Gd,1);
-            obj.nu   = obj.nwk + obj.nvk + size(obj.Gd,2);
+            ff      = obj.f;
+            obj.f   = @(t,x,u)ff(t,x,obj.Phi(t,x,u));
+            obj.nd  = nd;
             obj.nxk = nxk;
+            obj.nx  = obj.nxk + obj.nd;
             
+            if isempty(obj.RealNu())
+                obj.nu = obj.nwk + obj.nvk + size(obj.Gd,2);
+            else
+                obj.nu = obj.RealNu();
+            end
             
             
         end
-                
+        
         function hP = plot(obj,varargin)
             
             if isempty(varargin)
@@ -280,9 +294,9 @@ classdef UnderactuatedVehicle < Vehicle
                 k = 0.5;
                 
                 XY=[ -h/2,-w/2;
-                     -h/2,w/2  ;
-                     h/2,k*w/2  ;
-                     h/2,-k*w/2 ]*R';
+                    -h/2,w/2  ;
+                    h/2,k*w/2  ;
+                    h/2,-k*w/2 ]*R';
                 
                 hP=patch(XY(:,1)+p(1),XY(:,2)+p(2),1);
                 
@@ -290,10 +304,32 @@ classdef UnderactuatedVehicle < Vehicle
             
         end
         
-        function R = getR(obj,x)
-           if(obj.n ==2)
+        function set.Gd(obj,Gd)
+            
+            if obj.nd >0 && isempty(obj.Gd)
                 
-                R = [cos(x(3)),-sin(x(3));sin(x(3)),cos(x(3))];
+                nuk = obj.nwk + obj.nvk;
+                
+                obj.Gd = Gd;
+                ff = @(t,x,u)[obj.fk(t,x,u)                ;...
+                    obj.fd(t,x,u(1:nuk))]+[zeros(obj.nxk,1);obj.Gd*u(nuk+1:nuk+size(obj.Gd,2))];
+                obj.f = @(varargin)UnderactuatedVehicle.dotX(ff,varargin);
+            else
+                obj.Gd = Gd;
+            end
+            
+            if isempty(obj.RealNu())
+                obj.nu = obj.nwk + obj.nvk + size(obj.Gd,2);
+            end
+            
+        end
+        
+        
+        function R = getR(obj,x)
+            if(obj.n ==2)
+                
+                R = [cos(x(3)),-sin(x(3));
+                    sin(x(3)),cos(x(3))];
                 
             elseif(obj.n==3)
                 
@@ -301,6 +337,7 @@ classdef UnderactuatedVehicle < Vehicle
                     
                     case 'Quaternion' % Quaternions
                         R = quaternion.q2R(x(4:7));
+                        
                     case 'RotationMatrix' % Rotation matrix
                         R = reshape(x(4:12),3,3);
                 end
@@ -309,72 +346,14 @@ classdef UnderactuatedVehicle < Vehicle
         
         
         function p = getPosition(obj,x)
-         
             p = x(1:obj.n);
-         
-        end
-        
-        function val = fd(obj,t,x,u)
-         
-            if ~isempty(obj.fdh);
-                val = obj.fdh(t,x,u);
-            end
-            
-        end
-        
-        function val = wmDot(obj,t,x)
-         
-            if isempty(obj.wmDoth);
-                if obj.n == 2
-                    val = 0;
-                elseif obj.n == 3
-                    val = zeros(3,1);
-                end
-                
-            else
-                val = obj.wmDoth(t,x);
-            end
-            
-        end
-        
-        function val = vmDot(obj,t,x)
-         
-            if isempty(obj.vmDoth);
-                val = zeros(obj.n,1);
-            else
-                val = obj.vmDoth(t,x);
-            end
-            
         end
         
         
-        function val = wm(obj,t,x)
-         
-            if isempty(obj.wmh);
-                if obj.n == 2
-                    val = 0;
-                elseif obj.n == 3
-                    val = zeros(3,1);
-                end
-                
-            else
-                val = obj.wmh(t,x);
-            end
-            
-        end
         
-        function val = vm(obj,t,x)
-         
-            if isempty(obj.vmh);
-                val = zeros(obj.n,1);
-            else
-                val = obj.vmh(t,x);
-            end
-            
-        end
         
         function d = getd(obj,x)
-            d = x(obj.nxk+(1:size(obj.Gd,1)));
+            d = x(obj.nxk+(1:obj.nd));
         end
         
         function uRealK = PhiK(obj,t,x,uAffineK)
@@ -385,6 +364,9 @@ classdef UnderactuatedVehicle < Vehicle
             uAffineK = uRealK;
         end
         
+        function realNu = RealNu(obj)
+            realNu = [];
+        end
         
         function uRealD = PhiD(obj,t,x,uAffineD)
             uRealD = uAffineD;
@@ -409,7 +391,6 @@ classdef UnderactuatedVehicle < Vehicle
             else
                 error('nopee');
             end
-            
         end
         
         function uAffine = Phi(obj,t,x,uReal)
@@ -430,6 +411,62 @@ classdef UnderactuatedVehicle < Vehicle
             
         end
         
+        %% The following function can be overwritten by subclasses
+        function val = fd(obj,t,x,u)
+            
+            if ~isempty(obj.fdh);
+                val = obj.fdh(t,x,u);
+            end
+            
+        end
+        
+        function val = wmDot(obj,t,x)
+            
+            if isempty(obj.wmDoth);
+                if obj.n == 2
+                    val = 0;
+                elseif obj.n == 3
+                    val = zeros(3,1);
+                end
+            else
+                val = obj.wmDoth(t,x);
+            end
+            
+        end
+        
+        function val = vmDot(obj,t,x)
+            
+            if isempty(obj.vmDoth);
+                val = zeros(obj.n,1);
+            else
+                val = obj.vmDoth(t,x);
+            end
+            
+        end
+        
+        function val = wm(obj,t,x)
+            
+            if isempty(obj.wmh);
+                if obj.n == 2
+                    val = 0;
+                elseif obj.n == 3
+                    val = zeros(3,1);
+                end
+            else
+                val = obj.wmh(t,x);
+            end
+            
+        end
+        
+        function val = vm(obj,t,x)
+            
+            if isempty(obj.vmh);
+                val = zeros(obj.n,1);
+            else
+                val = obj.vmh(t,x);
+            end
+            
+        end
         
     end
     
@@ -445,7 +482,6 @@ classdef UnderactuatedVehicle < Vehicle
             end
             
         end
-        
         
         function StPosQuat_dot = fk3DQuaternion(quat,v,omega) % quaternon is only for 3D case
             
@@ -480,18 +516,16 @@ classdef UnderactuatedVehicle < Vehicle
             StPosStR_dot = [dotp;stDotR];
         end
         
-        function StPosTheta_dot = fk2D(theta,v,omega) % Theta is only for 3D case
+        function StPosTheta_dot = fk2D(theta,v,omega) % Theta is only for 2D case
             
-            R = [cos(theta),-sin(theta);sin(theta),cos(theta)];
+            R = [cos(theta),-sin(theta);
+                sin(theta), cos(theta)];
             
-            dotp   = R*v;
+            dotp = R*v;
             
             StPosTheta_dot = [dotp;omega];
         end
         
     end
-    
-    
-    
     
 end
