@@ -1,4 +1,5 @@
-![](logo.jpg =250x)
+
+<div align="center"><img src=".\logo.jpg" width="200 align="middle"> </div>
 
 VirtualArena is Object-Oriented Matlab IDE for Control Design and System Simulation.
 
