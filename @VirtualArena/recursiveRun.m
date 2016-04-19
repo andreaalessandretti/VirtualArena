@@ -21,7 +21,6 @@
                                 
                             end
                             
-                                
                             logAll{i} = obj.runOne(i);
                         end
                         

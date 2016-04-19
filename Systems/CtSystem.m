@@ -1,15 +1,41 @@
 
 classdef CtSystem < GeneralSystem
-    %CtSystem Continuous Time System
+    %%GeneralSystem
     %
-    %   See help GeneralSystem
+    % Consider a continuous-time dynamical model described by
     %
-    %   CtSystem methods:
-    %   CtSystem          - constructor sys = CtSystem(par1,val1,par2,val2, ...)
-    %                       see GeneralSystem for the explanation of the
-    %                       parameters and values.
-    %   getStateTrajectory - Compute a solution
-    %   changeOfCoordinate - Perform a change of state and/or input coordinate
+    % \dot{x} = f(t,x,u)
+    % y       = h(t,x)/h(t,x,u)
+    % 
+    % where
+    %
+    % x is an nx-dimensional vector
+    % u is an nu-dimensional vector
+    % y is an ny-dimensional vector
+    % 
+    % In VA such system is defined as follows
+    % 
+    % sys = CtSystem(par1,val1,par2,val2,...)
+    %
+    % where the parameters are chosen among
+    %
+    % 'StateEquation', 'nx', 'nu', 'OutputEquation', 'ny' , 
+    % 'InitialCondition', 'Controller','StateObserver'
+    %
+    % Often, it is also possible to set the parameters after the creation
+    % of the object, e.g.,
+    %
+    % sys.controller = mycontroller;
+    % sys.stateObserver = myobserver;
+    % sys.initialCondition = [1;1];
+    %
+    % Some methods provided by this function are the following:
+    %
+    %   getStateTrajectory - Compute a solution of the system. 
+    %                        See help CtSystem.getStateTrajectory.
+    %   changeOfCoordinate - Perform a change of state and/or input
+    %                        coordinate.
+    %                        See help CtSystem.changeOfCoordinate.
     %
     % See also GeneralSystem, DtSystem
     

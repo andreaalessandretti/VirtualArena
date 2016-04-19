@@ -100,7 +100,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 initVal = 0.1*randn(mpcOp.system.nu*mpcOp.horizonLength,1);
             end
             
-            
             posOpt = find(strcmp(solverParameters,'SolverOptions'));
             
             if(posOpt)
@@ -132,7 +131,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             ret.timeConditioning      = 0;
             ret.timeOther             = 0;
             
-            
+            exitflag
             switch lower(exitflag)
                 case 1
                     %First-order optimality measure was less than options.TolFun,
@@ -141,13 +140,13 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 case 0
                     %Number of iterations exceeded options.
                     %MaxIter or number of function evaluations exceeded options.MaxFunEvals.
-                    OK = 1;
+                    OK = 0;
                 case -1
                     %The output function terminated the algorithm.
-                    OK = 1;
+                    OK = 0;
                 case -2
                     % No feasible point was found.
-                    OK = 1;
+                    OK = 0;
                 case 2
                     % (trust-region-reflective and interior-point algorithms):
                     %Change in x was less than options.TolX and maximum constraint violation was less than options.TolCon.
@@ -157,17 +156,17 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                     % Change in the objective function value was less than
                     % options.TolFun and maximum constraint violation was
                     % less than options.TolCon.
-                    OK = 1;
+                    OK = 0;%1;
                 case 4
                     %Magnitude of the search direction was less than 2*options.TolX and maximum constraint violation was less than options.TolCon.
-                    OK = 1;
+                    OK = 0;%1;
                 case 5
                     %Magnitude of directional derivative in search direction was less than 2*options.TolFun and maximum constraint violation was less than options.TolCon.
-                    OK = 1;
+                    OK = 0;%1
                 case -3
                     %(interior-point and sqp algorithms)
                     %Objective function at current iteration went below options.ObjectiveLimit and maximum constraint violation was less than options.TolCon.
-                    OK = 1;
+                    OK = 0;%1;
             end
             
             
@@ -175,6 +174,10 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             ret.u_opt     = reshape(Uopt',nu,N);
             ret.x_opt     = mpcOp.system.getStateTrajectory(t0,x0,ret.u_opt);
+            
+            ret.tu_opt    = t0:t0+N-1;
+            ret.tx_opt    = t0:t0+N;
+            
             ret.solution  = solution;
             ret.problem   = not(OK);
             
@@ -245,7 +248,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         end
         
         
-        function faceProblem(obj,solution,mpcOp,xim1)
+        function sol = faceProblem(obj,mpcController,problematicSol,t,x,varargin)
             error('problem');
         end
         
@@ -326,6 +329,10 @@ function cost = fminconCost(dtMpcOp,t0,x0,U)
 cost = 0;
 x = x0;
 t = t0;
+if t0>100
+    aasadssa=1;
+end
+
 nu = dtMpcOp.system.nu;
 
 hasStageCost    = not(isempty(dtMpcOp.stageCost));

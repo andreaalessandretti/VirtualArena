@@ -8,11 +8,18 @@ classdef GeneralSystem < handle & InitDeinitObject
     % u is an nu-dimensional vector
     % y is an ny-dimensional vector
     %
-    % v zero mean gaussian state noise with covariance Q
-    % w zero mean gaussian output noise with covariance R
+    % (x',x,u,y) = (x(k+1),x(k),u(k),y(k))) in the discrte time case.
+    % (x',x,u,y) = (\dot{x}(t),x(t),u(t),y(t)) in the continuous time case.
     %
-    % (x',x,u,y) = (x(k+1),x(k),u(k),y(k),v(t),w(t))     in the discrte time case.
-    % (x',x,u,y) = (\dot{x}(t),x(t),u(t),y(t),v(t),w(t)) in the continuous time case.
+    %  Use:
+    % 
+    %  sys = GeneralSystem(par1,val1,par2,val2,...) % only by a subclass
+    %
+    %  where the parameters are chosen among the following
+    %
+    %   'nx', 'nu', 'ny', 'InitialCondition', 'Controller',
+    %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
+    %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
     %
     % GeneralSystem properties:
     %
@@ -22,23 +29,15 @@ classdef GeneralSystem < handle & InitDeinitObject
     % A,B,p,C,D,q  - function handles @(tbar,xbar,ubar) of the parameters 
     %                of the linearized model
     %
-    %  x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
-    %  y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
+    % x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
+    % y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
     %
     % initialCondition - initial condition/conditions of the system
-    % stateObserver     - state observer (of class StateObserver)
-    % controller        - system controller of class Controller, CtSystem, or
+    % stateObserver    - state observer (of class StateObserver)
+    % controller       - system controller of class Controller, CtSystem, or
     %                     DtSystem
-    % x                 - current state vector
+    % x                - current state vector
     %
-    %
-    %  sys = obj@GeneralSystem(par1,val1,par2,val2,...) % only by a subclass
-    %
-    %  where the parameters are chosen among the following
-    %
-    %   'nx', 'nu', 'ny', 'InitialCondition', 'Controller',
-    %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
-    %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
     %
     % See also CtSystem, DtSystem
     

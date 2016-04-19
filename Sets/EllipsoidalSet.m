@@ -68,13 +68,15 @@ classdef EllipsoidalSet < GeneralSet
                 c = varargin{3};
             end
             
-            obj = obj@GeneralSet(@(x) (x-c)'*P*(x-c)-b ,size(P,2),1);
+           
             
+            obj = obj@GeneralSet(0 ,size(P,2),1);
             obj.P = P;
             
             obj.b = b;
             
             obj.c = c;
+            obj.f = @(x) (x-obj.c)'*obj.P*(x-obj.c)-obj.b;
             
         end
         

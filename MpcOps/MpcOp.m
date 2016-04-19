@@ -254,9 +254,13 @@ classdef MpcOp < handle
             
             fprintf(getMessage('MpcOp:evaluation'));
             
+            if not(isempty(obj.stageCost))
+                obj.stageCost    = matlabFunction(simplify( obj.stageCost(t,x,u) ) ,'vars',{t,x,u});
+            end
             
-            obj.stageCost    = matlabFunction(simplify( obj.stageCost(t,x,u) ) ,'vars',{t,x,u});
-            obj.terminalCost = matlabFunction(simplify( obj.terminalCost(t,x) ) ,'vars',{t,x});
+            if not(isempty(obj.terminalCost))
+                obj.terminalCost = matlabFunction(simplify( obj.terminalCost(t,x) ) ,'vars',{t,x});
+            end
             fprintf(getMessage('done'));
         end
         

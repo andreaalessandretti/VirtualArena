@@ -282,7 +282,7 @@ classdef  BoxSet < PolytopicSet
         %Note: the addition is performed only in the existing bounds
         function ret = plus(arg1,arg2)
             
-            if  isa(arg1,'BoxSet')||isa(arg2,'BoxSet')
+            if  isa(arg1,'BoxSet') && isa(arg2,'BoxSet')
                 
                 ret = arg1.plusMinkowski(arg1,arg2);
                 
@@ -348,7 +348,7 @@ classdef  BoxSet < PolytopicSet
             
         end
         
-        function ret = plusVectorPlusSet(arg1,arg2)
+        function ret = plusVectorPlusSet(obj,arg1,arg2)
             
             if not((isnumeric(arg1)||isnumeric(arg2)) && (isa(arg1,'PolytopicSet')||isa(arg2,'PolytopicSet')))
                 error ('The sum is defined for a pair numeric and BoxSet');

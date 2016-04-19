@@ -136,7 +136,7 @@ classdef VirtualArena < handle
         %   e.g. Stop when vehicle 1 reaches the origin
         %       @(k,systemsList) systemsList{1}.x(1:2)=[0;0];
         %
-        stoppingCriteria  = @(x,i) norm(x)<0.002
+        stoppingCriteria  = @(t,sysList)t>10
         
         %stepPlotFunction is the function handle executed at every step of the
         %   simulation
@@ -224,6 +224,10 @@ classdef VirtualArena < handle
         % DisplaySelector object that chooses what to display
         display              = 0;
         
+        preSimuationTestFnc
+        
+        preSimuationTest = 0;
+        
     end
     
     properties (SetAccess = private, GetAccess = private)
@@ -310,6 +314,14 @@ classdef VirtualArena < handle
             obj.loadInitialConditions(iInitialCondition);
             
             i = 1;
+            
+            if obj.preSimuationTest
+                retTest = obj.preSimuationTestFnc(obj);
+                if not(isempty(retTest))
+                    log = retTest;
+                    return
+                end
+            end
             
             plot_handles = 0;
             
@@ -500,7 +512,9 @@ classdef VirtualArena < handle
                     plot_handles  = obj.defaultStepPlotFunction(obj.systemsList,obj.log,plot_handles,i);
                     
                     if isa(obj.handlePostFirstPlot,'function_handle')&&i==1
+                        
                         obj.handlePostFirstPlot();
+                        
                     elseif i==1
                         
                         obj.defaultAfterStepPlotFunction();

@@ -1,33 +1,61 @@
-%
-%DTSystem discrete time system
-%
-%   See help GeneralSystem
-%
-% DTSystem methods:
-%
-% DtSystem                     - constructor
-% getStateTrajectory(obj,x0,u) - compute the state trajectory obtained
-%                                from x0 applying the sequence of inputs u
-%
-%   See also GeneralSystem, CtSystem
 
- 
+%%DtSystem discrete-time system
+%
+% Consider a discrete-time dynamical model described by
+%
+% x+ = f(t,x,u)
+% y  = h(t,x)/h(t,x,u)
+%
+% where
+%
+% x is an nx-dimensional vector
+% u is an nu-dimensional vector
+% y is an ny-dimensional vector
+%
+% In VA such system is defined as follows
+%
+% sys = CtSystem(par1,val1,par2,val2,...)
+%
+% where the parameters are chosen among
+%
+% 'StateEquation', 'nx', 'nu', 'OutputEquation', 'ny' ,
+% 'InitialCondition', 'Controller','StateObserver'
+%
+% Often, it is also possible to set the parameters after the creation
+% of the object, e.g.,
+%
+% sys.controller = mycontroller;
+% sys.stateObserver = myobserver;
+% sys.initialCondition = [1;1];
+%
+% Some methods provided by this function are the following:
+%
+%   getStateTrajectory - Compute a solution of the system.
+%                        See help CtSystem.getStateTrajectory.
+%   changeOfCoordinate - Perform a change of state and/or input
+%                        coordinate.
+%                        See help CtSystem.changeOfCoordinate.
+%
+% See also GeneralSystem, DtSystem
+
+
+
 % This file is part of VirtualArena.
 %
 % Copyright (c) 2014, Andrea Alessandretti
 % All rights reserved.
 %
 % e-mail: andrea.alessandretti [at] {epfl.ch, ist.utl.pt}
-% 
+%
 % Redistribution and use in source and binary forms, with or without
 % modification, are permitted provided that the following conditions are met:
-% 
+%
 % 1. Redistributions of source code must retain the above copyright notice, this
-%    list of conditions and the following disclaimer. 
+%    list of conditions and the following disclaimer.
 % 2. Redistributions in binary form must reproduce the above copyright notice,
 %    this list of conditions and the following disclaimer in the documentation
 %    and/or other materials provided with the distribution.
-% 
+%
 % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 % ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -38,9 +66,9 @@
 % ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 % (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-% 
+%
 % The views and conclusions contained in the software and documentation are those
-% of the authors and should not be interpreted as representing official policies, 
+% of the authors and should not be interpreted as representing official policies,
 % either expressed or implied, of the FreeBSD Project.
 
 
@@ -79,12 +107,12 @@ classdef DtSystem < GeneralSystem
                 
                 indexF = find(strcmp(superClassParameters, 'StateEquation'));
                 
-                    if nargin == 3
-                        superClassParameters{indexF +1} = @(t,x,u) varargin{3}.integrate(@(y)ctSys.f(t,y,u),x,dt);
-                    else
-                        superClassParameters{indexF +1} = @(t,x,u) RK4.integrate(@(y)ctSys.f(t,y,u),x,dt);
-                    end
-               
+                if nargin == 3
+                    superClassParameters{indexF +1} = @(t,x,u) varargin{3}.integrate(@(y)ctSys.f(t,y,u),x,dt);
+                else
+                    superClassParameters{indexF +1} = @(t,x,u) RK4.integrate(@(y)ctSys.f(t,y,u),x,dt);
+                end
+                
                 
                 %superClassParameters{indexF +1} = @(x,u) RK4.integrate(@(y)ctSys.f(y,u),x,dt);
                 

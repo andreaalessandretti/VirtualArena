@@ -1,5 +1,11 @@
 classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
     %AcadoMpcOpSolver
+    % e.g.
+    %
+    % mpcOpSolver = AcadoMpcOpSolver('StepSize',dt,'MpcOp',op,'AcadoOptimizationAlgorithmOptions', {...
+    %       'KKT_TOLERANCE',1e-4,'MAX_NUM_ITERATIONS',30 ...
+    %            });
+    %
     %
     % Parameters :
     %
@@ -189,9 +195,10 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             eval(sprintf('out = %s_RUN(%s,InitControl,InitState);',obj.acadoProblemName,statesList));
             %eval(sprintf('out = %s_RUN(%s,InitState,InitControl);',obj.acadoProblemName,statesList));
-            
+            ret.problem = 0;
             if not(out.CONVERGENCE_ACHIEVED)
                 disp('Attention convergence not achived ');
+                ret.problem = 1;
             end
             
             ret.solverTime = toc;
@@ -206,7 +213,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             ret.acadoSolverOutput = out;
             
-            ret.problem = 0;
+            
             
             if sum(sum(isnan(ret.x_opt)))>0 || ...
                     max(max(ret.u_opt.*ret.u_opt)) > 10^(2*2) || ...
@@ -220,7 +227,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         function sol = faceProblem(obj,mpcController,problematicSol,t,x,varargin)
             
-            warning('AcadoMpcOpSolver: solution problem. Facing problem...try again')
+            error('AcadoMpcOpSolver: solution problem. Facing problem...try again')
             
             warmStart = [];
             

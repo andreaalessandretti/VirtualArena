@@ -179,13 +179,13 @@ classdef UnderactuatedVehicle < Vehicle
                 
             end
             
-            obj.nvk = iff( isempty(obj.Lvk), 0, size(obj.Lvk,2));
+            obj.nvk = va_iff( isempty(obj.Lvk), 0, size(obj.Lvk,2));
             
-            obj.nvd = iff( isempty(obj.Lvd), 0, size(obj.Lvd,2));
+            obj.nvd = va_iff( isempty(obj.Lvd), 0, size(obj.Lvd,2));
             
-            obj.nwk = iff( isempty(obj.Lwk), 0, size(obj.Lwk,2));
+            obj.nwk = va_iff( isempty(obj.Lwk), 0, size(obj.Lwk,2));
             
-            obj.nwd = iff( isempty(obj.Lwd), 0, size(obj.Lwd,2));
+            obj.nwd = va_iff( isempty(obj.Lwd), 0, size(obj.Lwd,2));
             
             
             %% Compose v

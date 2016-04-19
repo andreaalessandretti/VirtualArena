@@ -51,16 +51,17 @@ switch varargin{1}
         
         M = varargin{2};
         nn = varargin{3};
+        
         samples = [linspace(-M,M,nn);
             M*ones(1,nn)];
         
-        samples = [samples,...
-            [linspace(-M,M,nn);
-            -M*ones(1,nn)]];
+          samples = [samples,...
+            [M*ones(1,nn-2);
+            linspace(M-2*M/(nn-1),-M+2*M/(nn-1),nn-2)]];
         
         samples = [samples,...
-            [M*ones(1,nn-2);
-            linspace(-M+2*M/(nn-1),M-2*M/(nn-1),nn-2)]];
+            [linspace(M,-M,nn);
+            -M*ones(1,nn)]];
         
         samples = [samples,...
             [-M*ones(1,nn-2);
