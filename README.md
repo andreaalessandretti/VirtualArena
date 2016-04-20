@@ -5,10 +5,6 @@ VirtualArena is Object-Oriented Matlab IDE for Control Design and System Simulat
 
 ## Why VirtualArena?
 
-### No to the big time-loop
-
-Programs for control simulation often end up in a big outer-loop (updating time) with all the code listed inside. VirtualArena exploits the benefits of the Object-Oriented paradigm and a set of build-in functionalities to make the life of the developer easier. 
-
 #### Example: Control of a Double Integrator
 #####Common Coding Approach
 
@@ -56,9 +52,12 @@ va = VirtualArena(sys,...
 
 va.run();
 ```
-### Key Benefits- **Modularity & reusability & maintenance.** As the size of the control structure increases, the use of a modular software becomes fundamental for the sustainability a robust software. Virtual Arena, embracing the Object-Oriented programming paradigms, allows the user to focus on the design and test of specific modules and easily interconnect them with the rest of the architecture. Once an object (e.g., a controller) is developed, the knowledge of its implementation is not necessary for its use. This abstraction, allows to easily maintaining the application updated by simply replacing selected blocks.
-- **Collaborative design & test.** When multiple developers are involved in the design of a control architecture, the formalization of common interface to connect different components of the system is required. Virtual Arena defines such interfaces, facilitating the assignment of the design of modules to different developers.
-- **Dissemination & extensibility.** The effort and the technological and theoretical background required for the implementation of advanced control strategies are the main obstacles slowing down the dissemination of new research results. Virtual Arena, allowing the development of modular controllers, promotes the sharing of new algorithms among the users and provides a function to install external modules from third-party githubs.
+### Key Benefits of Virtual Arena
+- **Modularity & reusability & maintenance.** As the size of the control structure increases, the use of a modular software becomes fundamental for the sustainability a robust software. Virtual Arena, embracing the Object-Oriented programming paradigms, allows the user to focus on the design and test of specific modules and easily interconnect them with the rest of the architecture. Once an object (e.g., a controller) is developed, the knowledge of its implementation is not necessary for its use. This abstraction, allows to easily maintaining the application updated by simply replacing selected blocks.
+
+- **Collaborative design & test.** When multiple developers are involved in the design of a control architecture, the formalization of common interface to connect different components of the system is required. Virtual Arena defines such interfaces, facilitating the assignment of the design of modules to different developers.
+
+- **Dissemination & extensibility.** The effort and the technological and theoretical background required for the implementation of advanced control strategies are the main obstacles slowing down the dissemination of new research results. Virtual Arena, allowing the development of modular controllers, promotes the sharing of new algorithms among the users and provides a function to install external modules from third-party githubs.
 
 - **Many control-oriented common functions implemented.** There are many common components/procedures required in the simulation/design of control systems (e.g., discretization procedures, linearization procedures, EKF design, data logging architecture, ...). VirtualaArena provides with an increasing number of predefined functionalities devoted to make the life of the developer easier. All the functionalities are presented in the rest of this document.
 
@@ -87,11 +86,22 @@ In this section, we list some of the features of VirtualArena. We refer to the m
 
 - Discretization of continuous-time dynamical models.
 - Linearization of continuous-time and discrete-time dynamical models.
-###State Estimation
+
+###State Estimation
 - Symbolic Hessian and Jacobian computation or estimation via sampling.
 - Automatic generation of Extended Kalman Filter for discrete-time dynamical systems.
-- Automatic generation of Extended Kalman-Bucy Filter for continuous-time dynamical systems.###Model Predictive Control- Interface to solve discrete-time MPC problems using Fmincon.- Interface to solve continuous-time and discrete-time MPC problems using ACADO Toolkit.- Implementation of different warm-start strategies for MPC controllers.
-###Motion Control of Underactuated Vehicle- Different representations of attitude using quaternions and rotation matrices.- Generic dynamical model representing a variety of vehicles.## Examples
+- Automatic generation of Extended Kalman-Bucy Filter for continuous-time dynamical systems.
+
+###Model Predictive Control
+- Interface to solve discrete-time MPC problems using Fmincon.
+- Interface to solve continuous-time and discrete-time MPC problems using ACADO Toolkit.
+- Implementation of different warm-start strategies for MPC controllers.
+
+###Motion Control of Underactuated Vehicle
+- Different representations of attitude using quaternions and rotation matrices.
+- Generic dynamical model representing a variety of vehicles.
+
+## Examples
 In this section, we illustrate the use of `VirtualArena` using some examples, which can be found in the folder `\VirtualArena\examples`.
 
 ### Ex 01: Control of a Unicycle Model
