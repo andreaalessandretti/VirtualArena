@@ -33,7 +33,7 @@ plot(kSpan*dt,x(2,1:end-1));grid on;xlabel('t');ylabel ('x_2')
 subplot(3,1,3)
 plot(kSpan*dt,u);grid on;xlabel('t');ylabel ('u')
 ```
-#####Virtual Arena
+#####VirtualArena
 
 ```matlab
 sys = CtSystem(...
@@ -52,28 +52,28 @@ va = VirtualArena(sys,...
 
 va.run();
 ```
-### Key Benefits of Virtual Arena
-- **Modularity & reusability & maintenance.** As the size of the control structure increases, the use of a modular software becomes fundamental for the sustainability a robust software. Virtual Arena, embracing the Object-Oriented programming paradigms, allows the user to focus on the design and test of specific modules and easily interconnect them with the rest of the architecture. Once an object (e.g., a controller) is developed, the knowledge of its implementation is not necessary for its use. This abstraction, allows to easily maintaining the application updated by simply replacing selected blocks.
+### Key Benefits of VirtualArena
+- **Modularity & reusability & maintenance.** VirtualArena promote the development of a modular structure, where each object (e.g., a controller, a dynamical model...) is self-contained, and interchangeable. Once an object is developed, the knowledge of its implementation is not necessary for its use. This abstraction allows to reuse/share components and easily maintain the architecture by simply replacing selected blocks.
 
-- **Collaborative design & test.** When multiple developers are involved in the design of a control architecture, the formalization of common interface to connect different components of the system is required. Virtual Arena defines such interfaces, facilitating the assignment of the design of modules to different developers.
+- **Collaborative design & test.** When multiple developers are involved in the design of a control architecture, it is required a formalization of common interfaces to connect the different components of the architecture. VirtualArena defines such interfaces, facilitating the assignment of the design of modules to different developers.
 
-- **Dissemination & extensibility.** The effort and the technological and theoretical background required for the implementation of advanced control strategies are the main obstacles slowing down the dissemination of new research results. Virtual Arena, allowing the development of modular controllers, promotes the sharing of new algorithms among the users and provides a function to install external modules from third-party githubs.
+- **Dissemination & extensibility.** The effort and the technological and theoretical background required for the implementation of advanced control strategies are the main obstacles slowing down the dissemination of new research results. VirtualArena, allowing the development of modular controllers, promotes the sharing of new algorithms among the users and provides functions to install external modules from third-party githubs.
 
-- **Many control-oriented common functions implemented.** There are many common components/procedures required in the simulation/design of control systems (e.g., discretization procedures, linearization procedures, EKF design, data logging architecture, ...). VirtualaArena provides with an increasing number of predefined functionalities devoted to make the life of the developer easier. All the functionalities are presented in the rest of this document.
+- **Many control-oriented common functions implemented.** There are many common components/procedures required in the simulation/design of control systems (e.g., discretization procedures, linearization procedures, EKF design, data logging architecture, ...). VirtualaArena comes with an increasing number of predefined functionalities devoted to make the life of the developer easier.
 
 ## Getting Started
 Open Matlab on the folder where you want to create the VirtualArena folder and run the following code
 
 ```matlab
- urlwrite('https://github.com/andreaalessandretti/VirtualArena/archive/master.zip','master.zip');
- unzip('master.zip');
- movefile('VirtualArena-master','VirtualArena');
- cd VirtualArena/;
- addPathsOfVirtualarena;
+urlwrite('https://github.com/andreaalessandretti/VirtualArena/archive/master.zip','master.zip');
+unzip('master.zip');
+movefile('VirtualArena-master','VirtualArena');
+cd VirtualArena/;
+addPathsOfVirtualarena;
 ```
 
 ## Features
-In this section, we list some of the features of VirtualArena. We refer to the matlab documentation for theuse of the specific function.
+In this section, we list some of the features of VirtualArena. We refer to the Matlab documentation for the use of specific functions.
 
 ###Simulation
 - Implementation of different time discretization methods (Euler forward, Runge-Kutta, ...).
@@ -83,7 +83,6 @@ In this section, we list some of the features of VirtualArena. We refer to the m
 - Simultaneous simulation of a network of multiple vehicles.
 
 ###System Manipulation
-
 - Discretization of continuous-time dynamical models.
 - Linearization of continuous-time and discrete-time dynamical models.
 
@@ -106,10 +105,9 @@ In this section, we illustrate the use of `VirtualArena` using some examples, wh
 
 ### Ex 01: Control of a Unicycle Model
 This example addresses the control of unicycle system. We will see how to :
-
 - Define controller in a separate file
-- Custom StagePlotFunction
-- Custom StoppingCriteria 
+- Use custom StagePlotFunction
+- Use custom StoppingCriteria 
 
 Main file ```ex01runme_Unicyle.m```:
 
@@ -194,7 +192,7 @@ end
 
 ```
 ### Ex 02: Output Feedback and EKF
-Here, the previous example is extended by simulating that only the position of the unicycle is availavle and designing an Extended Kalman Filter to estimate its sate.
+Here, the previous example is extended by making available only the position of the unicycle and designing an Extended Kalman Filter to estimate its sate.
 
 In order to define an output of the system, we can use the parameter `OutputEquation` in the definition of the system.
 
@@ -230,6 +228,10 @@ grid on
 
 end
 ```
+**Note that:**
+
+- `DtSystem(sys,dt)` discretized the continuous time model
+- The `EkfFilter` automatically computed the linearized system and used it to design the Extended Kalman Filter.
 
 ### Ex 03: A simple MPC controller
 Building on the previous examples, we replace the controller `UniGoToPoint` with a simple MPC controller.
