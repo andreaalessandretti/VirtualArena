@@ -299,8 +299,6 @@ classdef VirtualArena < handle
         
         function log = runOne(obj,varargin)
             
-            overallTime = tic;
-            
             if nargin == 2 %Simulate using initial condition iInitialCondition
                 
                 iInitialCondition = varargin{1};
@@ -548,7 +546,6 @@ classdef VirtualArena < handle
             end
             
             obj.cutExtraLogVector(i-1,timeInfo);
-            obj.log.simulationTime = toc(overallTime);
             log = obj.log;
         end
         
