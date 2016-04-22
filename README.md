@@ -276,3 +276,81 @@ va = VirtualArena(realSystem,...
 ```
 Note that, as expected, the observer is designed on the model `sys` and then attached on the real system `realSystem`.
 At this point, before running the file `ex04runme_UnicycleWithEKFandMPCRealSystem.m` run on the terminal the python script `ex04RealSystem.py` that emulate the real system `python ex04RealSystem.py `.
+
+### Ex 05: Distributed control - basic consensus algorithm
+
+VirtualArena supports the simulation of a network of systems. In this example, we see how to set up and run a consensus control scheme of a set of single integrators.
+
+```matlab
+N = 5;
+
+for i = 1:N
+    
+    v{i}                  = CtSystem('StateEquation',@(t,x,u)u,'nx',1,'nu',1);    
+    v{i}.controller       = ex5BasicConsensusController();
+    v{i}.initialCondition = i;
+    
+end
+
+%% Network
+
+% Adjacency matrix of a loop
+% Aij = 1 id agent i measures agent j
+A            = zeros(N);
+A(1,4)       = 1;
+A(2:N,1:N-1) = eye(N-1);
+
+%A Sensor defines what to measure, in this case the state
+s1 = ex5StateSensor();
+
+a = VirtualArena(v,...
+    'StoppingCriteria'  , @(t,as)t>10,...
+    'SensorsNetwork'    , {s1,A},...
+    'DiscretizationStep', 0.1,...
+    'PlottingStep'      , 1);
+
+ret = a.run();
+
+%Show the final state to see that the system reached consensus
+for i=1:length(ret)
+    finalState = ret{i}.stateTrajectory(1,end)'
+end
+```
+A sensor object, subcalss of `Sensor` defines what kind of measurement we are taking. Since we want to measure the state of our neighborhoods, the implementation will be as follows:
+
+```matlab
+classdef ex5StateSensor < Sensor
+    methods (Static)
+        
+        function  measurement = sense(agentId,agent,detectableAgentsList,detectableAgentsIds)
+            measurement = {};
+            nDetectables = length(detectableAgentsIds);
+            for i = 1 : nDetectables
+                measurement{i} = detectableAgentsList{i}.x;
+            end 
+        end
+        
+    end
+end
+```
+
+The `Sensor` mounted on `agent`, with associated `agentId`, 
+ `sense`s the `detectableAgentsList` with associated `detectableAgentsIds` and provides a `measurement`. In this case, the `measurement` is a call containing all the states of the detectable agents. The adjacency matrix defines the detected agents
+
+A network based controller, other than time and state, has as input also the readings from the network, which in this case are the state of the neighborhooding systems.
+
+```matlab
+classdef ex5BasicConsensusController < Controller
+    methods
+        
+        function u = computeInput(obj,t,x,readings)
+            nNeigh = length(readings);
+            u = 0;
+            for i =1:nNeigh
+                u = u+(readings{1}{i} -x)/nNeigh;
+            end
+        end
+    end
+    
+end
+```

@@ -257,7 +257,7 @@ classdef VirtualArena < handle
             end
             
             if isempty(obj.multiruns)
-                obj.multiruns = { MultiRun(1,@(i,va)1==1)}; % Just do the classic simulation without modifications
+                obj.multiruns = { MultiRun(1,@(i,va)1==1) }; % Just do the classic simulation without modifications
             end
             
         end
