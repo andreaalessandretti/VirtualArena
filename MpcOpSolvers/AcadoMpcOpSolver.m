@@ -96,6 +96,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         stepSize;
         
+        conditionProblem = @(out)not(out.CONVERGENCE_ACHIEVED)
         
         
     end
@@ -196,10 +197,8 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             eval(sprintf('out = %s_RUN(%s,InitControl,InitState);',obj.acadoProblemName,statesList));
             %eval(sprintf('out = %s_RUN(%s,InitState,InitControl);',obj.acadoProblemName,statesList));
             ret.problem = 0;
-            if not(out.CONVERGENCE_ACHIEVED)
-                disp('Attention convergence not achived ');
-                ret.problem = 1;
-            end
+            
+            
             
             ret.solverTime = toc;
             
@@ -217,9 +216,11 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             if sum(sum(isnan(ret.x_opt)))>0 || ...
                     max(max(ret.u_opt.*ret.u_opt)) > 10^(2*2) || ...
-                    not(out.CONVERGENCE_ACHIEVED)
+                    obj.conditionProblem(out)
                 ret.problem = 1;
             end
+            
+         
             
             ret.solverParameters = {out};
             

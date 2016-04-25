@@ -277,6 +277,8 @@ va = VirtualArena(realSystem,...
 Note that, as expected, the observer is designed on the model `sys` and then attached on the real system `realSystem`.
 At this point, before running the file `ex04runme_UnicycleWithEKFandMPCRealSystem.m` run on the terminal the python script `ex04RealSystem.py` that emulate the real system `python ex04RealSystem.py `.
 
+**Remark:** Note that this is just an example to show the flexibility of VirtualArena, but in most cases this is not the best way of using MPC controllers on real systems.
+
 ### Ex 05: Distributed control - basic consensus algorithm
 
 VirtualArena supports the simulation of a network of systems. In this example, we see how to set up and run a consensus control scheme of a set of single integrators.
