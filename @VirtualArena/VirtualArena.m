@@ -375,6 +375,7 @@ classdef VirtualArena < handle
                         x             = obj.systemsList{ia}.x;
                         xToController = obj.systemsList{ia}.h(timeInfo,x);
                         z             = xToController;
+                        
                     else % State feedback
                         
                         x             = obj.systemsList{ia}.x;
@@ -385,11 +386,10 @@ classdef VirtualArena < handle
                     %% Classic vs Network control
                     if not(isempty(obj.sensorsNetwork))
                         
-                        log = obj.senseNetworkToAgent(ia);
-                        if isempty(log)
+                        netReadings = obj.senseNetworkToAgent(ia);
+                        
+                        if isempty(netReadings)
                             netReadings = {};
-                        else
-                            netReadings = obj.senseNetworkToAgent(ia);
                         end
                         
                     else
@@ -407,7 +407,7 @@ classdef VirtualArena < handle
                         
                         u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
                         
-                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,u,controllerFParams{:}),xc,obj.discretizationStep);
+                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:}),xc,obj.discretizationStep);
                         
                         obj.systemsList{ia}.controller.x = nextXc;
                         

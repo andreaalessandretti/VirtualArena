@@ -214,7 +214,6 @@ classdef TrackingControllerECC13 < Controller
         
         function u = computeInputFromPdPdDot(obj,pd,pdDot,x)
             
-           
             p = obj.vehicle.getPosition(x);
             
             R = obj.vehicle.getR(x);
