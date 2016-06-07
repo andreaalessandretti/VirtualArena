@@ -228,7 +228,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         function sol = faceProblem(obj,mpcController,problematicSol,t,x,varargin)
             
-            error('AcadoMpcOpSolver: solution problem. Facing problem...try again')
+            warning('AcadoMpcOpSolver: solution problem. Facing problem...ty agrain')
             
             warmStart = [];
             

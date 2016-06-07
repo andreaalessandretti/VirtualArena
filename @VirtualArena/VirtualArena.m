@@ -337,6 +337,8 @@ classdef VirtualArena < handle
                 timeInfo = (i-1)*obj.discretizationStep;
             elseif isa(obj.systemsList{1},'DtSystem')
                 timeInfo = (i-1);
+            else
+                error('The system must either be a CtSystem or a DtSystem');
             end
             
             obj.initLogs(timeInfo);
