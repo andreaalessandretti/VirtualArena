@@ -356,3 +356,16 @@ classdef ex5BasicConsensusController < Controller
     
 end
 ```
+
+## Reference
+
+If you like VirtuaArena, you can reference the associated Ph.D. thesis with BibTeX entry:
+
+```
+@phdthesis{Alessandretti2016,
+author = {Alessandretti, A.},
+school = {IST-EPFL},
+title = {{Continuous-time Model Predictive Control for Economic Optimization: Theory, Design, and Applications to Motion Control of Underactuated Vehicles}},
+year = {2016}
+}
+```
