@@ -320,10 +320,19 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
             %% Obtain strings of the differential equations
             
             x = sym('x',[nx,1]);
-            x = sym(x,'real');
+            if isempty(which('assume'))
+                x = sym(x,'real');
+            else
+                assume(x,'real');
+            end
             
             u = sym('u',[nu,1]);
-            u = sym(u,'real');
+            
+            if isempty(which('assume'))
+                u = sym(u,'real');
+            else
+                assume(u,'real');
+            end
             
             tsym = sym('t','real');
             
@@ -544,10 +553,18 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 nu = obj.mpcOp.system.nu;
                 
                 x = sym('x',[nx,1]);
-                x = sym(x,'real');
+                if isempty(which('assume'))
+                    x = sym(x,'real');
+                else
+                    assume(x,'real');
+                end
                 
                 u = sym('u',[nu,1]);
-                u = sym(u,'real');
+                if isempty(which('assume'))
+                    u = sym(u,'real');
+                else
+                    assume(u,'real');
+                end
                 
                 tsym = sym('t','real');
                 

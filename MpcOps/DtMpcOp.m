@@ -205,7 +205,15 @@ classdef DtMpcOp < MpcOp
                     
                     stCost = superClassParameters{index +1};
                     
-                    superClassParameters{index +1} = @(t,x,u) dt*stCost(t,x,u);
+                    superClassParameters{index +1} = @(k,x,u) dt*stCost(dt*k,x,u);
+                    
+                    % TerminalCost Discretization
+                    
+                    index = find(strcmp(superClassParameters, 'TerminalCost'));
+                    
+                    teCost = superClassParameters{index +1};
+                    
+                    superClassParameters{index +1} = @(k,x) teCost(dt*k,x);
                     
                     
                 end

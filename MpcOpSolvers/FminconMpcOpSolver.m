@@ -69,7 +69,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             
         end
         
-        function ret = solve(obj,mpcOp,t0,x0,warmStart,varargin)
+        function ret = solve(obj,mpcOp,k0,x0,warmStart,varargin)
             
             mpcOp = obj.mpcOp;
             
@@ -84,7 +84,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             switch class(mpcOp)
                 
                 case 'DtMpcOp'
-                    
                     
                 otherwise
                     
@@ -111,11 +110,11 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             A = []; b = []; Aeq = []; beq = [];
             
             [Uopt,fval,exitflag,output,lambda,grad,hessian] = fmincon(...
-                @(U) fminconCost(mpcOp,t0,x0,U),...
+                @(U) fminconCost(mpcOp,k0,x0,U),...
                 initVal,...
                 A, b, Aeq, beq,...
                 [],[],...
-                @(U) obj.getNonlinearConstraints(mpcOp,t0,x0,U),...
+                @(U) obj.getNonlinearConstraints(mpcOp,k0,x0,U),...
                 options...
                 );
             
@@ -173,10 +172,10 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             %ret.x_opt = reshape( xmin(1:nx*(N+1)    ,:)  ,nx,N+1);
             
             ret.u_opt     = reshape(Uopt',nu,N);
-            ret.x_opt     = mpcOp.system.getStateTrajectory(t0,x0,ret.u_opt);
+            ret.x_opt     = mpcOp.system.getStateTrajectory(k0,x0,ret.u_opt);
             
-            ret.tu_opt    = t0:t0+N-1;
-            ret.tx_opt    = t0:t0+N;
+            ret.tu_opt    = k0:k0+N-1;
+            ret.tx_opt    = k0:k0+N;
             
             ret.solution  = solution;
             ret.problem   = not(OK);
@@ -206,7 +205,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 if isa(stageConstratins{i},'GeneralSet')
                     
-                    nNonlinearStageConstratins    = nNonlinearStageConstratins +1;
+                    nNonlinearStageConstratins    = nNonlinearStageConstratins + 1;
                     
                     sizeNonlinearStageConstratins = sizeNonlinearStageConstratins ...
                         + stageConstratins{i}.nf;
@@ -255,16 +254,14 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         function close(obj)
         end
         
-        
-        
-        function [C,Ceq] = getNonlinearConstraints(obj,mpcOp,t0,x0,U)
+        function [C,Ceq] = getNonlinearConstraints(obj,mpcOp,k0,x0,U)
             
             nu = mpcOp.system.nu;
             nx = mpcOp.system.nx;
             N  = mpcOp.horizonLength;
             
             u = reshape(U',nu,N);
-            x = mpcOp.system.getStateTrajectory(t0,x0,u);
+            x = mpcOp.system.getStateTrajectory(k0,x0,u);
             
             terminalConstratins = mpcOp.terminalConstraints;
             stageConstratins    = mpcOp.stageConstraints;
@@ -276,19 +273,19 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             for i =1:length(stageConstratins)
                 con = stageConstratins{i};
                 if (isa(con,'GeneralSet'))
-                    t = t0;
-                    for k = 1:N
+                    k = k0;
+                    for kk = 1:N
                         
                         if con.nx == nx+ nu
-                            ck = con.f([x(:,k);u(:,k)]);
+                            ckk = con.f([x(:,kk);u(:,kk)]);
                         elseif con.nx == nx+ nu +1
-                            ck = con.f([t;x(:,k);u(:,k)]);
+                            ckk = con.f([k;x(:,kk);u(:,kk)]);
                         end
-                        nck = length(ck);
+                        nckk = length(ckk);
                         
-                        C(j-1+(1:nck)) = ck;
-                        j = j+nck;
-                        t = t +obj.discretizationStep;
+                        C(j-1+(1:nckk)) = ckk;
+                        j = j+nckk;
+                        k = k + 1;
                     end
                 else
                     error(getMessage('FminconMpcOpSolver:OnlyGeneralSet'));
@@ -302,15 +299,15 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 if (isa(con,'GeneralSet'))
                     
                        if con.nx == nx
-                            ck = con.f(x(:,N+1));
+                            ckk = con.f(x(:,N+1));
                         elseif con.nx == nx +1
-                            ck = con.f([t;x(:,N+1)]);
+                            ckk = con.f([k;x(:,N+1)]);
                         end
                         
-                    nck = length(ck);
+                    nckk = length(ckk);
                     
-                    C(j-1+(1:nck)) = ck;
-                    j = j+nck;
+                    C(j-1+(1:nckk)) = ckk;
+                    j = j+nckk;
                 else
                     error(getMessage('FminconMpcOpSolver:OnlyGeneralSet'));
                 end
@@ -324,14 +321,11 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
 end
 
 % U = [u1;u2;...]
-function cost = fminconCost(dtMpcOp,t0,x0,U)
+function cost = fminconCost(dtMpcOp,k0,x0,U)
 
 cost = 0;
 x = x0;
-t = t0;
-if t0>100
-    aasadssa=1;
-end
+k = k0;
 
 nu = dtMpcOp.system.nu;
 
@@ -343,15 +337,15 @@ for i =1:length(U)/nu
     u = U((i-1)*nu+(1:nu));
     
     if hasStageCost
-        cost = cost + dtMpcOp.stageCost(t,x,u);
+        cost = cost + dtMpcOp.stageCost(k,x,u);
     end
     
-    x = dtMpcOp.system.f(t,x,u);
-    t = t + 1;
+    x = dtMpcOp.system.f(k,x,u);
+    k = k + 1;
 end
 
 if hasTerminalCost
-    cost = cost + dtMpcOp.terminalCost(t,x);
+    cost = cost + dtMpcOp.terminalCost(k,x);
 end
 
 if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0

@@ -108,14 +108,12 @@ classdef DtSystem < GeneralSystem
                 indexF = find(strcmp(superClassParameters, 'StateEquation'));
                 
                 if nargin == 3
-                    superClassParameters{indexF +1} = @(t,x,u) varargin{3}.integrate(@(y)ctSys.f(t,y,u),x,dt);
+                    superClassParameters{indexF +1} = @(k,x,u) varargin{3}.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
                 else
-                    superClassParameters{indexF +1} = @(t,x,u) RK4.integrate(@(y)ctSys.f(t,y,u),x,dt);
+                    superClassParameters{indexF +1} = @(k,x,u) RK4.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
                 end
                 
-                
                 %superClassParameters{indexF +1} = @(x,u) RK4.integrate(@(y)ctSys.f(y,u),x,dt);
-                
                 
             else
                 
@@ -128,14 +126,14 @@ classdef DtSystem < GeneralSystem
         end
         
         
-        function x = getStateTrajectory(obj,t0,x0,u)
+        function x = getStateTrajectory(obj,k0,x0,u)
             
             x = zeros(length(x0),size(u,2)+1);
             x(:,1) = x0;
-            t = t0;
+            k = k0;
             for i =1:size(u,2)
-                x(:,i+1) = obj.f(t,x(:,i),u(:,i));
-                t = t+1;
+                x(:,i+1) = obj.f(k,x(:,i),u(:,i));
+                k = k+1;
             end
             
             if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0
