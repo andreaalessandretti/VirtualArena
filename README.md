@@ -93,7 +93,6 @@ In this section, we list some of the features of VirtualArena. We refer to the M
 
 ###Model Predictive Control
 - Interface to solve discrete-time MPC problems using Fmincon.
-- Interface to solve continuous-time and discrete-time MPC problems using ACADO Toolkit.
 - Implementation of different warm-start strategies for MPC controllers.
 
 ###Motion Control of Underactuated Vehicle
