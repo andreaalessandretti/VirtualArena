@@ -230,8 +230,8 @@ classdef TrackingControllerECC13 < Controller
             
             u = PinvE*(-obj.Ke*e -r);
             
-            
         end
+        
         
         function e = computeError(obj,t,x)
           

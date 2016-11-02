@@ -1,5 +1,3 @@
-
-
 classdef UniGoToPointPid < DtSystem
     %UniGoToPointPid go-to-position Controller for Unicycle models
     %   Given the state of a Unicycle vehicle, this Controller computes the

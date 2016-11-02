@@ -399,30 +399,34 @@ classdef VirtualArena < handle
                     end
                     
                     controllerFParams = {xToController,netReadings{:}};
+                    %netReadings{1}{i_sensor}{j_measurament_of_sensor_i}
                     
                     %% Compute input
-                    
+                    uSysCon = [];
                     if isa(obj.systemsList{ia}.controller,'CtSystem') %CtController
                         
                         %xc = obj.log{ia}.controllerStateTrajectory(:,i);
                         xc = obj.systemsList{ia}.controller.x;
                         
-                        u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
+                        uSysCon = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
                         
-                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,controllerFParams{:}),xc,obj.discretizationStep);
+                        nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:}),xc,obj.discretizationStep);
                         
                         obj.systemsList{ia}.controller.x = nextXc;
+                        
+                        u = uSysCon(1:obj.systemsList{ia}.nu);
                         
                     elseif isa(obj.systemsList{ia}.controller,'DtSystem') %DtController
                         
                         xc = obj.systemsList{ia}.controller.x;
                         
-                        u = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
+                        uSysCon = obj.systemsList{ia}.controller.h(timeInfo,xc,controllerFParams{:});
                         
-                        nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,u,controllerFParams{:});
+                        nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:});
                         
                         obj.systemsList{ia}.controller.x = nextXc;
                         
+                        u = uSysCon(1:obj.systemsList{ia}.nu); 
                         
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
                         
@@ -481,7 +485,7 @@ classdef VirtualArena < handle
                         
                     end
                     
-                    obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z);
+                    obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z,netReadings,uSysCon);
                     
                     obj.systemsList{ia}.x = nextX;
                     
@@ -600,7 +604,7 @@ classdef VirtualArena < handle
             
         end
         
-        function appendLogs(obj,agent,u,iAgent,i,t,z)
+        function appendLogs(obj,agent,u,iAgent,i,t,z,netReadings,uSysCon)
             
             logObjs = obj.logObjs;
             
@@ -623,7 +627,7 @@ classdef VirtualArena < handle
                 
                 
                 if logTheDate && (isempty(logger.condition) || (not(isempty(logger.condition)) && logger.condition(t,agent,u,z)))
-                    obj.appendVectorToLog(logger.getVectorToLog(t,agent,u,z)    ,iAgent,logger.name,iLog + logger.shift );
+                    obj.appendVectorToLog(logger.getVectorToLog(t,agent,u,z,netReadings,uSysCon)    ,iAgent,logger.name,iLog + logger.shift );
                     %logger.i=logger.i+1;
                 end
                 

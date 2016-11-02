@@ -60,6 +60,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
         
         
         function obj = MpcOpTrackingECC13(varargin)
+            
             % TrackingControllerECC14 is the costructor
             %
             %          va = TrackingControllerECC14(par1,val1,par2,val2,...)
@@ -71,8 +72,6 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             %	see the descriptions of the associated properties.
             
             obj = obj@CtMpcOp(varargin{:});
-            
-            
             
             %% Retrive parameters for superclass GeneralSystem
             
@@ -91,6 +90,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
                             obj.Q = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
+                            
                         case 'O'
                             
                             obj.O = varargin{parameterPointer+1};
@@ -109,21 +109,17 @@ classdef MpcOpTrackingECC13 < CtMpcOp
                 
                 hasParameters = length(varargin)-parameterPointer>=0;
                 
-                %if not(isempty(obj.vehicle.Lvd)) || not(isempty(obj.vehicle.Lwd)) || not(isempty(obj.vehicle.mw))|| not(isempty(obj.vehicle.mw))
-                %    error(getMessage('TrackingControllerECC14:wrongvehicle'));
-                %end
-                
             end
             
-             parss = {varargin{:},'Vehicle',obj.system};
-                obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
-                
-                obj.stageCost    = @obj.myStageCost;
-                obj.terminalCost = @obj.myTerminalCost;
+            parss = {varargin{:},'Vehicle',obj.system};
+            obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
+            
+            obj.stageCost    = @obj.myStageCost;
+            obj.terminalCost = @obj.myTerminalCost;
             
         end
         
-        function cost = myStageCost(obj,t,x,u)
+        function cost = myStageCost(obj,t,x,u,varargin)
             
             e    = obj.auxiliaryLaw.computeError(t,x);
             uAux = obj.auxiliaryLaw.computeInput(t,x);
@@ -131,7 +127,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
         end
         
-        function cost = myTerminalCost(obj,t,x)
+        function cost = myTerminalCost(obj,t,x,varargin)
             
             e = obj.auxiliaryLaw.computeError(t,x);
             K = obj.auxiliaryLaw.Ke;

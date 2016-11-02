@@ -51,174 +51,9 @@ classdef DtMpcOp < MpcOp
                 
                 
                 ctOP = varargin{1};
-                
-                superClassParameters = ctOP.getParameters();
-                
                 dt = varargin{2};
                 
-                % HorizonLength Discretization
-                
-                index = find(strcmp(superClassParameters, 'HorizonLength'));
-                
-                hLen = superClassParameters{index +1};
-                
-                superClassParameters{index +1} = floor(hLen/dt);
-                
-                
-                % Penalization input derivative
-                
-                index = find(strcmp(superClassParameters, 'InputDerivative'));
-                
-                if not(isempty(index)) && not(isempty(superClassParameters{index +1}))  && superClassParameters{index +1}
-                    
-                    %% In order to penilize the derivative of the input, we
-                    % first augment the state as follows
-                    %
-                    % xx(i) = [x(i),u(i-1)]
-                    %
-                    % with the associated dynamics
-                    %
-                    % ff(xx) = [f(x);I]
-                    %
-                    % and them we rewrite the agumented stage cost
-                    %
-                    % l(x,u,dotU)
-                    %
-                    % in the standard form
-                    %
-                    % ll(x,u) = l(x(1:nx),u,u-x(nx+(1:nu)))
-                    %
-                    % similarly for the terminal cost
-                    
-                    % System Discretization
-                    
-                    index = find(strcmp(superClassParameters, 'System'));
-                    ctSys = superClassParameters{index +1};
-                    dtSys = DtSystem(ctSys,dt);
-                    
-                    % Augment the state vector and the dynamic
-                    
-                    oldf       = dtSys.f;
-                    originalNx = dtSys.nx;
-                    nu         = dtSys.nu;
-                    dtSys.f    = @(t,x,u)[oldf(x(1:originalNx),u);
-                        u];
-                    
-                    dtSys.nx = originalNx + nu;
-                    
-                    superClassParameters{index +1} = dtSys;
-                    
-                    
-                    % StageCost Discretization and normal form
-                    
-                    index = find(strcmp(superClassParameters, 'StageCost'));
-                    
-                    ctStCost = superClassParameters{index +1};
-                    dtStCost = @(t,x,u,dotU) dt*ctStCost(t,x,u,dotU);
-                    
-                    dtStCost2 = @(t,x,u) dtStCost(t,...
-                        x(1:originalNx),...
-                        u,...
-                        u-x(originalNx+(1:nu))...
-                        );
-                    
-                    superClassParameters{index +1} = dtStCost2;
-                    
-                    % Terminal cost in normal form
-                    
-                    index = find(strcmp(superClassParameters, 'TerminalCost'));
-                    tCost = superClassParameters{index +1};
-                    
-                    superClassParameters{index +1} = @(t,x) tCost(t,x(1:originalNx));
-                    superClassParameters{index +1} = @(t,x) tCost(t,x(1:originalNx));
-                    
-                    
-                    %% Modify the stage and terminal constratins
-                    % not that
-                    %
-                    % [x(i)  ]     [x(i)       ]
-                    % [u(i-i)] = A [u(i)       ]
-                    % [u(i)  ]     [u(i)-u(i-1)]
-                    %
-                    % [x(i)       ]     [x(i)  ]
-                    % [u(i)       ] = T [u(i-1)]
-                    % [u(i)-u(i-i)]     [u(i)  ]
-                    %
-                    % with
-                    
-                    T = [eye(originalNx)     , zeros(originalNx,2*nu);
-                        zeros(nu,originalNx+nu)    ,eye(nu) ;
-                        zeros(nu,originalNx),-eye(nu),eye(nu)];
-                    
-                    A = [eye(originalNx)     , zeros(originalNx,2*nu);
-                        zeros(nu,originalNx), eye(nu), -eye(nu)     ;
-                        zeros(nu,originalNx), eye(nu), zeros(nu,nu) ;];
-                    
-                    index = find(strcmp(superClassParameters, 'StageConstraints'));
-                    
-                    if not(isempty(index))
-                        stageConstratins = superClassParameters{index+1};
-                        for i = 1:length(stageConstratins)
-                            try
-                                stageConstratins{i} = stageConstratins{i}.getAffineTransformation(T,zeros(size(T,1),1));
-                            catch e
-                                disp('Affine transformation for input derivative failed')
-                            end
-                            
-                        end
-                        superClassParameters{index+1} = stageConstratins;
-                    end
-                    
-                    index = find(strcmp(superClassParameters, 'TerminalConstraints'));
-                    
-                    % morover
-                    %
-                    % [x(N)]  = T [x(N);u(N-1)];
-                    %
-                    % with
-                    
-                    T = [eye(originalNx), zeros(originalNx,nu)];
-                    
-                    if not(isempty(index))
-                        terminalConstratins = superClassParameters{index+1};
-                        for i = 1:length(terminalConstratins)
-                            terminalConstratins{i} = terminalConstratins{i}.getAffineTransformation(T,zeros(size(T,1),1));
-                        end
-                        superClassParameters{index+1} = terminalConstratins;
-                    end
-                    
-                    
-                else
-                    
-                    % System Discretization
-                    
-                    index = find(strcmp(superClassParameters, 'System'));
-                    
-                    ctSys = superClassParameters{index +1};
-                    
-                    superClassParameters{index +1} = DtSystem(ctSys,dt);
-                    
-                    
-                    % StageCost Discretization
-                    
-                    index = find(strcmp(superClassParameters, 'StageCost'));
-                    
-                    stCost = superClassParameters{index +1};
-                    
-                    superClassParameters{index +1} = @(k,x,u) dt*stCost(dt*k,x,u);
-                    
-                    % TerminalCost Discretization
-                    
-                    index = find(strcmp(superClassParameters, 'TerminalCost'));
-                    
-                    teCost = superClassParameters{index +1};
-                    
-                    superClassParameters{index +1} = @(k,x) teCost(dt*k,x);
-                    
-                    
-                end
-                
-                
+                superClassParameters = DtMpcOp.discretizeCtMpcOp(ctOP,dt);
             else
                 
                 superClassParameters = varargin;
@@ -230,4 +65,229 @@ classdef DtMpcOp < MpcOp
         end
         
     end
+    methods(Static)
+        function superClassParameters = discretizeCtMpcOp(ctOp,dt)
+            
+            superClassParameters = ctOp.getParameters();
+            % HorizonLength Discretization
+            
+            index = find(strcmp(superClassParameters, 'HorizonLength'));
+            
+            hLen = superClassParameters{index +1};
+            
+            superClassParameters{index +1} = floor(hLen/dt);
+            
+            
+            % Penalization input derivative
+            % WARNING:
+            % - old implementation
+            
+            index = find(strcmp(superClassParameters, 'InputDerivative'));
+            
+            if not(isempty(index)) && not(isempty(superClassParameters{index +1}))  && superClassParameters{index +1}
+                
+                %% In order to penilize the derivative of the input, we
+                % first augment the state as follows
+                %
+                % xx(i) = [x(i),u(i-1)]
+                %
+                % with the associated dynamics
+                %
+                % ff(xx) = [f(x);I]
+                %
+                % and them we rewrite the agumented stage cost
+                %
+                % l(x,u,dotU)
+                %
+                % in the standard form
+                %
+                % ll(x,u) = l(x(1:nx),u,u-x(nx+(1:nu)))
+                %
+                % similarly for the terminal cost
+                
+                % System Discretization
+                
+                index = find(strcmp(superClassParameters, 'System'));
+                ctSys = superClassParameters{index +1};
+                dtSys = DtSystem(ctSys,dt);
+                
+                % Augment the state vector and the dynamic
+                
+                oldf       = dtSys.f;
+                originalNx = dtSys.nx;
+                nu         = dtSys.nu;
+                dtSys.f    = @(t,x,u)[oldf(x(1:originalNx),u);
+                    u];
+                
+                dtSys.nx = originalNx + nu;
+                
+                superClassParameters{index +1} = dtSys;
+                
+                
+                % StageCost Discretization and normal form
+                
+                index = find(strcmp(superClassParameters, 'StageCost'));
+                
+                ctStCost = superClassParameters{index +1};
+                dtStCost = @(t,x,u,dotU) dt*ctStCost(t,x,u,dotU);
+                
+                dtStCost2 = @(t,x,u) dtStCost(t,...
+                    x(1:originalNx),...
+                    u,...
+                    u-x(originalNx+(1:nu))...
+                    );
+                
+                superClassParameters{index +1} = dtStCost2;
+                
+                % Terminal cost in normal form
+                
+                index = find(strcmp(superClassParameters, 'TerminalCost'));
+                tCost = superClassParameters{index +1};
+                
+                superClassParameters{index +1} = @(t,x) tCost(t,x(1:originalNx));
+                superClassParameters{index +1} = @(t,x) tCost(t,x(1:originalNx));
+                
+                
+                %% Modify the stage and terminal constratins
+                % not that
+                %
+                % [x(i)  ]     [x(i)       ]
+                % [u(i-i)] = A [u(i)       ]
+                % [u(i)  ]     [u(i)-u(i-1)]
+                %
+                % [x(i)       ]     [x(i)  ]
+                % [u(i)       ] = T [u(i-1)]
+                % [u(i)-u(i-i)]     [u(i)  ]
+                %
+                % with
+                
+                T = [eye(originalNx)     , zeros(originalNx,2*nu);
+                    zeros(nu,originalNx+nu)    ,eye(nu) ;
+                    zeros(nu,originalNx),-eye(nu),eye(nu)];
+                
+                A = [eye(originalNx)     , zeros(originalNx,2*nu);
+                    zeros(nu,originalNx), eye(nu), -eye(nu)     ;
+                    zeros(nu,originalNx), eye(nu), zeros(nu,nu) ;];
+                
+                index = find(strcmp(superClassParameters, 'StageConstraints'));
+                
+                if not(isempty(index))
+                    stageConstratins = superClassParameters{index+1};
+                    for i = 1:length(stageConstratins)
+                        try
+                            stageConstratins{i} = stageConstratins{i}.getAffineTransformation(T,zeros(size(T,1),1));
+                        catch e
+                            disp('Affine transformation for input derivative failed')
+                        end
+                        
+                    end
+                    superClassParameters{index+1} = stageConstratins;
+                end
+                
+                index = find(strcmp(superClassParameters, 'TerminalConstraints'));
+                
+                % morover
+                %
+                % [x(N)]  = T [x(N);u(N-1)];
+                %
+                % with
+                
+                T = [eye(originalNx), zeros(originalNx,nu)];
+                
+                if not(isempty(index))
+                    terminalConstratins = superClassParameters{index+1};
+                    for i = 1:length(terminalConstratins)
+                        terminalConstratins{i} = terminalConstratins{i}.getAffineTransformation(T,zeros(size(T,1),1));
+                    end
+                    superClassParameters{index+1} = terminalConstratins;
+                end
+                
+                
+            else
+                
+                % System Discretization
+                
+                index = find(strcmp(superClassParameters, 'System'));
+                
+                if not(isempty(index))
+                    ctSys = superClassParameters{index +1};
+                    
+                    superClassParameters{index +1} = DtSystem(ctSys,dt);
+                end
+                
+                % StageCost Discretization
+                
+                index = find(strcmp(superClassParameters, 'StageCost'));
+                
+                stCost = superClassParameters{index +1};
+                if not(isempty(stCost))
+                    if nargin(stCost) <5
+                        dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:end});
+                    elseif nargin(stCost) >=5%stageCost_jj(k,x_j_i,u_j_i,netReadings,ii);
+                        dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:4},dt*varargin{5},varargin{6:end});
+                    end
+
+                    superClassParameters{index +1} = dtStageCost;
+                end
+                
+                % TerminalCost Discretization
+                
+                index = find(strcmp(superClassParameters, 'TerminalCost'));
+                
+                teCost = superClassParameters{index +1};
+                
+                if not(isempty(teCost))
+                    superClassParameters{index +1} = @(varargin) teCost(dt*varargin{1},varargin{2:end});
+                end
+                
+                % StageConstraints Discretization
+                
+                index = find(strcmp(superClassParameters, 'StageConstraints'));
+                stConst = superClassParameters{index +1};
+                
+                for i = 1:length(stConst)
+                    stConsti = stConst{i};
+                    if stConsti.nx == ctSys.nx +ctSys.nu +1
+                        stConst{i} = GeneralSet(@(x)stConsti.f([dt*x(1);x(2:end)]),stConsti.nx,stConsti.nf);
+                    end
+                end
+                
+                superClassParameters{index +1} = stConst;
+                
+                % TerminalConstraints Discretization
+                
+                index = find(strcmp(superClassParameters, 'TerminalConstraints'));
+                teConst = superClassParameters{index +1};
+                
+                for i = 1:length(teConst)
+                    teConsti = teConst{i};
+                    if teConsti.nx == ctSys.nx +ctSys.nu +1
+                        teConst{i} = GeneralSet(@(x)teConsti.f([dt*x(1);x(2:end)]),teConsti.nx,teConsti.nf);
+                    end
+                end
+                
+                superClassParameters{index +1} = teConst;
+                
+                % PerformanceConstraints Discretization
+                
+                index  = find(strcmp(superClassParameters, 'PerformanceConstraints'));
+                pConst = superClassParameters{index +1};
+                
+                for i = 1:length(pConst)
+                    
+                    pConsti   = pConst{i};
+                    pConst{i} = GeneralSet(@(k0,x0,Ji)pConsti.f(dt*k0,x0,Ji),pConsti.nx,pConsti.nf);
+                    
+                end
+                
+                superClassParameters{index +1} = pConst;
+                
+            end
+            
+            
+        end
+        
+    end
+    
+    
 end

@@ -85,11 +85,18 @@ classdef MpcOp < handle
         
         system
         
+        getMpcOpParams % function that extracts the parameter vector from the readings
+        np % Number Paramters
+        
         horizonLength
         
         stageConstraints = {}
         
         terminalConstraints = {}
+        
+        neglectPerformanceIndex = 0;
+        
+        performanceConstraints = {}
         
         stageCost
         
@@ -116,6 +123,7 @@ classdef MpcOp < handle
         jacobianComputationMethod = 'Symbolic';
         
         cA, cb, cC, cd, ce, cf %Change of coordinate
+        
     end
     
     methods
@@ -131,9 +139,15 @@ classdef MpcOp < handle
                     
                     switch varargin{parameterPointer}
                         
-                        case 'InputDerivative'
+                          case 'InputDerivative'
                             
                             obj.inputDerivative = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'np'
+                            
+                            obj.np = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -146,6 +160,12 @@ classdef MpcOp < handle
                         case 'HorizonLength'
                             
                             obj.horizonLength = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'NeglectPerformanceIndex'
+                            
+                            obj.neglectPerformanceIndex = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -182,6 +202,23 @@ classdef MpcOp < handle
                             
                             parameterPointer = parameterPointer+2;
                             
+                        case 'PerformanceConstraints'
+                            
+                            
+                            par = varargin{parameterPointer+1};
+                            
+                            if iscell(par)
+                                
+                                obj.performanceConstraints = par;
+                                
+                            else
+                                
+                                obj.performanceConstraints = {par};
+                                
+                            end
+                            
+                            parameterPointer = parameterPointer+2;
+                            
                         case 'StageCost'
                             
                             obj.stageCost = varargin{parameterPointer+1};
@@ -199,6 +236,7 @@ classdef MpcOp < handle
                             obj.auxiliaryLaw = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
+                            
                             
                         otherwise
                             
@@ -222,14 +260,17 @@ classdef MpcOp < handle
         
         function params = getParameters(obj)
             params = {...
-                'System'             , obj.system, ...
-                'HorizonLength'      , obj.horizonLength,...
-                'StageConstraints'   , obj.stageConstraints,...
-                'TerminalConstraints', obj.terminalConstraints,...
-                'StageCost'          , obj.stageCost,...
-                'TerminalCost'       , obj.terminalCost,...
-                'InputDerivative'    , obj.inputDerivative,...
-                'AuxiliaryLaw'       , obj.auxiliaryLaw...
+                'System'                 , obj.system, ...
+                'HorizonLength'          , obj.horizonLength,...
+                'np'                     , obj.np,...
+                'StageConstraints'       , obj.stageConstraints,...
+                'TerminalConstraints'    , obj.terminalConstraints,...
+                'PerformanceConstraints' , obj.performanceConstraints,...
+                'NeglectPerformanceIndex', obj.neglectPerformanceIndex,...
+                'StageCost'              , obj.stageCost,...
+                'TerminalCost'           , obj.terminalCost,...
+                'InputDerivative'        , obj.inputDerivative,...
+                'AuxiliaryLaw'           , obj.auxiliaryLaw...
                 };
         end
         
@@ -243,14 +284,28 @@ classdef MpcOp < handle
             
             obj.system.useSymbolicEvaluation();
             
+            t = sym('t',[1,1]);
+            
+            if isempty(which('assume'))
+                t = sym(t,'real');
+            else
+                assume(t,'real');
+            end
+            
             x = sym('x',[obj.system.nx,1]);
-            x = sym(x,'real');
+            if isempty(which('assume'))
+                x = sym(x,'real');
+            else
+                assume(x,'real');
+            end
+            
             
             u = sym('u',[obj.system.nu,1]);
-            u = sym(u,'real');
-            
-            t = sym('t',[1,1]);
-            t = sym(t,'real');
+            if isempty(which('assume'))
+                u = sym(u,'real');
+            else
+                assume(u,'real');
+            end
             
             fprintf(getMessage('MpcOp:evaluation'));
             
@@ -312,7 +367,7 @@ classdef MpcOp < handle
                 U = zeros(length(y),length(y));
             end
             
-            Hl = Hlkm1 +U +V;
+            Hl = Hlkm1 + U + V;
             
         end
         
@@ -329,31 +384,37 @@ classdef MpcOp < handle
                 obj.system.computeLinearization();
             end
             
-            %% Symbolic variables/functions for Jacobian/Hessian computation
-            
-            
-            
             %% Stage cost Approximation
             fprintf(getMessage('MpcOpSolver:LinearizinStageCost'));
-            
             
             switch obj.jacobianComputationMethod
                 case 'Symbolic'
                     
                     x = sym('x',[nx,1]);
-                    x = sym(x,'real');
+                    if isempty(which('assume'))
+                        x = sym(x,'real');
+                    else
+                        assume(x,'real');
+                    end
                     
                     u = sym('u',[nu,1]);
-                    u = sym(u,'real');
+                    if isempty(which('assume'))
+                        u = sym(u,'real');
+                    else
+                        assume(u,'real');
+                    end
                     
                     t = sym('t',[1,1]);
-                    t = sym(t,'real');
+                    if isempty(which('assume'))
+                        t = sym(t,'real');
+                    else
+                        assume(t,'real');
+                    end
                     
                     z  = [t;x;u];
                     l  = obj.stageCost(t,x,u);
                     
                     obj.Dl = matlabFunction(  jacobian(l,z)  ,'vars',{t,x,u} );
-                    
                     
                 case 'AA'
                     
@@ -362,7 +423,6 @@ classdef MpcOp < handle
                 otherwise
                     error('Unknown method for the approximation of the hessian');
                     
-                    
             end
             
             
@@ -370,13 +430,25 @@ classdef MpcOp < handle
                 case 'Symbolic'
                     
                     x = sym('x',[nx,1]);
-                    x = sym(x,'real');
+                    if isempty(which('assume'))
+                        x = sym(x,'real');
+                    else
+                        assume(x,'real');
+                    end
                     
                     u = sym('u',[nu,1]);
-                    u = sym(u,'real');
+                    if isempty(which('assume'))
+                        u = sym(u,'real');
+                    else
+                        assume(u,'real');
+                    end
                     
                     t = sym('t',[1,1]);
-                    t = sym(t,'real');
+                    if isempty(which('assume'))
+                        t = sym(t,'real');
+                    else
+                        assume(t,'real');
+                    end
                     
                     z = [t;x;u];
                     l  = obj.stageCost(t,x,u);
@@ -400,10 +472,18 @@ classdef MpcOp < handle
                     case 'Symbolic'
                         
                         x = sym('x',[nx,1]);
-                        x = sym(x,'real');
+                        if isempty(which('assume'))
+                            x = sym(x,'real');
+                        else
+                            assume(x,'real');
+                        end
                         
                         t = sym('t',[1,1]);
-                        t = sym(t,'real');
+                        if isempty(which('assume'))
+                            t = sym(t,'real');
+                        else
+                            assume(t,'real');
+                        end
                         
                         m  = obj.terminalCost(t,x);
                         obj.Dm = matlabFunction(jacobian(m,x),'vars',{t,x});
@@ -421,10 +501,18 @@ classdef MpcOp < handle
                     case 'Symbolic'
                         
                         x = sym('x',[nx,1]);
-                        x = sym(x,'real');
+                        if isempty(which('assume'))
+                            x = sym(x,'real');
+                        else
+                            assume(x,'real');
+                        end
                         
                         t = sym('t',[1,1]);
-                        t = sym(t,'real');
+                        if isempty(which('assume'))
+                            t = sym(t,'real');
+                        else
+                            assume(t,'real');
+                        end
                         
                         m  = obj.terminalCost(t,x);
                         z = [t;x];

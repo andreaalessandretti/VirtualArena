@@ -36,7 +36,7 @@ classdef TimeLog < InlineLog
     methods
         function obj = TimeLog()
             
-            obj = obj@InlineLog('time', @(t,agent,u,z) t);
+            obj = obj@InlineLog('time', @(t,agent,u,z,varargin) t);
         end
         
     end

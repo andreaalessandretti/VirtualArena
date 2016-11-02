@@ -301,5 +301,14 @@ classdef EkfFilter < DtSystem & StateObserver
             
         end
         
+        function initSimulations(obj)
+        end
+        function initSimulation(obj)
+        end
+        
+        function deinitSimulations(obj)
+        end
+        function deinitSimulation(obj)
+        end
     end
 end

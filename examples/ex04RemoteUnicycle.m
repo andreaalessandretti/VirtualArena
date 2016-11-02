@@ -18,6 +18,8 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
         log
         iLog = 1;
         
+        lastu;
+        
     end
     
     
@@ -90,15 +92,21 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
             obj.nx = 1;
             obj.log.travelTime = [];
             obj.initialCondition = zeros(obj.nx,1);
-            obj.f = @(t,x,u)zeros(obj.nx,1);
-            obj.h = @(t,x,u)obj.fRemote(x,u);
+            obj.f = @(t,x,u)obj.fakeF(t,x,u,varargin);
+            obj.h = @(t,x)obj.fakeH();
             
         end
         
-        function xNext = fRemote(obj,x,u)
+        
+        function xNext = fakeF(obj,t,x,u,varargin)
+            xNext = zeros(obj.nx,1);
+            obj.lastu = u;
+        end
+        
+        function y = fakeH(obj)
             srtime = tic;
-            obj.send(u);
-            xNext = obj.recive();
+            obj.send(obj.lastu);
+            y = obj.recive();
             
             obj.appendVectorToLog(toc(srtime),'travelTime',obj.iLog);
             obj.iLog = obj.iLog +1;

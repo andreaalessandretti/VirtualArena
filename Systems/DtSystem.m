@@ -108,9 +108,34 @@ classdef DtSystem < GeneralSystem
                 indexF = find(strcmp(superClassParameters, 'StateEquation'));
                 
                 if nargin == 3
-                    superClassParameters{indexF +1} = @(k,x,u) varargin{3}.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
+                    
+                    customIntegrator = varargin{3};
+                    
+                    if nargin(ctSys.f)==3
+                        
+                        superClassParameters{indexF +1} = @(k,x,u) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
+                        
+                    elseif nargin(ctSys.f)==6
+                        
+                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,dt*t_h,x0),x,dt);
+                        
+                    else
+                        error('Too many input for f(.)');
+                    end
+                        
                 else
-                    superClassParameters{indexF +1} = @(k,x,u) RK4.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
+                    if nargin(ctSys.f)==3
+                        
+                        superClassParameters{indexF +1} = @(k,x,u) RK4.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
+                        
+                    elseif nargin(ctSys.f)==6
+                        
+                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) RK4.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,dt*t_h,x0),x,dt);
+                        
+                    else
+                        error('Too many input for f(.)');
+                    end
+                    
                 end
                 
                 %superClassParameters{indexF +1} = @(x,u) RK4.integrate(@(y)ctSys.f(y,u),x,dt);
@@ -128,7 +153,10 @@ classdef DtSystem < GeneralSystem
         
         function x = getStateTrajectory(obj,k0,x0,u)
             
-            x = zeros(length(x0),size(u,2)+1);
+            if isnumeric(x0) %Could be symbolic
+                x = zeros(length(x0),size(u,2)+1);
+            end
+            
             x(:,1) = x0;
             k = k0;
             for i =1:size(u,2)

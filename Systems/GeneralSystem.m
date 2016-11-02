@@ -129,6 +129,8 @@ classdef GeneralSystem < handle & InitDeinitObject
         output2d
         output3d
         
+        info
+        
     end
     
    
@@ -368,13 +370,20 @@ classdef GeneralSystem < handle & InitDeinitObject
             %   the case of complex models.
             
             x = sym('x',[obj.nx,1]);
-            x = sym(x,'real');
             
             u = sym('u',[obj.nu,1]);
-            u = sym(u,'real');
             
             t = sym('t',[1,1]);
-            t = sym(t,'real');
+            
+            if isempty(which('assume'))
+                x = sym(x,'real');
+                u = sym(u,'real');
+                t = sym(t,'real');
+            else
+                assume(x,'real');
+                assume(u,'real');
+                assume(t,'real');
+            end
             
             fprintf(getMessage('GeneralSystem:evaluation'));
             
@@ -467,16 +476,25 @@ classdef GeneralSystem < handle & InitDeinitObject
                         
                         %% Compute linearizations
                         t = sym('t',[1,1]);
-                        t = sym(t,'real');
                         
                         tbar = sym('tbar',[1,1]);
-                        tbar = sym(tbar,'real');
                         
                         xbar = sym('xbar',[obj.nx,1]);
-                        xbar = sym(xbar,'real');
                         
                         ubar = sym('ubar',[obj.nu,1]);
-                        ubar = sym(ubar,'real');
+                        
+                        
+                        if isempty(which('assume'))
+                            ubar = sym(ubar,'real');
+                            xbar = sym(xbar,'real');
+                            tbar = sym(tbar,'real');
+                            t    = sym(t,'real');
+                        else
+                            assume(ubar,'real');
+                            assume(xbar,'real');
+                            assume(tbar,'real');
+                            assume(t,'real');
+                        end
                         
                         
                         

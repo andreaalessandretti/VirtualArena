@@ -165,8 +165,6 @@ end
 
 
 
-grid on
-
 
 
 if not(predefinedFileName) && saveFile
@@ -198,7 +196,7 @@ for i = 1:length(hAllAxes)
     set(get(hAllAxes(i),'zlabel'),'FontSize',fontSize,'FontName',fontName);
     set(get(hAllAxes(i),'title') ,'FontSize',fontSizeTitle,'FontName',fontName);
     set(hAllAxes(i),'fontsize',fontSize,'FontName',fontName);
-    grid on
+    grid(hAllAxes(i),'on');
 end
 
 % Set units to all be the same

@@ -63,13 +63,14 @@ classdef MpcController < Controller & InitDeinitObject
         %  log.computationTime(i) - time to compute u at step i
         %  log.stageCost(i)       - stage cost at step i
         %  log.solverTime(i)      - time to solve the Op at step i
-        log
+        % log -nope
         
         warmStarter;
         auxiliaryLaw;
         runAuxiliaryLaw = 0;
         lastSolution;
         
+        outputFunction = @(sol,t,x,varargin)sol.u_opt(:,1);
         initialController = {};
     end
     
@@ -177,54 +178,40 @@ classdef MpcController < Controller & InitDeinitObject
                 if iscell(warmStart) % multiple warm starts
                     for i=1:length(warmStart)
                         ws = warmStart{i};
-                        sols{i} = obj.mpcOpSolver.solve(obj.mpcOp,t,x,ws,obj.solverParameters{:});
+                        sols{i} = obj.mpcOpSolver.solve(obj.mpcOp,t,x,ws,varargin{:},obj.solverParameters{:});
                     end
                     sol = obj.warmStarter.returnWinningSolution(t,sols);
-                    u   = sol.u_opt(:,1);
+                    u   = obj.outputFunction(sol,t,x,varargin{:});
+                
                 else
-                    sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,warmStart,obj.solverParameters{:});
+                    
+                    sol = obj.mpcOpSolver.solve(obj.mpcOp,t,x,warmStart,varargin{:},obj.solverParameters{:});
                     
                     if sol.problem
-                        sol = obj.mpcOpSolver.faceProblem(obj,sol,t,x,varargin);
+                        sol = obj.mpcOpSolver.faceProblem(obj,sol,t,x,varargin{:});
                     end
                     
-                    u   = sol.u_opt(:,1);
+                    u   = obj.outputFunction(sol,t,x,varargin{:});
+                    
                 end
                 
             end
             
-            obj.appendVectorToLog(toc, obj.i, 'computationTime')
             
             %% Logging
             if runSolver
                 
                 obj.lastSolution   = sol;
                 obj.lastSolution.t = t;
-                obj.appendVectorToLog(sol.solverTime ,obj.i,'solverTime');
+                %obj.appendVectorToLog(sol.solverTime ,obj.i,'solverTime');
                 
             end
             
-            obj.appendVectorToLog(obj.mpcOp.stageCost(t,x,u),obj.i,'stageCost')
+            %obj.appendVectorToLog(obj.mpcOp.stageCost(t,x,u,varargin),obj.i,'stageCost')
             obj.i = obj.i+1;
             
         end
-        
-        
-        function appendVectorToLog(obj,v,i,fildname)
-            
-            if not(isfield(obj.log,fildname))
-                
-                obj.log.(fildname) = v;
-                
-            elseif i>=size(obj.log.(fildname),2)
-                
-                obj.log.(fildname) =  [obj.log.(fildname),zeros(size(v,1),obj.blockSizeAllocation)];
-                
-            end
-            
-            obj.log.(fildname)(:,i) = v;
-            
-        end
+  
         
         function deinitSimulation(obj)
             obj.lastSolution = [];
