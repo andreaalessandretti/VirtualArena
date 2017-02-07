@@ -21,6 +21,7 @@ if measureAndFilter
         if nargin(obj.systemsList{ia}.h)==2
             zSys = obj.systemsList{ia}.h(timeInfo,x);
         elseif nargin(obj.systemsList{ia}.h)==3
+           
             zSys = obj.systemsList{ia}.h(timeInfo,x,u);
         end
     end

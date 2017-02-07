@@ -117,7 +117,7 @@ classdef DtSystem < GeneralSystem
                         
                     elseif nargin(ctSys.f)==6
                         
-                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,dt*t_h,x0),x,dt);
+                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
                         
                     else
                         error('Too many input for f(.)');
@@ -128,9 +128,13 @@ classdef DtSystem < GeneralSystem
                         
                         superClassParameters{indexF +1} = @(k,x,u) RK4.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
                         
+                    elseif nargin(ctSys.f)==4
+                        
+                        superClassParameters{indexF +1} = @(k,xc,uSysCon,x) RK4.integrate(@(y)ctSys.f(dt*k,y,uSysCon,x),xc,dt);
+                    
                     elseif nargin(ctSys.f)==6
                         
-                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) RK4.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,dt*t_h,x0),x,dt);
+                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) RK4.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
                         
                     else
                         error('Too many input for f(.)');

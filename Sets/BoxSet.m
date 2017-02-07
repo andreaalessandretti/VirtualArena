@@ -379,17 +379,17 @@ classdef  BoxSet < PolytopicSet
                 oldUpperBounds+v(oldIndexesUpperBounds),oldIndexesUpperBounds,...
                 oldSpaceDimension);
         end
-%         
-%         function  ret = subsref(arg,val)
-%             
-%             if length(val)==1 && strcmp(val.type,'()')
-%                 indexes = val.subs{:};
-% 
-%                 ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
-%             else
-%                 ret =  builtin('subsref', arg,val);
-%             end
-%         end
+        
+        function  ret = subsref(arg,val)
+            
+            if length(val)==1 && strcmp(val.type,'()')
+                indexes = val.subs{:};
+
+                ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
+            else
+                ret =  builtin('subsref', arg,val);
+            end
+        end
         
         function ret = mtimes(arg1,arg2)
             

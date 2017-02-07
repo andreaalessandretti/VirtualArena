@@ -137,7 +137,7 @@ classdef VirtualArena < handle
         %       @(k,systemsList) systemsList{1}.x(1:2)=[0;0];
         %
         stoppingCriteria  = @(t,sysList)t>10
-        
+        stoppingForced    = 0;
         %stepPlotFunction is the function handle executed at every step of the
         %   simulation
         %
@@ -227,6 +227,8 @@ classdef VirtualArena < handle
         preSimuationTestFnc
         
         preSimuationTest = 0;
+        
+        initialTime = 0;
         
     end
     
@@ -333,17 +335,15 @@ classdef VirtualArena < handle
             end
             
             %% Compute time for obj.initLogs(timeInfo);
-            if isa(obj.systemsList{1},'CtSystem')
-                timeInfo = (i-1)*obj.discretizationStep;
-            elseif isa(obj.systemsList{1},'DtSystem')
-                timeInfo = (i-1);
+            if not(obj.discretizationStep==1) %TODO: remove this madness
+                timeInfo = obj.initialTime + (i-1)*obj.discretizationStep;
             else
-                error('The system must either be a CtSystem or a DtSystem');
+                timeInfo = obj.initialTime + (i-1);
             end
             
             obj.initLogs(timeInfo);
             
-            if isa(obj.systemsList{1},'CtSystem') && obj.realTime
+            if not(obj.discretizationStep==1) && obj.realTime
                 simTimeTic =tic;
             end
             
@@ -351,14 +351,17 @@ classdef VirtualArena < handle
                 profile on
             end
             
-            while not( obj.stoppingCriteria(timeInfo,obj.systemsList) )
+             
+            while not( obj.stoppingCriteria(timeInfo,obj.systemsList)  || obj.stoppingForced )
+               
                 
+            
                 
                 %% Compute time
-                if isa(obj.systemsList{1},'CtSystem')
-                    timeInfo = (i-1)*obj.discretizationStep;
-                elseif isa(obj.systemsList{1},'DtSystem')
-                    timeInfo = (i-1);
+                if not(obj.discretizationStep==1) %TODO: remove this madness
+                    timeInfo = obj.initialTime + (i-1)*obj.discretizationStep;
+                else
+                    timeInfo = obj.initialTime + (i-1);
                 end
                 
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
@@ -474,7 +477,7 @@ classdef VirtualArena < handle
                         error(getMessage('VirtualArena:UnknownSystemType'));
                     end
                     
-                    if isa(obj.systemsList{1},'CtSystem') && obj.realTime
+                    if not(obj.discretizationStep==1)&& obj.realTime
                         while toc(simTimeTic)<timeInfo*obj.realTime
                         end
                     end
@@ -536,8 +539,13 @@ classdef VirtualArena < handle
                     end
                 end
                 
-                
                 i = i+1;
+                
+                drawnow
+                if strcmp(get(gcf,'CurrentCharacter'),'q')==1
+                    obj.stoppingForced = 1;
+                    disp('PRESSED KEY ''q'' >> simulation stopped')
+                end
                 
             end
             if obj.profiler

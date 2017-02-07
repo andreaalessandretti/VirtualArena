@@ -222,12 +222,12 @@ classdef UnderactuatedVehicle < Vehicle
                     
                     case 'Quaternion' % Quaternions
                         
-                        nxk = 7; 
+                        nxk = 7;
                         fk  = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                         
                     case 'RotationMatrix' % Rotation matrix
                         
-                        nxk = 12; 
+                        nxk = 12;
                         fk  = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                         
                     otherwise
@@ -285,6 +285,7 @@ classdef UnderactuatedVehicle < Vehicle
             end
             
             p = obj.getPosition(x);
+            
             if length(p)==2
                 
                 R = obj.getR(x);
@@ -298,8 +299,49 @@ classdef UnderactuatedVehicle < Vehicle
                     h/2,k*w/2  ;
                     h/2,-k*w/2 ]*R';
                 
-                hP=patch(XY(:,1)+p(1),XY(:,2)+p(2),1);
+                if nargin>2
+                    hP=patch(XY(:,1)+p(1),XY(:,2)+p(2),1,varargin{2},varargin{3});
+                else
+                    hP=patch(XY(:,1)+p(1),XY(:,2)+p(2),1);
+                end
                 
+                
+            elseif length(p)==3
+                
+                R = obj.getR(x);
+                
+                l = 0.3*1;
+                w = 0.3*1;
+                h = 0.3*0.1;
+                r = 0.3*0.1;
+                
+                X = [-l/2,    l/2, -l/2, -l/2, -l/2, -l/2;
+                    -l/2,    l/2, -l/2, -l/2, -l/2, -l/2;
+                    -l/2,    l/2,  l/2, l/2,  l/2, l/2;
+                    -l/2,    l/2,  l/2, l/2,  l/2, l/2];
+                
+                Y =[ w/2,  r*w/2,  w/2,   w/2,   -w/2,  -w/2;
+                    0,      0,    0,     0,      0,     0;
+                    -w/2, -r*w/2,    0,     0,      0,     0;
+                    0,      0,r*w/2, r*w/2, -r*w/2, -r*w/2 ];
+                
+                Z = [   0,      0,    0,    0,    0,    0;
+                    h/2,  r*h/2,  h/2, -h/2,  h/2, -h/2;
+                    0,      0, r*h/2, -r*h/2, r*h/2, -r*h/2;
+                    -h/2, -r*h/2,     0,  0 ,     0,  0 ];
+                
+                xyz_points = [reshape(X,1,size(X,1)*size(X,2));
+                    reshape(Y,1,size(Y,1)*size(Y,2));
+                    reshape(Z,1,size(Z,1)*size(Z,2))];
+                
+                
+                xyz_new = repmat(p,1,size(xyz_points,2)) +  R*xyz_points;
+                
+                Xnew = reshape(xyz_new(1,:),size(X,1),size(X,2));
+                Ynew = reshape(xyz_new(2,:),size(Y,1),size(Y,2));
+                Znew = reshape(xyz_new(3,:),size(Z,1),size(Z,2));
+                
+                h = fill3(Xnew,Ynew,Znew,0.5*ones(4,6));
             end
             
         end

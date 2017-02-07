@@ -45,7 +45,6 @@ classdef RK4 < Integrator
     methods (Static)
         function xkp1 = integrate(f,xk,h)
             
-            
             k1 = f(xk);
             k2 = f(xk + 0.5*h*k1);
             k3 = f(xk + 0.5*h*k2);

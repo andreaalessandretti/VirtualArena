@@ -100,15 +100,17 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                             
                         case 'UseSymbolicEvaluation'
                             
-                            
-                            if varargin{parameterPointer+1} == 1
-                                obj.useSymbolicEvaluation = 1;
-                                obj.dimNet = {1};
-                            elseif varargin{parameterPointer+1} == 0
-                                obj.useSymbolicEvaluation = 0;
-                            else
+                            if iscell(varargin{parameterPointer+1})
                                 obj.useSymbolicEvaluation = 1;
                                 obj.dimNet = varargin{parameterPointer+1};
+                                
+                            elseif varargin{parameterPointer+1} == 1
+                                
+                                obj.useSymbolicEvaluation = 1;
+                                obj.dimNet = {1};
+                            
+                            else
+                                obj.useSymbolicEvaluation = 0;
                             end
                             
                             
@@ -138,7 +140,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             solverParameters = varargin;
             
-            if length(varargin)>=1
+            if length(varargin)>=1 && not(ischar(varargin{1}))
                 netReadings = varargin{1};
             else
                 netReadings = [];
@@ -238,6 +240,10 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             
             OK = FminconMpcOpSolver.isOK(exitflag);
             
+            if not(OK)
+                aasd=1;
+            end
+            
             solution.xmin             = Uopt;
             solution.fval             = fval;
             solution.exitflag         = exitflag;
@@ -270,7 +276,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             Ceq = [];
         end
         
-        function initSimulations(obj)
+        function initSimulation(obj)
             
             mpcOp = obj.mpcOp;
             obj.symbolizeProblem(mpcOp);
@@ -487,9 +493,8 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             xx(:,ii+1) = x;
             k          = k0 + ii;
             kk(ii+1)   = k0;
+            
             while(atLeastOneMpcOpWithinHorizon)
-                
-                
                 
                 xNext = x; %Temporary - to fix dimentions
                 
@@ -498,7 +503,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 atLeastOneMpcOpWithinHorizon = 0; %Temporary
                 
                 uCollective = [];
-                
                 
                 for jj = 1:Nmpcs
                     
@@ -517,11 +521,11 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                     mpcOp_jj = mpcOps{jj};
                     H_jj     = mpcOps{jj}.horizonLength;
                     
-                    
                     if not(isempty(mpcOp_jj.system)) ...
                             && not(isempty(mpcOp_jj.system.f)) ...
                             && not(isempty(mpcOp_jj.system.nx)) ...
                             && not(isempty(mpcOp_jj.system.nu))
+                        
                         nx_jj    = mpcOp_jj.system.nx;
                         nu_jj    = mpcOp_jj.system.nu;
                         f_jj     = mpcOp_jj.system.f;

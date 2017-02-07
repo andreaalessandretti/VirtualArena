@@ -96,6 +96,12 @@ while hasParameters
                 
                 parameterPointer = parameterPointer+2;
                 
+            case 'FontName'
+                
+                fontName = varargin{parameterPointer+1};
+                
+                parameterPointer = parameterPointer+2;
+                
             case 'Units'
                 
                 units = varargin{parameterPointer+1};

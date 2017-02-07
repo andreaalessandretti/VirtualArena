@@ -28,6 +28,12 @@ function setOptions(obj,varargin)
                             
                             parameterPointer = parameterPointer+2;
                             
+                        case 'InitialTime'
+                            
+                            obj.initialTime = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
                         case 'DefaultPlots'
                             
                             obj.defaultPlots = varargin{parameterPointer+1};

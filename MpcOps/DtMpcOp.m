@@ -221,12 +221,26 @@ classdef DtMpcOp < MpcOp
                 
                 stCost = superClassParameters{index +1};
                 if not(isempty(stCost))
-                    if nargin(stCost) <5
-                        dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:end});
-                    elseif nargin(stCost) >=5%stageCost_jj(k,x_j_i,u_j_i,netReadings,ii);
+                    
+                    %% I rewrite extensively this code
+                    %if nargin(stCost) <5
+                    %   dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:end});
+                    %elseif nargin(stCost) >=5%stageCost_jj(k,x_j_i,u_j_i,netReadings,ii);
+                    %    dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:4},dt*varargin{5},varargin{6:end});
+                    %end
+                    % so nargin can detect the number of input
+                    
+                    if nargin(stCost) ==3
+                        dtStageCost = @(k,x,u)  dt*stCost(dt*k,x,u);
+                    elseif nargin(stCost) ==4
+                        dtStageCost = @(k,x,u,net)  dt*stCost(dt*k,x,u,net);
+                    elseif nargin(stCost) ==5
+                        dtStageCost = @(k,x,u,net,tau_k)  dt*stCost(dt*k,x,u,net,dt*tau_k);
+                    else %nargin(stageCost_jj) ==6
                         dtStageCost = @(varargin)  dt*stCost(dt*varargin{1},varargin{2:4},dt*varargin{5},varargin{6:end});
+                        
                     end
-
+                    
                     superClassParameters{index +1} = dtStageCost;
                 end
                 
@@ -237,7 +251,15 @@ classdef DtMpcOp < MpcOp
                 teCost = superClassParameters{index +1};
                 
                 if not(isempty(teCost))
-                    superClassParameters{index +1} = @(varargin) teCost(dt*varargin{1},varargin{2:end});
+                    
+                    %% I explicit the case 2 and 3 so nargin works on teCost
+                    if nargin(teCost) ==2
+                        superClassParameters{index +1} = @(k,x)  teCost(dt*k,x);
+                    elseif nargin(stCost) ==3
+                        superClassParameters{index +1} = @(k,x,net)  teCost(dt*k,x,net);
+                    else %nargin(stageCost_jj) ==6
+                        superClassParameters{index +1} = @(varargin) teCost(dt*varargin{1},varargin{2:end});
+                    end
                 end
                 
                 % StageConstraints Discretization
