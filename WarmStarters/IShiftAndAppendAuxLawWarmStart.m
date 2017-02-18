@@ -1,5 +1,5 @@
-classdef ShiftAndAppendZeroWarmStart < WarmStart
-    %%ShiftAndAppendZeroWarmStart
+classdef IShiftAndAppendAuxLawWarmStart < ShiftAndAppendAuxLawWarmStart
+    %%IShiftAndAppendAuxLawWarmStart 
     
     % This file is part of VirtualArena.
     %
@@ -33,15 +33,26 @@ classdef ShiftAndAppendZeroWarmStart < WarmStart
     % either expressed or implied, of the FreeBSD Project.
     
 
+    properties
+        hAuxiliaryLaw
+        hNextX
+    end
     
     methods
-        function obj = ShiftAndAppendZeroWarmStart()
+        
+        function obj = IShiftAndAppendAuxLawWarmStart(hAuxiliaryLaw,hNextX)
+            obj.hNextX        = hNextX;
+            obj.hAuxiliaryLaw = hAuxiliaryLaw;
         end
         
-        function sol = generateWarmStarts(obj,t,previousSol)
-            sol.u_opt = [previousSol.u_opt(:,2:end),zeros(size(previousSol.u_opt(:,2:end),1),1)];
-            sol.x_opt = [previousSol.x_opt(:,2:end),zeros(size(previousSol.x_opt(:,2:end),1),1)];
+        function ret = auxiliaryLaw(obj,t,x)
+            ret = obj.hAuxiliaryLaw(t,x);
         end
+        
+        function  ret =nextX(obj,t,x,u)
+            ret = obj.hNextX(t,x,u);
+        end
+       
      
     end
     

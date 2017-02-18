@@ -1,8 +1,5 @@
 classdef AuxLawWarmStart < WarmStart
-    %%WarmStart specifies  what to log during the simulation.
-    %
-    % See also ShiftAndAppendAuxLawWarmStart,
-    % ShiftAndAppendZeroWarmStart, ShiftAndHoldWarmStart, WarmStart
+    %%AuxLawWarmStart
     
     % This file is part of VirtualArena.
     %
@@ -36,16 +33,17 @@ classdef AuxLawWarmStart < WarmStart
     % either expressed or implied, of the FreeBSD Project.
     
     properties
-        auxiliaryLaw;
-        nextX;
         dt;
+    end
+    
+    methods (Abstract)
+        auxiliaryLaw(obj,t,x);
+        nextX(obj,t,x,u);
     end
 
     
     methods
-        function obj = AuxLawWarmStart(auxiliaryLaw,nextX,dt)
-            obj.auxiliaryLaw = auxiliaryLaw;
-            obj.nextX        = nextX;
+        function obj = AuxLawWarmStart(dt)
             obj.dt           = dt;
         end
         
@@ -53,23 +51,22 @@ classdef AuxLawWarmStart < WarmStart
             
             x_opt = previousSol.x_opt;
             u_opt = previousSol.u_opt;
-            kAuc  = obj.auxiliaryLaw;
             
             x0     = previousSol.x_opt(:,2);
             tx_opt = previousSol.tx_opt;
             t      = [tx_opt(2:end),tx_opt(end)+obj.dt];
             
-            sol.u = zeros(size(u_opt));
-            sol.x = zeros(size(x_opt));
+            sol.u_opt  = zeros(size(u_opt));
+            sol.x_opt  = zeros(size(x_opt));
+            sol.tx_opt = t;
             
-            sol.x(:,1)=x0;
+            sol.x_opt(:,1)=x0;
             
             for i=2:length(tx_opt)
-               sol.u(:,i-1) = kAuc(t(i-1),sol.x(:,i-1));
-               sol.x(:,i) = obj.nextX(t(i-1),sol.x(:,i-1),sol.u(:,i-1));
+               sol.u_opt(:,i-1) = obj.auxiliaryLaw(t(i-1),sol.x_opt(:,i-1));
+               sol.x_opt(:,i) = obj.nextX(t(i-1),sol.x_opt(:,i-1),sol.u_opt(:,i-1));
             end
             
-            sol.u(:,end)=kAuc(t(end),sol.x(:,end));
         end
      
     end
