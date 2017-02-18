@@ -175,7 +175,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 %% Build Initial Condition
                 if not(isempty(warmStart))
-                    initVal = reshape(warmStart.u,size(warmStart.u,1)*size(warmStart.u,2),1);
+                    initVal = reshape(warmStart.u_opt,size(warmStart.u_opt,1)*size(warmStart.u_opt,2),1);
                 else
                     initVal = [];
                     for i=1:Nmpcs
@@ -206,7 +206,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 %% Warm start
                 if not(isempty(warmStart))
-                    initVal = reshape(warmStart.u,N*nu,1);
+                    initVal = reshape(warmStart.u_opt,N*nu,1);
                 else
                     initVal = 0.1*randn(mpcOp.system.nu*mpcOp.horizonLength,1);
                 end

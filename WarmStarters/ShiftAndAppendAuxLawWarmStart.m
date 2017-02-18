@@ -47,11 +47,12 @@ classdef ShiftAndAppendAuxLawWarmStart < WarmStart
         end
         
         function sol = generateWarmStarts(obj,t,previousSol)
+            sol  = previousSol;
             endX = previousSol.x_opt(:,end);
             auxU = obj.auxiliaryLaw(t,endX);
             auxX = obj.nextX(t,endX,auxU);
-            sol.u = [previousSol.u_opt(:,2:end),auxU];
-            sol.x = [previousSol.x_opt(:,2:end),auxX];
+            sol.u_opt = [previousSol.u_opt(:,2:end),auxU];
+            sol.x_opt = [previousSol.x_opt(:,2:end),auxX];
         end
      
     end

@@ -42,8 +42,8 @@ classdef ShiftAndHoldWarmStart < WarmStart
         end
         
         function sol = generateWarmStarts(obj,t,previousSol)
-            sol.u = [previousSol.u_opt(:,2:end),previousSol.u_opt(:,end)];
-            sol.x = [previousSol.x_opt(:,2:end),previousSol.x_opt(:,end)];
+            sol.u_opt = [previousSol.u_opt(:,2:end),previousSol.u_opt(:,end)];
+            sol.x_opt = [previousSol.x_opt(:,2:end),previousSol.x_opt(:,end)];
         end
      
     end

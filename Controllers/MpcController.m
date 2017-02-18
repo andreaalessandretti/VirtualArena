@@ -72,9 +72,7 @@ classdef MpcController < Controller & InitDeinitObject
         
         outputFunction = @(sol,t,x,varargin)sol.u_opt(:,1);
         initialController = {};
-    end
-    
-    properties(SetAccess = private)
+        
         i = 1
         blockSizeAllocation = 100;
     end
