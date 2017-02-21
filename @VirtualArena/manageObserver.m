@@ -16,15 +16,9 @@ measureAndFilter = mod(round(timeInfo/obj.discretizationStep),obj.systemsList{ia
 
 if measureAndFilter
     %% Compute measuraments
-    zSys = [];
-    if  ~isempty(obj.systemsList{ia}.h)
-        if nargin(obj.systemsList{ia}.h)==2
-            zSys = obj.systemsList{ia}.h(timeInfo,x);
-        elseif nargin(obj.systemsList{ia}.h)==3
-           
-            zSys = obj.systemsList{ia}.h(timeInfo,x,u);
-        end
-    end
+    
+    zSys = obj.systemsList{ia}.h(timeInfo,x,u);
+
     zNet = [];
     if ~isempty(netReadings)
         for si=1:length(netReadings)
@@ -57,7 +51,7 @@ end
 measureAndFilterNext = mod(round(timeInfoNext/obj.discretizationStep),obj.systemsList{ia}.stateObserver.downsampling)==0;
 if measureAndFilterNext
     % Update of the predicted state (without using the input)
-    if(isa(obj.systemsList{ia}.stateObserver,'StateObserver')) &&  nargin(obj.systemsList{ia}.h)==2
+    if(isa(obj.systemsList{ia}.stateObserver,'StateObserver')) &&  obj.systemsList{ia}.stateObserver.inputDependentOutput==0
         
         zNext    = obj.systemsList{ia}.h(timeInfoNext,nextX);
         if ~isempty(zNext)

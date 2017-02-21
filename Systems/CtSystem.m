@@ -1,5 +1,5 @@
 
-classdef CtSystem < GeneralSystem
+classdef CtSystem < DynamicalSystem
     %%GeneralSystem
     %
     % Consider a continuous-time dynamical model described by
@@ -77,7 +77,7 @@ classdef CtSystem < GeneralSystem
         
         function obj = CtSystem (varargin)
             
-            obj = obj@GeneralSystem(varargin{:});
+            obj = obj@DynamicalSystem(varargin{:});
             
         end
         

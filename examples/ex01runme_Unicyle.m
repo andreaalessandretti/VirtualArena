@@ -8,7 +8,7 @@ clc; close all; clear all;
 dt = 0.1;
 
 %% Unicycle Model
-sys = CtSystem(...
+sys = ICtSystem(...
     'StateEquation', @(t,x,u) [
     u(1)*cos(x(3));
     u(1)*sin(x(3));

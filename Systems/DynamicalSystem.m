@@ -1,5 +1,5 @@
-classdef GeneralSystem < handle & InitDeinitObject
-    %GeneralSystem
+classdef DynamicalSystem < handle & InitDeinitObject
+    %DynamicalSystem
     %
     % x' = f(t,x,u)
     % y  = h(t,x)/h(t,x,u)
@@ -13,7 +13,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %
     %  Use:
     % 
-    %  sys = GeneralSystem(par1,val1,par2,val2,...) % only by a subclass
+    %  sys = DynamicalSystem(par1,val1,par2,val2,...) % only by a subclass
     %
     %  where the parameters are chosen among the following
     %
@@ -21,7 +21,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
     %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
     %
-    % GeneralSystem properties:
+    % DynamicalSystem properties:
     %
     % nx,nu,ny     - dimension of vectors x,u, and y respectively
     % f,h          - function handles of f(x,u)/f(x,u,w) and h(x,u)/h(x,u,w)
@@ -83,10 +83,6 @@ classdef GeneralSystem < handle & InitDeinitObject
         
         ny % Dimension of the output space
         
-        f  % State equation ( function handle @(t,x,u) )
-        
-        h  % Output equation ( function handle @(t,x,u) )
-        
         % it is posible to specify different initial conditions for multiple
         % simulations. In this case initialCondition(:,i) containts the
         % ith initial condition to simulate
@@ -133,20 +129,27 @@ classdef GeneralSystem < handle & InitDeinitObject
         
     end
     
-   
-    
-    methods
+   methods (Abstract) 
+        f(varargin)  % State equation ( function handle @(t,x,u) )
         
-        function obj = GeneralSystem (varargin)
+        %h(varargin)  % Output equation ( function handle @(t,x,u) )
+   end
+    
+   methods
+        function y =  h(obj,t,x,u)
+            y = x;
+        end
+        
+        function obj = DynamicalSystem (varargin)
             %
-            %       sys = GeneralSystem(par1,val1,par2,val2,...)
+            %       sys = DynamicalSystem(par1,val1,par2,val2,...)
             %  where the parameters are chosen among the following
             %
             %   'nx', 'nu', 'ny', 'InitialCondition', 'Q', 'R', 'Controller',
             %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
             %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             
@@ -172,18 +175,6 @@ classdef GeneralSystem < handle & InitDeinitObject
                         case 'ny'
                             
                             obj.ny = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
-                        case 'StateEquation'
-                            
-                            obj.f = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
-                        case 'OutputEquation'
-                            
-                            obj.h = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -385,7 +376,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                 assume(t,'real');
             end
             
-            fprintf(getMessage('GeneralSystem:evaluation'));
+            fprintf(getMessage('DynamicalSystem:evaluation'));
             
             if not(isempty(obj.f))
                 obj.f = matlabFunction(simplify( obj.f(t,x,u) ) ,'vars',{t,x,u});
@@ -435,7 +426,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                         %% Compute linearizations
                         if isa(obj.f,'function_handle')
                             
-                            fprintf(getMessage('GeneralSystem:LinearizingStateEquationS'));
+                            fprintf(getMessage('DynamicalSystem:LinearizingStateEquationS'));
                             
                             obj.A = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.f(tbar,x,ubar),xbar);
                             obj.B = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.f(tbar,xbar,u),ubar);
@@ -449,7 +440,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                         
                         if isa(obj.h, 'function_handle')
                             
-                            fprintf(getMessage('GeneralSystem:LinearizingOutputEquationS'));
+                            fprintf(getMessage('DynamicalSystem:LinearizingOutputEquationS'));
                             
                             if nargin(obj.h)==2
                                 
@@ -498,9 +489,8 @@ classdef GeneralSystem < handle & InitDeinitObject
                         
                         
                         
-                        if isa(obj.f,'function_handle')
                             
-                            fprintf(getMessage('GeneralSystem:LinearizingStateEquation'));
+                            fprintf(getMessage('DynamicalSystem:LinearizingStateEquation'));
                             
                             DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar), 'vars', {tbar,xbar,ubar});
                             
@@ -514,21 +504,11 @@ classdef GeneralSystem < handle & InitDeinitObject
                             
                             fprintf(getMessage('done'));
                             
-                        end
                         
-                        if isa(obj.h, 'function_handle')
                             
-                            fprintf(getMessage('GeneralSystem:LinearizingOutputEquation'));
+                            fprintf(getMessage('DynamicalSystem:LinearizingOutputEquation'));
                             
-                            if nargin(obj.h)==2
-                                
-                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar),tbar)  ,'vars',{tbar,xbar});
-                                
-                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar),xbar)  ,'vars',{tbar,xbar});
-                                
-                                obj.q = matlabFunction( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar]   ,'vars',{t,tbar,xbar});
-                                
-                            elseif nargin(obj.h)==3
+           
                                 
                                 DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
                                 
@@ -538,12 +518,10 @@ classdef GeneralSystem < handle & InitDeinitObject
                                 
                                 obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
                                 
-                            end
-                            
+                     
                             
                             fprintf(getMessage('done'));
-                            
-                        end
+                        
                 end
             end
         end
@@ -556,8 +534,6 @@ classdef GeneralSystem < handle & InitDeinitObject
                 'nx', obj.nx, ...
                 'nu', obj.nu, ...
                 'ny', obj.ny,...
-                'StateEquation', obj.f, ...
-                'OutputEquation',obj.h, ...
                 'InitialCondition',obj.initialCondition...
                 ...'LinearizationMatrices',{obj.A,obj.B,obj.p,obj.C,obj.D,obj.q}...
                 };
@@ -738,8 +714,8 @@ classdef GeneralSystem < handle & InitDeinitObject
         % end
         function ret = vertcat(a,b)
             
-            if not(isa(a,'GeneralSystem') & isa(b,'GeneralSystem'))
-                error(getMessage('GeneralSystem:vercat'));
+            if not(isa(a,'DynamicalSystem') & isa(b,'DynamicalSystem'))
+                error(getMessage('DynamicalSystem:vercat'));
             end
             
             if isa(a,'CtSystem')
@@ -757,7 +733,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                     'nu',a.nu+b.nu,...
                     'StateEquation', @(t,x,u)  [a.f(t,x(1:a.nx),u(1:a.nu));b.f(t,x(a.nx+1:a.nx+b.nx),u(a.nu+1:a.nu+b.nu))]);
             else
-                error(getMessage('GeneralSystem:vercat2'));
+                error(getMessage('DynamicalSystem:vercat2'));
             end
             
             if not(isempty(a.h)) && not(isempty(b.h))

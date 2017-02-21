@@ -522,13 +522,12 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                     H_jj     = mpcOps{jj}.horizonLength;
                     
                     if not(isempty(mpcOp_jj.system)) ...
-                            && not(isempty(mpcOp_jj.system.f)) ...
                             && not(isempty(mpcOp_jj.system.nx)) ...
                             && not(isempty(mpcOp_jj.system.nu))
                         
                         nx_jj    = mpcOp_jj.system.nx;
                         nu_jj    = mpcOp_jj.system.nu;
-                        f_jj     = mpcOp_jj.system.f;
+                        
                         selX_jj  = cumulativePositionX+(1:nx_jj);
                         
                         
@@ -554,13 +553,13 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                             
                         end
                         
-                        if nargin(f_jj)==3
-                            xNext(selX_jj) = f_jj(k,x(selX_jj),u_j_i);
-                        elseif nargin(f_jj)==6
-                            xNext(selX_jj) = f_jj(k,x(selX_jj),u_j_i,netReadings,ii+1,xx(:,1));
-                        else
-                            error('To many input for f()');
-                        end
+                        %if nargin(f_jj)==3
+                        %    xNext(selX_jj) = f_jj(k,x(selX_jj),u_j_i);
+                        %elseif nargin(f_jj)==6
+                            xNext(selX_jj) = mpcOp_jj.system.f(k,x(selX_jj),u_j_i,netReadings,ii+1,xx(:,1));
+                        %else
+                        %    error('To many input for f()');
+                        %end
                         
                         uCollective = [uCollective;u_j_i];
                         

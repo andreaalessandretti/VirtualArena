@@ -5,12 +5,12 @@ clc; close all; clear all;
 dt = 0.1;
 
 %% Unicycle Model
-sys = CtSystem(...
-    'StateEquation', @(t,x,u) [
+sys = ICtSystem(...
+    'StateEquation', @(t,x,u,varargin) [
     u(1)*cos(x(3));
     u(1)*sin(x(3));
     u(2)],...
-    'OutputEquation', @(t,x) x(1:2),'ny',2, ... % GPS
+    'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
     'nx',3,'nu',2 ...
 );
 

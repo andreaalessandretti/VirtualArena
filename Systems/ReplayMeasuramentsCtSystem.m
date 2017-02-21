@@ -15,6 +15,7 @@ classdef ReplayMeasuramentsCtSystem < CtSystem & InitDeinitObject
     
     timeLog
     measurementLog
+    
     end
     
     methods

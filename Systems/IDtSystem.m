@@ -1,5 +1,5 @@
 
-%%DtSystem discrete-time system
+%%IDtSystem discrete-time system
 %
 % Consider a discrete-time dynamical model described by
 %
@@ -74,57 +74,64 @@
 
 
 
-classdef DtSystem < DynamicalSystem
+classdef IDtSystem < DtSystem
     
     properties
-        OriginalCtSystem;
-        Integrator;
-        Dt
+        StateEquation
+        OutputEquation
     end
     
     methods
         
-        function obj = DtSystem (varargin)
-            %A discrete time system can be created as
-            %
-            %   dtSys = DtSystem(par1,val1,par2,val2,...)
-            %
-            %   where the parameters and the associated values are specified in
-            %   the help of the abstract class GeneralSystem, or as
-            %   discretization of a continuous time system as
-            %
-            %   dtSys = DtSystem(ctSys,dt)
-            %   dtSys = DtSystem(ctSys,dt,integrator)
-            %
-            %   where ctSys is of the class CtSystem, dt is the discretization
-            %   step and integrator is an integration method (Default RK4)
-            %
-            %   See also GeneralSystem, CtSystem, Integrator, RK4
+        
+        function obj = IDtSystem (varargin)
             
-            obj = obj@DynamicalSystem(varargin{:});
+            obj = obj@DtSystem(varargin{:});
             
+            parameterPointer = 1;
+            
+            hasParameters = length(varargin)-parameterPointer>=0;
+            
+            while hasParameters
+                
+                if (ischar(varargin{parameterPointer}))
+                    
+                    switch varargin{parameterPointer}
+                            
+                        case 'StateEquation'
+                            
+                            obj.StateEquation = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        case 'OutputEquation'
+                            
+                            obj.OutputEquation = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                            
+                        otherwise
+                            
+                            parameterPointer = parameterPointer+1;
+                            
+                            
+                    end
+                else
+                    parameterPointer = parameterPointer+1;
+                end
+                
+                hasParameters = length(varargin)-parameterPointer>=0;
+                
+            end
         end
         
-        
-        function x = getStateTrajectory(obj,k0,x0,u)
-            
-            if isnumeric(x0) %Could be symbolic
-                x = zeros(length(x0),size(u,2)+1);
-            end
-            
-            x(:,1) = x0;
-            k = k0;
-            for i =1:size(u,2)
-                x(:,i+1) = obj.f(k,x(:,i),u(:,i));
-                k = k+1;
-            end
-            
-            if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0
-                error('inf or nan prediction');
-            end
-            
+        function xDot = f(obj,varargin)
+            xDot = obj.StateEquation(varargin{:});
         end
         
-        
+        function y = h(obj,varargin)
+            y = obj.OutputEquation(varargin{:});
+        end
+          
     end
 end

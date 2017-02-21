@@ -63,13 +63,15 @@ classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
         system
         
         inputDependentOutput = 0;
-        
-        % To be changed for special errors, e.g., error between angles
-        innovationFnc = @(z,y)z-y;
+   
     end
     
     
     methods
+         % To be changed for special errors, e.g., error between angles
+        function inn = innovationFnc(obj,z,y)
+            inn = z-y;
+        end
         
         function obj = EkbfFilter(sys,varargin)
             
