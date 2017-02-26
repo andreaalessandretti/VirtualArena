@@ -39,7 +39,7 @@ classdef ControllerStateLog < InlineLog
             
             obj = obj@InlineLog(...
                 'controllerStateTrajectory', @(t,sys,u,z,varargin)sys.controller.x,...
-                'Condition', @(t,sys,u,z,varargin) isa(sys.controller,'GeneralSystem') );
+                'Condition', @(t,sys,u,z,varargin) isa(sys.controller,'DynamicalSystem') );
         
         end
         

@@ -1,4 +1,4 @@
-classdef DynamicalSystem < handle & InitDeinitObject
+classdef DynamicalSystem < handle & InitDeinitObject & LinearizedSystem
     %DynamicalSystem
     %
     % x' = f(t,x,u)
@@ -93,12 +93,6 @@ classdef DynamicalSystem < handle & InitDeinitObject
         controller;      %controller used to drive the vehicle
         x;               %current state vector
         y;               %current output vector
-        
-        %% Linearization
-        % x(k+1)/dot(x) = A x(k) + B u(k) + p
-        % y(k)           = C x(k) + D u(k) + q
-        A,B,p,C,D,q
-        
         
         % changeOfCoordinate - Variable of the change of choordinates
         % x' = A x+b
@@ -351,180 +345,180 @@ classdef DynamicalSystem < handle & InitDeinitObject
             
         end
         
+% replaced with SymbolizedSystem       
+%         function useSymbolicEvaluation(obj)
+%             %%useSymbolicEvaluation evaluates the state and output equations
+%             %   with symbolic variables, simplify them, and replace them with the
+%             %   simplified version.
+%             %
+%             %   This can lead to a notable decrease of computation time for
+%             %   the case of complex models.
+%             
+%             x = sym('x',[obj.nx,1]);
+%             
+%             u = sym('u',[obj.nu,1]);
+%             
+%             t = sym('t',[1,1]);
+%             
+%             if isempty(which('assume'))
+%                 x = sym(x,'real');
+%                 u = sym(u,'real');
+%                 t = sym(t,'real');
+%             else
+%                 assume(x,'real');
+%                 assume(u,'real');
+%                 assume(t,'real');
+%             end
+%             
+%             fprintf(getMessage('DynamicalSystem:evaluation'));
+%             
+%             if not(isempty(obj.f))
+%                 obj.f = matlabFunction(simplify( obj.f(t,x,u) ) ,'vars',{t,x,u});
+%             end
+%             
+%             if not(isempty(obj.h))
+%                 obj.h = matlabFunction(simplify( obj.h(t,x,u) ) ,'vars',{t,x,u});
+%             end
+%             
+%             fprintf(getMessage('done'));
+%         end
         
-        function useSymbolicEvaluation(obj)
-            %%useSymbolicEvaluation evaluates the state and output equations
-            %   with symbolic variables, simplify them, and replace them with the
-            %   simplified version.
-            %
-            %   This can lead to a notable decrease of computation time for
-            %   the case of complex models.
-            
-            x = sym('x',[obj.nx,1]);
-            
-            u = sym('u',[obj.nu,1]);
-            
-            t = sym('t',[1,1]);
-            
-            if isempty(which('assume'))
-                x = sym(x,'real');
-                u = sym(u,'real');
-                t = sym(t,'real');
-            else
-                assume(x,'real');
-                assume(u,'real');
-                assume(t,'real');
-            end
-            
-            fprintf(getMessage('DynamicalSystem:evaluation'));
-            
-            if not(isempty(obj.f))
-                obj.f = matlabFunction(simplify( obj.f(t,x,u) ) ,'vars',{t,x,u});
-            end
-            
-            if not(isempty(obj.h))
-                obj.h = matlabFunction(simplify( obj.h(t,x,u) ) ,'vars',{t,x,u});
-            end
-            
-            fprintf(getMessage('done'));
-        end
         
-        
-        
-        function computeLinearization(obj,varargin)
-            %%computeLinearization
-            %   computeLinearization()
-            %   Computes the parametric matrices A, B, p, C, D, and q, with
-            %   parameters (xbar,ubar), associated with the linearized system
-            %
-            %   x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
-            %   y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
-            %
-            %   By default these matrices are computed using the Symbolic
-            %   Toolbox of Matlab and stored in the object as function handles.
-            %
-            %   computeLinearization('Sampled')
-            %   In this case the matrices are computed using via sampling of
-            %   the function. This mode is advised when the computation of the
-            %   symbolic jacobians are prohibitive.
-            %
-            %   WARNING: At the moment this applies only to time invariant system
-            %            The linearization is evaluated at t=0
-            
-            methodNotSpecified = (nargin == 1);
-            
-            if methodNotSpecified
-                varargin{1} = 'Symbolic';
-                methodNotSpecified = 0;
-            end
-            
-            if not(methodNotSpecified) & ischar( varargin{1})
-                
-                switch varargin{1}
-                    case 'Sampled'
-                        
-                        %% Compute linearizations
-                        if isa(obj.f,'function_handle')
-                            
-                            fprintf(getMessage('DynamicalSystem:LinearizingStateEquationS'));
-                            
-                            obj.A = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.f(tbar,x,ubar),xbar);
-                            obj.B = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.f(tbar,xbar,u),ubar);
-                            DtF   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.f(t,xbar,ubar),tbar);
-                            
-                            obj.p = @(t,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                        
-                        if isa(obj.h, 'function_handle')
-                            
-                            fprintf(getMessage('DynamicalSystem:LinearizingOutputEquationS'));
-                            
-                            if nargin(obj.h)==2
-                                
-                                DtH   = @(tbar,xbar) jacobianSamples(@(t)obj.h(t,xbar),tbar);
-                                obj.C = @(tbar,xbar) jacobianSamples(@(x)obj.h(tbar,x),xbar);
-                                obj.q = @(t,tbar,xbar) ( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar] );
-                                
-                            elseif nargin(obj.h)==3
-                                
-                                DtH   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.h(t,xbar,ubar),tbar);
-                                obj.C = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.h(tbar,x,ubar),xbar);
-                                obj.D = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.h(tbar,xbar,u),ubar);
-                                
-                                obj.q = @(t,tbar,xbar,ubar) ( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                                
-                            end
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                        
-                        
-                    otherwise
-                        
-                        %% Compute linearizations
-                        t = sym('t',[1,1]);
-                        
-                        tbar = sym('tbar',[1,1]);
-                        
-                        xbar = sym('xbar',[obj.nx,1]);
-                        
-                        ubar = sym('ubar',[obj.nu,1]);
-                        
-                        
-                        if isempty(which('assume'))
-                            ubar = sym(ubar,'real');
-                            xbar = sym(xbar,'real');
-                            tbar = sym(tbar,'real');
-                            t    = sym(t,'real');
-                        else
-                            assume(ubar,'real');
-                            assume(xbar,'real');
-                            assume(tbar,'real');
-                            assume(t,'real');
-                        end
-                        
-                        
-                        
-                            
-                            fprintf(getMessage('DynamicalSystem:LinearizingStateEquation'));
-                            
-                            DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar), 'vars', {tbar,xbar,ubar});
-                            
-                            obj.A = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),xbar), 'vars', {tbar,xbar,ubar});
-                            
-                            obj.B = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),ubar), 'vars', {tbar,xbar,ubar});
-                            
-                            %obj.p = @(t,x,u,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar);obj.A(tbar,xbar,ubar);obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                            
-                            obj.p = matlabFunction( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
-                            
-                            fprintf(getMessage('done'));
-                            
-                        
-                            
-                            fprintf(getMessage('DynamicalSystem:LinearizingOutputEquation'));
-                            
-           
-                                
-                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),xbar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.D = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
-                                
-                     
-                            
-                            fprintf(getMessage('done'));
-                        
-                end
-            end
-        end
+%         
+%         function computeLinearization(obj,varargin)
+%             %%computeLinearization
+%             %   computeLinearization()
+%             %   Computes the parametric matrices A, B, p, C, D, and q, with
+%             %   parameters (xbar,ubar), associated with the linearized system
+%             %
+%             %   x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
+%             %   y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
+%             %
+%             %   By default these matrices are computed using the Symbolic
+%             %   Toolbox of Matlab and stored in the object as function handles.
+%             %
+%             %   computeLinearization('Sampled')
+%             %   In this case the matrices are computed using via sampling of
+%             %   the function. This mode is advised when the computation of the
+%             %   symbolic jacobians are prohibitive.
+%             %
+%             %   WARNING: At the moment this applies only to time invariant system
+%             %            The linearization is evaluated at t=0
+%             
+%             methodNotSpecified = (nargin == 1);
+%             
+%             if methodNotSpecified
+%                 varargin{1} = 'Symbolic';
+%                 methodNotSpecified = 0;
+%             end
+%             
+%             if not(methodNotSpecified) & ischar( varargin{1})
+%                 
+%                 switch varargin{1}
+%                     case 'Sampled'
+%                         
+%                         %% Compute linearizations
+%                         if isa(obj.f,'function_handle')
+%                             
+%                             fprintf(getMessage('DynamicalSystem:LinearizingStateEquationS'));
+%                             
+%                             obj.A = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.f(tbar,x,ubar),xbar);
+%                             obj.B = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.f(tbar,xbar,u),ubar);
+%                             DtF   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.f(t,xbar,ubar),tbar);
+%                             
+%                             obj.p = @(t,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
+%                             
+%                             fprintf(getMessage('done'));
+%                             
+%                         end
+%                         
+%                         if isa(obj.h, 'function_handle')
+%                             
+%                             fprintf(getMessage('DynamicalSystem:LinearizingOutputEquationS'));
+%                             
+%                             if nargin(obj.h)==2
+%                                 
+%                                 DtH   = @(tbar,xbar) jacobianSamples(@(t)obj.h(t,xbar),tbar);
+%                                 obj.C = @(tbar,xbar) jacobianSamples(@(x)obj.h(tbar,x),xbar);
+%                                 obj.q = @(t,tbar,xbar) ( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar] );
+%                                 
+%                             elseif nargin(obj.h)==3
+%                                 
+%                                 DtH   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.h(t,xbar,ubar),tbar);
+%                                 obj.C = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.h(tbar,x,ubar),xbar);
+%                                 obj.D = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.h(tbar,xbar,u),ubar);
+%                                 
+%                                 obj.q = @(t,tbar,xbar,ubar) ( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
+%                                 
+%                             end
+%                             
+%                             fprintf(getMessage('done'));
+%                             
+%                         end
+%                         
+%                         
+%                     otherwise
+%                         
+%                         %% Compute linearizations
+%                         t = sym('t',[1,1]);
+%                         
+%                         tbar = sym('tbar',[1,1]);
+%                         
+%                         xbar = sym('xbar',[obj.nx,1]);
+%                         
+%                         ubar = sym('ubar',[obj.nu,1]);
+%                         
+%                         
+%                         if isempty(which('assume'))
+%                             ubar = sym(ubar,'real');
+%                             xbar = sym(xbar,'real');
+%                             tbar = sym(tbar,'real');
+%                             t    = sym(t,'real');
+%                         else
+%                             assume(ubar,'real');
+%                             assume(xbar,'real');
+%                             assume(tbar,'real');
+%                             assume(t,'real');
+%                         end
+%                         
+%                         
+%                         
+%                             
+%                             fprintf(getMessage('DynamicalSystem:LinearizingStateEquation'));
+%                             
+%                             DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar), 'vars', {tbar,xbar,ubar});
+%                             
+%                             obj.A = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),xbar), 'vars', {tbar,xbar,ubar});
+%                             
+%                             obj.B = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),ubar), 'vars', {tbar,xbar,ubar});
+%                             
+%                             %obj.p = @(t,x,u,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar);obj.A(tbar,xbar,ubar);obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
+%                             
+%                             obj.p = matlabFunction( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
+%                             
+%                             fprintf(getMessage('done'));
+%                             
+%                         
+%                             
+%                             fprintf(getMessage('DynamicalSystem:LinearizingOutputEquation'));
+%                             
+%            
+%                                 
+%                                 DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
+%                                 
+%                                 obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),xbar)  ,'vars',{tbar,xbar,ubar});
+%                                 
+%                                 obj.D = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
+%                                 
+%                                 obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
+%                                 
+%                      
+%                             
+%                             fprintf(getMessage('done'));
+%                         
+%                 end
+%             end
+%         end
         
         
         

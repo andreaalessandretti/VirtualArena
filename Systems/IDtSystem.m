@@ -36,7 +36,7 @@
 %                        coordinate.
 %                        See help CtSystem.changeOfCoordinate.
 %
-% See also GeneralSystem, DtSystem
+% See also DynamicalSystem, DtSystem
 
 
 

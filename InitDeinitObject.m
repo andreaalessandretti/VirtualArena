@@ -49,7 +49,7 @@ classdef InitDeinitObject < handle
         %   simulation. It is called once for the case of simulations from
         %   multiple initial conditions.
         %   
-        %   see also GeneralSystem.initSimulation
+        %   see also DynamicalSystem.initSimulation
         function initSimulations(obj)
             
             obj.executeOnFieldsIfInitDeinitObject('initSimulations');
@@ -60,7 +60,7 @@ classdef InitDeinitObject < handle
         %   simulation. It is called at the beginning of every simulation 
         %   for the case of multiple initial conditions.
         %   
-        %   see also GeneralSystem.initSimulations
+        %   see also DynamicalSystem.initSimulations
         function initSimulation(obj)
             
             obj.executeOnFieldsIfInitDeinitObject('initSimulation');
@@ -72,7 +72,7 @@ classdef InitDeinitObject < handle
         %   simulation. It is called once for the case of simulations from
         %   multiple initial conditions
         %   
-        %   see also GeneralSystem.initSimulation
+        %   see also DynamicalSystem.initSimulation
         function deinitSimulations(obj)
             
              obj.executeOnFieldsIfInitDeinitObject('deinitSimulations');
@@ -84,7 +84,7 @@ classdef InitDeinitObject < handle
         %   simulation. It is called at the end of every simulation 
         %   for the case of multiple initial conditions.
         %   
-        %   see also GeneralSystem.initSimulations
+        %   see also DynamicalSystem.initSimulations
         function deinitSimulation(obj)
             
             obj.executeOnFieldsIfInitDeinitObject('deinitSimulation');

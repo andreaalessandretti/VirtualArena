@@ -30,9 +30,9 @@ classdef SymbolizedSystem < handle
                 assume(u,'real');
             end
             
+            addpath './gen';
             if not(exist('./gen', 'dir') == 7)
                 mkdir ./gen;
-                addpath './gen';
             end
             
             %% Generate function for h

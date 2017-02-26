@@ -74,7 +74,7 @@ classdef MpcOpPathFollowingECC13 < MpcOpTrackingECC13
             
             obj = obj@MpcOpTrackingECC13(varargin{:});
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             

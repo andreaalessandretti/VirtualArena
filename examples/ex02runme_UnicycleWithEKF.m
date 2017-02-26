@@ -24,7 +24,7 @@ sys.controller       = UniGoToPoint(desiredPosition);
 
 %% <<< BEGIN difference from ex01   
 
-dtSys   = DtSystem(sys,dt);
+dtSys   = DiscretizedSystem(sys,dt);
 
 sys.stateObserver = EkfFilter(dtSys,...
                  'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...

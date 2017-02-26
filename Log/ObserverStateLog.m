@@ -39,7 +39,7 @@ classdef ObserverStateLog < InlineLog
             
             obj = obj@InlineLog(...
                 'observerStateTrajectory', @(t,sys,u,z,varargin)sys.stateObserver.x,...
-                'Condition', @(t,sys,u,z,varargin) not(isempty(sys.stateObserver)) &&  isa(sys.stateObserver,'GeneralSystem') );
+                'Condition', @(t,sys,u,z,varargin) not(isempty(sys.stateObserver)) &&  isa(sys.stateObserver,'DynamicalSystem') );
         
         end
         

@@ -37,17 +37,17 @@ function message = getMessage(MessageCode,varargin)
 
 switch MessageCode
     
-    case 'GeneralSystem:LinearizingOutputEquation'
+    case 'DynamicalSystem:LinearizingOutputEquation'
         message = 'Linearizing output equation (symbolic matlab)... ';
         
-    case 'GeneralSystem:LinearizingOutputEquationS'
+    case 'DynamicalSystem:LinearizingOutputEquationS'
         message = 'Computation linearization via sampling ... ';
         
         
-    case 'GeneralSystem:LinearizingStateEquation'
+    case 'DynamicalSystem:LinearizingStateEquation'
         message = 'Linearizing state equation (symbolic matlab) ... ';
         
-    case 'GeneralSystem:LinearizingStateEquationS'
+    case 'DynamicalSystem:LinearizingStateEquationS'
         message = 'Computation linearization via sampling  ... ';
         
     case 'done'
@@ -97,7 +97,7 @@ switch MessageCode
         
         message = 'Only GeneralSet Allowed.';
         
-    case 'GeneralSystem:evaluation'
+    case 'DynamicalSystem:evaluation'
         
         message = 'Evaluation and simplification of state and output equations ...';
     
@@ -153,11 +153,11 @@ switch MessageCode
         
         message = 'The SetBox compared have different spaceDimension.';
         
-     case 'GeneralSystem:vercat'
+     case 'DynamicalSystem:vercat'
         
-        message = 'Both elements should belong to the class GeneralSystem.';
+        message = 'Both elements should belong to the class DynamicalSystem.';
         
-    case 'GeneralSystem:vercat2'
+    case 'DynamicalSystem:vercat2'
         
         message = 'Only CtSystem and DtSystem supported for vercat.';
        

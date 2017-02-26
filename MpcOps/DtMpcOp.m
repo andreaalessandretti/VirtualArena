@@ -212,7 +212,7 @@ classdef DtMpcOp < MpcOp
                 if not(isempty(index))
                     ctSys = superClassParameters{index +1};
                     
-                    superClassParameters{index +1} = DtSystem(ctSys,dt);
+                    superClassParameters{index +1} = DiscretizedSystem(ctSys,dt);
                 end
                 
                 % StageCost Discretization

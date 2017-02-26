@@ -1,6 +1,6 @@
 
 classdef CtSystem < DynamicalSystem
-    %%GeneralSystem
+    %%DynamicalSystem
     %
     % Consider a continuous-time dynamical model described by
     %
@@ -37,7 +37,7 @@ classdef CtSystem < DynamicalSystem
     %                        coordinate.
     %                        See help CtSystem.changeOfCoordinate.
     %
-    % See also GeneralSystem, DtSystem
+    % See also DynamicalSystem, DtSystem
     
  
 % This file is part of VirtualArena.

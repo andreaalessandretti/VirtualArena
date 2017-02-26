@@ -76,6 +76,7 @@ classdef EkfFilter < DtSystem & StateObserver
         function inn = innovationFnc(obj,t,z,y)
             inn = z-y;
         end
+        
         function obj = EkfFilter(sys,varargin)
             
             if not(isa(sys,'DtSystem'))
@@ -89,9 +90,8 @@ classdef EkfFilter < DtSystem & StateObserver
             
             obj.system = sys;
             
-            if isempty(obj.system.A)
-                disp('Warning: Linearization not found, computing linearization - ');
-                obj.system.computeLinearization();
+            if not(isa(obj.system,'DiscretizedSystem'))
+                disp('Only ''DiscretizedSystem'' supported.');
             end
             
             parameterPointer = 1;
@@ -149,9 +149,10 @@ classdef EkfFilter < DtSystem & StateObserver
                 assume(x,'real');
                 assume(t,'real');
             end
-            if(sum(sum(sys.D(t,x,u) == 0)) == sys.nu*sys.ny)
+            
+            %if(sum(sum(sys.D(t,x,u) == 0)) == sys.nu*sys.ny)
                 obj.inputDependentOutput = 1;
-            end
+            %end
             
             obj.lastInnovation = zeros(sys.ny,1);
             

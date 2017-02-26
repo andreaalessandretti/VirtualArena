@@ -12,7 +12,6 @@ classdef DiscretizedSystem < DtSystem
         
         function obj = DiscretizedSystem (sys,dt,varargin)
             
-            
             superClassParameters = sys.getParameters();
             
             obj = obj@DtSystem(superClassParameters{:});
@@ -41,13 +40,13 @@ classdef DiscretizedSystem < DtSystem
                 x = varargin{2};
                 u = varargin{3};
                 
-                xNext = RK4.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,u),x,dt);
+                xNext = obj.Integrator.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,u),x,dt);
                 
             elseif length(varargin)==4
                 xc = varargin{2};
                 uSysCon = varargin{3};
                 x = varargin{4};
-                xNext = RK4.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,uSysCon,x),xc,dt);
+                xNext = obj.Integrator.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,uSysCon,x),xc,dt);
                 
             elseif length(varargin)==6
                 
@@ -57,11 +56,8 @@ classdef DiscretizedSystem < DtSystem
                 t_h = varargin{5};
                 x0 = varargin{6};
                 
+                xNext =  obj.Integrator.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
                 
-                xNext =  RK4.integrate(@(y)obj.OriginalCtSystem.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
-                
-            else
-                error('Too many input for f(.)');
             end
             
         end

@@ -74,7 +74,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
             
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             

@@ -12,7 +12,7 @@ sys = ICtSystem(...
     u(1)*cos(x(3));
     u(1)*sin(x(3));
     u(2)],...
-    'OutputEquation', @(t,x) x(1:2),'ny',2, ... % GPS
+    'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
     'nx',3,'nu',2 ...
 );
 
@@ -34,12 +34,13 @@ mpcOp = CtMpcOp( ...
 
 dtMpcOp = DtMpcOp(mpcOp,dt);
 
-dtSys   = DtSystem(sys,dt);
+dtSys   = DiscretizedSystem(sys,dt);
 
 realSystem.controller = MpcController(...  %% <<< the controller is applied to the real system 
     'MpcOp'       , dtMpcOp ,...
     'MpcOpSolver' , FminconMpcOpSolver('MpcOp', dtMpcOp,'UseSymbolicEvaluation',1) ...
     );
+realSystem.controller.mpcOpSolver.symbolizeProblem(dtMpcOp);
 
 realSystem.stateObserver = EkfFilter(dtSys,... %% <<< the filter is applied to the real system  
                  'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...

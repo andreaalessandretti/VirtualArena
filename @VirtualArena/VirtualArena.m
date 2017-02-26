@@ -482,7 +482,7 @@ classdef VirtualArena < handle
                         end
                     end
                     
-                    if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
                         [z,xObsNext] = obj.manageObserver(timeInfo,netReadings,ia,x,u,nextX);
                         
@@ -492,7 +492,7 @@ classdef VirtualArena < handle
                     
                     obj.systemsList{ia}.x = nextX;
                     
-                    if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
                         obj.systemsList{ia}.stateObserver.x = xObsNext;
                     end

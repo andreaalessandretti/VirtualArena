@@ -36,7 +36,7 @@
 %                        coordinate.
 %                        See help CtSystem.changeOfCoordinate.
 %
-% See also GeneralSystem, DtSystem
+% See also DynamicalSystem, DtSystem
 
 
 
@@ -76,11 +76,6 @@
 
 classdef DtSystem < DynamicalSystem
     
-    properties
-        OriginalCtSystem;
-        Integrator;
-        Dt
-    end
     
     methods
         
@@ -90,7 +85,7 @@ classdef DtSystem < DynamicalSystem
             %   dtSys = DtSystem(par1,val1,par2,val2,...)
             %
             %   where the parameters and the associated values are specified in
-            %   the help of the abstract class GeneralSystem, or as
+            %   the help of the abstract class DynamicalSystem, or as
             %   discretization of a continuous time system as
             %
             %   dtSys = DtSystem(ctSys,dt)
@@ -99,7 +94,7 @@ classdef DtSystem < DynamicalSystem
             %   where ctSys is of the class CtSystem, dt is the discretization
             %   step and integrator is an integration method (Default RK4)
             %
-            %   See also GeneralSystem, CtSystem, Integrator, RK4
+            %   See also DynamicalSystem, CtSystem, Integrator, RK4
             
             obj = obj@DynamicalSystem(varargin{:});
             
