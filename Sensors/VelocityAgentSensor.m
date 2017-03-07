@@ -29,7 +29,7 @@ classdef VelocityAgentSensor < Sensor
             obj.fOfAgent = fOfAgent;
         end
         
-        function  ret = sense(obj, agentId,agent,detectableAgentsList,detectableAgentsIds)
+        function  ret = sense(obj,t, agentId,agent,detectableAgentsList,detectableAgentsIds)
             ret = {};
             nDetectables = length(detectableAgentsIds);
             

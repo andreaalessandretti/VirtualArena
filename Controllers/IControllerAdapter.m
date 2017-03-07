@@ -1,5 +1,5 @@
 
-classdef  InlineControllerAdapter < ControllerAdapter
+classdef  IControllerAdapter < ControllerAdapter
     %
     % ControllerAdapter(originalController)
     %
@@ -49,14 +49,14 @@ classdef  InlineControllerAdapter < ControllerAdapter
         
         %%
         %
-        % InlineControllerAdapter(originalU2newU,originalController,x2originalX)
+        % IControllerAdapter(originalU2newU,originalController,x2originalX)
         % 
         % originalX = x2originalX(obj,t,x);
         % originalU = originalController.computeInput(t,originalX);
         % u         = originalU2newU(obj,t,x,originalU);
         %
         %
-        function obj = InlineControllerAdapter(originalU2newU,originalController,x2originalX)
+        function obj = IControllerAdapter(originalU2newU,originalController,x2originalX)
             
             obj = obj@ControllerAdapter(originalController);
             

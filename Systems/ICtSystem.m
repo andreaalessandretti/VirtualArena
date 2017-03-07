@@ -1,7 +1,35 @@
 
 classdef ICtSystem < CtSystem
 %%ICtSystem
-   
+% 
+% Example:
+%
+% Inline implementation of the continuous-time system
+%
+% dot{x} = [0,1;0,0]*x+[0;1]*u ,  x(0) = [1;1]
+%
+% with x \in R^nx and u \in R^nu, in closed-loop with 
+%
+% u = -[1,1.7321]*x
+%
+%
+% VA code:
+%
+%
+% sys = ICtSystem(...
+%     'StateEquation', @(t,x,u) [0,1;0,0]*x+[0;1]*u,...
+%     'nx',2,'nu',1 ...
+% );
+% 
+% sys.initialCondition = [1;1];
+% 
+% sys.controller = IController(@(t,x)-[1,1.7321]*x);
+% 
+% va = VirtualArena(sys,'DiscretizationStep', 0.1);
+% 
+% log = va.run();
+
+
 % This file is part of VirtualArena.
 %
 % Copyright (c) 2014, Andrea Alessandretti

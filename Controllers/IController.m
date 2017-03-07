@@ -1,15 +1,32 @@
-classdef InlineController < Controller
-    %InlineController inline Controller
+classdef IController < Controller
+    %IController inline Controller
     %
-    %   InlineController peoperties:
+    %   IController peoperties:
     %
     %   law     - @(t,x) function handle of the control law
     %
-    %   InlineController methods:
+    %   IController methods:
     %
-    %   InlineController - constructor, c = InlineController(@law)
+    %   IController - constructor, c = IController(@law)
     %
-    %   See also Controller
+    %
+    % Example:
+    %
+    % A = [1,2;0,1]; B = [0;1];
+    % 
+    % [K,P,E] = dlqr(A,B,eye(2),100);
+    % 
+    % sys = IDtSystem('StateEquation',@(k,x,u)A*x+B*u,'nx',2,'nu',1);
+    % 
+    % sys.controller = IController(@(k,x)-K*x);
+    % 
+    % sys.initialCondition = [10;20];
+    % 
+    % va = VirtualArena(sys,'StoppingCriteria'  ,@(k,as)k>30);
+    %  
+    % ret = va.run();
+    %
+    % See also Controller
     
  
 % This file is part of VirtualArena.
@@ -54,7 +71,7 @@ classdef InlineController < Controller
     methods
         
         
-        function obj = InlineController(law)
+        function obj = IController(law)
             
             obj = obj@Controller();
             obj.law = law;
@@ -62,9 +79,9 @@ classdef InlineController < Controller
         end
         
         
-        function u = computeInput(obj,t,x)
+        function u = computeInput(obj,varargin)
             
-            u = obj.law(t,x);
+            u = obj.law(varargin{:});
             
         end
         

@@ -375,11 +375,11 @@ classdef VirtualArena < handle
                         xToController = obj.systemsList{ia}.stateObserver.h(timeInfo,xObs);
                         x             = obj.systemsList{ia}.x;
                         
-                    elseif not(isempty(obj.systemsList{ia}.h)) % Output feedback
-                        
-                        x             = obj.systemsList{ia}.x;
-                        xToController = obj.systemsList{ia}.h(timeInfo,x);
-                        z             = xToController;
+                    %elseif not(isempty(obj.systemsList{ia}.h)) % Output feedback
+                    %    
+                    %    x             = obj.systemsList{ia}.x;
+                    %    xToController = obj.systemsList{ia}.h(timeInfo,x);
+                    %    z             = xToController;
                         
                     else % State feedback
                         
@@ -391,7 +391,7 @@ classdef VirtualArena < handle
                     %% Classic vs Network control
                     if not(isempty(obj.sensorsNetwork))
                         
-                        netReadings = obj.senseNetworkToAgent(ia);
+                        netReadings = obj.senseNetworkToAgent(timeInfo,ia);
                         
                         if isempty(netReadings)
                             netReadings = {};
@@ -490,15 +490,25 @@ classdef VirtualArena < handle
                     
                     obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z,netReadings,uSysCon);
                     
-                    obj.systemsList{ia}.x = nextX;
+                    nextXs{ia} = nextX;
                     
                     if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
-                        obj.systemsList{ia}.stateObserver.x = xObsNext;
+                        xObsNexts{ia} = xObsNext;
                     end
                     
                 end
                 
+                %% Update state objects
+                
+                for ia = 1:length(obj.systemsList) % Main loop for a single system
+                obj.systemsList{ia}.x = nextXs{ia};
+                    
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
+                        
+                        obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
+                    end
+                end
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
                     

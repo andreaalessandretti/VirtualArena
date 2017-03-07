@@ -3,22 +3,16 @@ classdef EkfFilter < DtSystem & StateObserver
     %
     % filter = EkfFiler(sys, 'Property1',PropertyValue1,'Property2',PropertyValue2,...)
     %
-    % where sys is the CtSystem used to design the filter.
+    % where sys is the DtSystem used to design the filter.
     %
     % Properties
     %
     % InitialStateEstimate
-    %
     % InitialCovarianceMatrix
     % StateNoiseMatrix
     % OutputNoiseMatrix
     %
-    %      obs = EkfFilter(dtVehicleModel,...
-    %        'StateNoiseMatrix'  , dt*Qobs,...
-    %        'OutputNoiseMatrix' , (1/dt)*Robs,...
-    %        'InitialCondition' , [2*ones(3,1);
-    %                               10*reshape(eye(3),9,1)]);
-    % demo: exStateObserver.m
+    % demo: examples/ex02runme_UnicycleWithEKF.m
     %
     %
     

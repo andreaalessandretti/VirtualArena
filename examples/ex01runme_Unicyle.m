@@ -1,8 +1,3 @@
-%% Note:
-% - Define controller in a separate file
-% - Custom StagePlotFunction
-% - Custom StoppingCriteria
-
 clc; close all; clear all;
 
 dt = 0.1;
@@ -30,5 +25,3 @@ va = VirtualArena(sys,...
     );
 
 log = va.run();
-
-log{1}

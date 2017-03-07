@@ -1,4 +1,4 @@
-%% Example 0
+%% Ex0: 
 
 clc; close all; clear all;
 
@@ -9,7 +9,7 @@ sys = ICtSystem(...
 
 sys.initialCondition = [1;1];
 
-sys.controller = InlineController(@(t,x)-[1,1.7321]*x);
+sys.controller = IController(@(t,x)-[1,1.7321]*x);
 
 va = VirtualArena(sys,...
     'DiscretizationStep', 0.1,...
@@ -17,5 +17,3 @@ va = VirtualArena(sys,...
     );
 
 log = va.run();
-
-log{1}

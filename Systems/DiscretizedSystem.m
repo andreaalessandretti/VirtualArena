@@ -1,7 +1,19 @@
-
-
 classdef DiscretizedSystem < DtSystem
-    
+%%
+% Consider a CtSystem sys
+%
+% dtSys   = DiscretizedSystem(sys,dt)
+%
+% returns a DtSystem that is the discretization of sys using RK4 with
+% discretization step of dt.
+%
+% To specify a custom discretization use, e.g,
+%
+% dtSys   = DiscretizedSystem(sys,dt,EulerForward())
+%
+
+
+
     properties
         OriginalCtSystem;
         Integrator;

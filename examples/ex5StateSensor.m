@@ -1,8 +1,8 @@
 
 classdef ex5StateSensor < Sensor
-    methods (Static)
+    methods 
         
-        function  measurement = sense(agentId,agent,detectableAgentsList,detectableAgentsIds)
+        function  measurement = sense(obj,t,agentId,agent,detectableAgentsList,detectableAgentsIds)
             measurement = {};
             nDetectables = length(detectableAgentsIds);
             for i = 1 : nDetectables

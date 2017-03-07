@@ -6,6 +6,7 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
         function testLin(testCase)
             
             tolleranceLin = 0.00001;
+            tolleranceLinSym = exp(-10);
             sys  = MyCtSystem();
             
             sys.useSymbolicLinearization();
@@ -29,11 +30,13 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %% A
              expA = sys.A(k,x,u);
              actA = A(k,x,u);
-             testCase.verifyEqual(expA,actA);
+             
+             testCase.verifyEqual(norm(expA-actA)<tolleranceLinSym,true);
              
              sys.useLinearizationBySamples();
              
              expA = norm(sys.A(k,x,u)-actA)<tolleranceLin;
+             
              testCase.verifyEqual(expA,true);
              
              sys.useSymbolicLinearization();
@@ -41,7 +44,8 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %% B
              expB = sys.B(k,x,u);
              actB = B(k,x,u);
-             testCase.verifyEqual(expB,actB);
+             
+             testCase.verifyEqual(norm(expB-actB)<tolleranceLinSym,true);
              
              sys.useLinearizationBySamples();
              
@@ -54,7 +58,9 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %% C
              expC = feval(sys.nameFunC,k,x,u);
              actC = C(k,x,u);
-             testCase.verifyEqual(expC,actC);
+             
+             testCase.verifyEqual(norm(expC-actC)<tolleranceLinSym,true);
+             
              
              sys.useLinearizationBySamples();
              
@@ -66,7 +72,8 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %D
              expD = sys.D(k,x,u);
              actD = D(k,x,u);
-             testCase.verifyEqual(expD,actD);
+             
+             testCase.verifyEqual(norm(expD-actD)<tolleranceLinSym,true);
              
              sys.useLinearizationBySamples();
              
@@ -78,7 +85,8 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %p
              expp = sys.p(kk,k,x,u);
              actp = p(kk,k,x,u);
-             testCase.verifyEqual(expp,actp);
+             
+             testCase.verifyEqual(norm(expp-actp)<tolleranceLinSym,true);
              
              sys.useLinearizationBySamples();
              
@@ -90,7 +98,8 @@ classdef TestLinearizedSystem < matlab.unittest.TestCase
              %q
              expq = sys.q(kk,k,x,u);
              actq = q(kk,k,x,u);
-             testCase.verifyEqual(expq,actq);
+             
+             testCase.verifyEqual(norm(expq-actq)<tolleranceLinSym,true);
              
              sys.useLinearizationBySamples();
              

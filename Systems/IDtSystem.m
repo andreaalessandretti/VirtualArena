@@ -1,40 +1,34 @@
 
 %%IDtSystem discrete-time system
 %
-% Consider a discrete-time dynamical model described by
+% Example:
 %
-% x+ = f(t,x,u)
-% y  = h(t,x)/h(t,x,u)
+% Inline implementation of the discrete-time system
 %
-% where
+% x+ = A*x+B*u ,  x(0) = [10;20]
 %
-% x is an nx-dimensional vector
-% u is an nu-dimensional vector
-% y is an ny-dimensional vector
+% with x \in R^nx and u \in R^nu, in closed-loop with
 %
-% In VA such system is defined as follows
+% u = -K*x
 %
-% sys = CtSystem(par1,val1,par2,val2,...)
 %
-% where the parameters are chosen among
+% VA code:
 %
-% 'StateEquation', 'nx', 'nu', 'OutputEquation', 'ny' ,
-% 'InitialCondition', 'Controller','StateObserver'
 %
-% Often, it is also possible to set the parameters after the creation
-% of the object, e.g.,
+% A = [1,2;0,1]; B = [0;1];
 %
-% sys.controller = mycontroller;
-% sys.stateObserver = myobserver;
-% sys.initialCondition = [1;1];
+% [K,P,E] = dlqr(A,B,eye(2),100);
 %
-% Some methods provided by this function are the following:
+% sys = IDtSystem('StateEquation',@(k,x,u)A*x+B*u,'nx',2,'nu',1);
 %
-%   getStateTrajectory - Compute a solution of the system.
-%                        See help CtSystem.getStateTrajectory.
-%   changeOfCoordinate - Perform a change of state and/or input
-%                        coordinate.
-%                        See help CtSystem.changeOfCoordinate.
+% sys.controller = IController(@(k,x)-K*x);
+%
+% sys.initialCondition = [10;20];
+%
+% va = VirtualArena(sys,'StoppingCriteria'  ,@(k,as)k>30);
+%
+% ret = va.run();
+%
 %
 % See also DynamicalSystem, DtSystem
 
@@ -97,7 +91,7 @@ classdef IDtSystem < DtSystem
                 if (ischar(varargin{parameterPointer}))
                     
                     switch varargin{parameterPointer}
-                            
+                        
                         case 'StateEquation'
                             
                             obj.StateEquation = varargin{parameterPointer+1};
@@ -132,6 +126,6 @@ classdef IDtSystem < DtSystem
         function y = h(obj,varargin)
             y = obj.OutputEquation(varargin{:});
         end
-          
+        
     end
 end

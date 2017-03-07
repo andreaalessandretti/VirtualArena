@@ -47,7 +47,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 case 0
                     %Number of iterations exceeded options.
                     %MaxIter or number of function evaluations exceeded options.MaxFunEvals.
-                    OK = 1;
+                    OK = 0;
                 case -1
                     %The output function terminated the algorithm.
                     OK = 0;
@@ -108,7 +108,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                                 
                                 obj.useSymbolicEvaluation = 1;
                                 obj.dimNet = {1};
-                            
+                                
                             else
                                 obj.useSymbolicEvaluation = 0;
                             end
@@ -188,14 +188,10 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 %mpcOp = obj.mpcOp;
                 
-                switch class(mpcOp)
+                if not(isa(mpcOp,'DtMpcOp'))
                     
-                    case 'DtMpcOp'
-                        
-                    otherwise
-                        
-                        error('Only DtMpcOp supporteds')
-                        
+                    error('Only DtMpcOp supporteds');
+                    
                 end
                 
                 tic
@@ -315,7 +311,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         
         function sol = faceProblem(obj,mpcController,problematicSol,t,x,varargin)
-            error('problem');
+            error('Solution Not Found');
         end
         
         function close(obj)
@@ -556,7 +552,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                         %if nargin(f_jj)==3
                         %    xNext(selX_jj) = f_jj(k,x(selX_jj),u_j_i);
                         %elseif nargin(f_jj)==6
-                            xNext(selX_jj) = mpcOp_jj.system.f(k,x(selX_jj),u_j_i,netReadings,ii+1,xx(:,1));
+                        xNext(selX_jj) = mpcOp_jj.system.f(k,x(selX_jj),u_j_i,netReadings,ii+1,xx(:,1));
                         %else
                         %    error('To many input for f()');
                         %end
@@ -676,51 +672,51 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 for jj = 1:Nmpcs
                     
-                        
+                    
                     %Extract Local Info
                     mpcOp_jj = mpcOps{jj};
                     H_jj     = mpcOps{jj}.horizonLength;
                     
                     if not(mpcOp_jj.neglectPerformanceIndex)
-                    x_j_i  = xx(:,ii);
-                    
-                    %Check if the mpc_jj optimizes over the current
-                    %time or if it uses the auxiliary law
-                    if(ii<=H_jj)
-                        u_j_i  = uu(:,ii);
-                        stageCost_jj = mpcOp_jj.stageCost;
+                        x_j_i  = xx(:,ii);
                         
-                        if not(isempty(stageCost_jj))
-                            if nargin(stageCost_jj) ==3
-                                cost = cost + stageCost_jj(k,x_j_i,u_j_i);
-                            elseif nargin(stageCost_jj) ==4
-                                cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings);
-                            elseif nargin(stageCost_jj) ==5
-                                cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings,ii);
-                            else %nargin(stageCost_jj) ==6
-                                cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings,ii,xx(:,1));
-                                
+                        %Check if the mpc_jj optimizes over the current
+                        %time or if it uses the auxiliary law
+                        if(ii<=H_jj)
+                            u_j_i  = uu(:,ii);
+                            stageCost_jj = @mpcOp_jj.stageCost;
+                            
+                            if not(isempty(stageCost_jj))
+                                if nargin(stageCost_jj) ==3
+                                    cost = cost + stageCost_jj(k,x_j_i,u_j_i);
+                                elseif nargin(stageCost_jj) ==4
+                                    cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings);
+                                elseif nargin(stageCost_jj) ==5
+                                    cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings,ii);
+                                else %nargin(stageCost_jj) ==6
+                                    cost = cost + stageCost_jj(k,x_j_i,u_j_i,netReadings,ii,xx(:,1));
+                                    
+                                end
                             end
+                            
                         end
                         
-                    end
-                    
-                    if(ii==H_jj+1)
-                        
-                        terminalCost_jj = mpcOp_jj.terminalCost;
-                        
-                        if not(isempty(terminalCost_jj))
-                            if nargin(terminalCost_jj) ==2
-                                cost = cost + terminalCost_jj(k,x_j_i);
-                            elseif nargin(terminalCost_jj) ==3
-                                cost = cost + terminalCost_jj(k,x_j_i,netReadings);
-                            else
-                                cost = cost + terminalCost_jj(k,x_j_i,netReadings,xx(:,1));
+                        if(ii==H_jj+1)
+                            
+                            terminalCost_jj = @mpcOp_jj.terminalCost;
+                            
+                            if not(isempty(terminalCost_jj))
+                                if nargin(terminalCost_jj) ==2
+                                    cost = cost + terminalCost_jj(k,x_j_i);
+                                elseif nargin(terminalCost_jj) ==3
+                                    cost = cost + terminalCost_jj(k,x_j_i,netReadings);
+                                else
+                                    cost = cost + terminalCost_jj(k,x_j_i,netReadings,xx(:,1));
+                                end
                             end
+                            
                         end
                         
-                    end
-                    
                     end
                 end
                 

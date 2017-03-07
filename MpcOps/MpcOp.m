@@ -98,9 +98,6 @@ classdef MpcOp < handle
         
         performanceConstraints = {}
         
-        stageCost
-        
-        terminalCost
         
         inputDerivative
         
@@ -123,6 +120,12 @@ classdef MpcOp < handle
         jacobianComputationMethod = 'Symbolic';
         
         cA, cb, cC, cd, ce, cf %Change of coordinate
+        
+    end
+    
+    methods (Abstract)
+        l = stageCost(obj,t,x,u,varargin)
+        m = terminalCost(obj,t,x,varargin)
         
     end
     
@@ -219,18 +222,6 @@ classdef MpcOp < handle
                             
                             parameterPointer = parameterPointer+2;
                             
-                        case 'StageCost'
-                            
-                            obj.stageCost = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
-                        case 'TerminalCost'
-                            
-                            obj.terminalCost = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
                         case 'AuxiliaryLaw'
                             
                             obj.auxiliaryLaw = varargin{parameterPointer+1};
@@ -256,6 +247,12 @@ classdef MpcOp < handle
             %                error('MpcOp:RequiredParametersMissing',getMessage('MpcOp:RequiredParametersMissing'))
             %            end
             
+            if isempty(obj.system)
+                error('Parameter ''System'' required.')
+            end
+            if isempty(obj.horizonLength)
+                error('Parameter ''HorizonLength'' required.')
+            end
         end
         
         function params = getParameters(obj)
@@ -267,8 +264,6 @@ classdef MpcOp < handle
                 'TerminalConstraints'    , obj.terminalConstraints,...
                 'PerformanceConstraints' , obj.performanceConstraints,...
                 'NeglectPerformanceIndex', obj.neglectPerformanceIndex,...
-                'StageCost'              , obj.stageCost,...
-                'TerminalCost'           , obj.terminalCost,...
                 'InputDerivative'        , obj.inputDerivative,...
                 'AuxiliaryLaw'           , obj.auxiliaryLaw...
                 };
