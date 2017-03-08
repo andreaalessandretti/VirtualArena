@@ -1,4 +1,4 @@
-classdef TimeLog < InlineLog
+classdef TimeLog < Log
     %%TimeLog logs the time
     
     
@@ -36,8 +36,13 @@ classdef TimeLog < InlineLog
     methods
         function obj = TimeLog()
             
-            obj = obj@InlineLog('time', @(t,agent,u,z,varargin) t);
+            obj = obj@Log('time');
         end
+        
+        function v =  getVectorToLog(obj,t,agent,u,z,varargin)
+            v = t;
+        end
+        
         
     end
     

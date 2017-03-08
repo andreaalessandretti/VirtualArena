@@ -1,4 +1,4 @@
-classdef ObserverStateLog < InlineLog
+classdef ObserverStateLog < Log
     %%ObserverStateLog logs the state of the state observer, if any
     
     
@@ -37,10 +37,14 @@ classdef ObserverStateLog < InlineLog
         
         function obj = ObserverStateLog()
             
-            obj = obj@InlineLog(...
-                'observerStateTrajectory', @(t,sys,u,z,varargin)sys.stateObserver.x,...
+            obj = obj@Log(...
+                'observerStateTrajectory',...
                 'Condition', @(t,sys,u,z,varargin) not(isempty(sys.stateObserver)) &&  isa(sys.stateObserver,'DynamicalSystem') );
         
+        end
+        
+        function v =  getVectorToLog(obj,t,agent,u,z,varargin)
+            v = agent.stateObserver.x;
         end
         
     end

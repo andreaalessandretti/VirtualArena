@@ -1,4 +1,4 @@
-classdef ControllerStateLog < InlineLog
+classdef ControllerStateLog < Log
     %%ControllerStateLog logs the state of the controller, if any
     
     
@@ -37,10 +37,14 @@ classdef ControllerStateLog < InlineLog
         
         function obj = ControllerStateLog()
             
-            obj = obj@InlineLog(...
-                'controllerStateTrajectory', @(t,sys,u,z,varargin)sys.controller.x,...
+            obj = obj@Log(...
+                'controllerStateTrajectory',...
                 'Condition', @(t,sys,u,z,varargin) isa(sys.controller,'DynamicalSystem') );
         
+        end
+        
+        function v =  getVectorToLog(obj,t,agent,u,z,varargin)
+            v = sys.controller.x;
         end
         
     end
