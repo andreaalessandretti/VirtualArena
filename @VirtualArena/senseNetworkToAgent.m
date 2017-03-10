@@ -1,4 +1,4 @@
-function readings = senseNetworkToAgent(obj,systemId)
+function readings = senseNetworkToAgent(obj,timeInfo,systemId)
             
             nSensor = length(obj.sensorsNetwork)/2;
             emptyMeasurements = 1;
@@ -7,7 +7,8 @@ function readings = senseNetworkToAgent(obj,systemId)
             for i =1:nSensor
                 
                 sensor  = obj.sensorsNetwork{(i-1)*2+1};
-                Lsensor = obj.sensorsNetwork{(i-1)*2+2};
+                LsensorH = obj.sensorsNetwork{(i-1)*2+2};
+                Lsensor = LsensorH(timeInfo);
                 
                 detectableAgents  = Lsensor(systemId,:);
                 indexesDetectable = 1:length(Lsensor(systemId,:));

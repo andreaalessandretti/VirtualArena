@@ -391,7 +391,7 @@ classdef VirtualArena < handle
                     %% Classic vs Network control
                     if not(isempty(obj.sensorsNetwork))
                         
-                        netReadings = obj.senseNetworkToAgent(ia);
+                        netReadings = obj.senseNetworkToAgent(timeInfo,ia);
                         
                         if isempty(netReadings)
                             netReadings = {};
@@ -490,15 +490,26 @@ classdef VirtualArena < handle
                     
                     obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z,netReadings,uSysCon);
                     
-                    obj.systemsList{ia}.x = nextX;
+                    nextXs{ia} = nextX;
+
                     
                     if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
                         
-                        obj.systemsList{ia}.stateObserver.x = xObsNext;
+                        xObsNexts{ia} = xObsNext;
                     end
                     
                 end
                 
+                %% Update state objects
+
+for ia = 1:length(obj.systemsList) % Main loop for a single system
+obj.systemsList{ia}.x = nextXs{ia};
+
+if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
+
+obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
+end
+end
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
                     
@@ -774,7 +785,7 @@ classdef VirtualArena < handle
                     xlabel = systemsList{sysId}.stateName;
                 else
                     for ix = 1:nx
-                        xlabel{ix}=sprintf('x%i',ix);
+                        xlabel{ix}=sprintf('x_{%i}',ix);
                     end
                 end
                 
@@ -782,7 +793,7 @@ classdef VirtualArena < handle
                     ulabel = systemsList{sysId}.stateName;
                 else
                     for iu = 1:nu
-                        ulabel{iu}=sprintf('u%i',iu);
+                        ulabel{iu}=sprintf('u_{%i}',iu);
                     end
                 end
                 labels = {xlabel{:},ulabel{:}};

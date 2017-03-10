@@ -48,6 +48,9 @@ classdef UniGoToPointPid < DtSystem
 % of the authors and should not be interpreted as representing official policies, 
 % either expressed or implied, of the FreeBSD Project.
     properties
+        kpid
+        uSet
+        point
     end
     
     methods
@@ -66,7 +69,7 @@ classdef UniGoToPointPid < DtSystem
             %                             constraints.
             %
             %   See also BoxSet
-            
+            point = point;
             kpid = [1,1,1];
             uSet = BoxSet([-inf;-inf],1:2,[inf;inf],1:2,2);
             
@@ -108,8 +111,12 @@ classdef UniGoToPointPid < DtSystem
             
             obj = obj@DtSystem(...
                 'StateEquation',@(t,xc,u,z)UniGoToPointPid.nextX(xc,z,point), ...
-                'OutputEquation',@(t,xc,z)UniGoToPointPid.computeInput(xc,z,point,kpid,uSet), ...
                 'nx',2,'nu',3,'ny',2,varargin{:});
+            
+            obj.point= point;
+            obj.kpid = kpid;
+            obj.uSet = uSet;
+            obj.h = @(t,xc,z)UniGoToPointPid.computeInput(xc,z,obj.point,obj.kpid,obj.uSet);
             
             
         end
@@ -153,6 +160,15 @@ classdef UniGoToPointPid < DtSystem
             %u = [min(max(v,uSet.lowerBounds(1)),uSet.upperBounds(1));
             %     min(max(w,uSet.lowerBounds(2)),uSet.upperBounds(2))];
             
+    
+        
+        
+        
+        
+        
+        
+        
+        
         end
         
     end
