@@ -1,6 +1,6 @@
 
-classdef CtSystem < GeneralSystem
-    %%GeneralSystem
+classdef CtSystem < DynamicalSystem
+    %%DynamicalSystem
     %
     % Consider a continuous-time dynamical model described by
     %
@@ -37,7 +37,7 @@ classdef CtSystem < GeneralSystem
     %                        coordinate.
     %                        See help CtSystem.changeOfCoordinate.
     %
-    % See also GeneralSystem, DtSystem
+    % See also DynamicalSystem, DtSystem
     
  
 % This file is part of VirtualArena.
@@ -77,7 +77,7 @@ classdef CtSystem < GeneralSystem
         
         function obj = CtSystem (varargin)
             
-            obj = obj@GeneralSystem(varargin{:});
+            obj = obj@DynamicalSystem(varargin{:});
             
         end
         

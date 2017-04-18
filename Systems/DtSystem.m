@@ -36,7 +36,7 @@
 %                        coordinate.
 %                        See help CtSystem.changeOfCoordinate.
 %
-% See also GeneralSystem, DtSystem
+% See also DynamicalSystem, DtSystem
 
 
 
@@ -74,7 +74,7 @@
 
 
 
-classdef DtSystem < GeneralSystem
+classdef DtSystem < DynamicalSystem
     
     
     methods
@@ -85,7 +85,7 @@ classdef DtSystem < GeneralSystem
             %   dtSys = DtSystem(par1,val1,par2,val2,...)
             %
             %   where the parameters and the associated values are specified in
-            %   the help of the abstract class GeneralSystem, or as
+            %   the help of the abstract class DynamicalSystem, or as
             %   discretization of a continuous time system as
             %
             %   dtSys = DtSystem(ctSys,dt)
@@ -94,63 +94,9 @@ classdef DtSystem < GeneralSystem
             %   where ctSys is of the class CtSystem, dt is the discretization
             %   step and integrator is an integration method (Default RK4)
             %
-            %   See also GeneralSystem, CtSystem, Integrator, RK4
+            %   See also DynamicalSystem, CtSystem, Integrator, RK4
             
-            
-            if ( (nargin == 3 || nargin == 2) && isa(varargin{1},'CtSystem') )
-                
-                ctSys = varargin{1};
-                
-                superClassParameters = ctSys.getParameters();
-                
-                dt = varargin{2};
-                
-                indexF = find(strcmp(superClassParameters, 'StateEquation'));
-                
-                if nargin == 3
-                    
-                    customIntegrator = varargin{3};
-                    
-                    if nargin(ctSys.f)==3
-                        
-                        superClassParameters{indexF +1} = @(k,x,u) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
-                        
-                    elseif nargin(ctSys.f)==6
-                        
-                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) customIntegrator.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
-                        
-                    else
-                        error('Too many input for f(.)');
-                    end
-                        
-                else
-                    if nargin(ctSys.f)==3
-                        
-                        superClassParameters{indexF +1} = @(k,x,u) RK4.integrate(@(y)ctSys.f(dt*k,y,u),x,dt);
-                        
-                    elseif nargin(ctSys.f)==4
-                        
-                        superClassParameters{indexF +1} = @(k,xc,uSysCon,x) RK4.integrate(@(y)ctSys.f(dt*k,y,uSysCon,x),xc,dt);
-                    
-                    elseif nargin(ctSys.f)==6
-                        
-                        superClassParameters{indexF +1} = @(k,x,u,netReadings,t_h,x0) RK4.integrate(@(y)ctSys.f(dt*k,y,u,netReadings,t_h,x0),x,dt);
-                        
-                    else
-                        error('Too many input for f(.)');
-                    end
-                    
-                end
-                
-                %superClassParameters{indexF +1} = @(x,u) RK4.integrate(@(y)ctSys.f(y,u),x,dt);
-                
-            else
-                
-                superClassParameters = varargin;
-                
-            end
-            
-            obj = obj@GeneralSystem(superClassParameters{:});
+            obj = obj@DynamicalSystem(varargin{:});
             
         end
         

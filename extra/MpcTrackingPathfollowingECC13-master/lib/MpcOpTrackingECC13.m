@@ -74,7 +74,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
             
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             
@@ -118,12 +118,18 @@ classdef MpcOpTrackingECC13 < CtMpcOp
              parss = {varargin{:},'Vehicle',obj.system};
                 obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
                 
+<<<<<<< HEAD
                 obj.stageCost    = @obj.myStageCost;
                 obj.terminalCost = @obj.myTerminalCost;
             
         end
         
         function cost = myStageCost(obj,t,x,u,varargin)
+=======
+        end
+        
+        function cost = stageCost(obj,t,x,u,varargin)
+>>>>>>> InlineClasses
             
             e    = obj.auxiliaryLaw.computeError(t,x);
             uAux = obj.auxiliaryLaw.computeInput(t,x);
@@ -131,7 +137,11 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
         end
         
+<<<<<<< HEAD
         function cost = myTerminalCost(obj,t,x,varargin)
+=======
+        function cost = terminalCost(obj,t,x,varargin)
+>>>>>>> InlineClasses
             
             e = obj.auxiliaryLaw.computeError(t,x);
             K = obj.auxiliaryLaw.Ke;

@@ -1,8 +1,5 @@
 classdef ZerosWarmStart < WarmStart
-    %%WarmStart specifies  what to log during the simulation.
-    %
-    % See also ShiftAndAppendAuxLawWarmStart,
-    % ShiftAndAppendZeroWarmStart, ShiftAndHoldWarmStart, WarmStart
+    %%ZerosWarmStart
     
     % This file is part of VirtualArena.
     %
@@ -47,8 +44,8 @@ classdef ZerosWarmStart < WarmStart
         
         function sol = generateWarmStarts(obj,t,previousSol)
         
-            sol.x = zeros(size(previousSol.x_opt));
-            sol.u = zeros(size(previousSol.u_opt));
+            sol.x_opt = zeros(size(previousSol.x_opt));
+            sol.u_opt = zeros(size(previousSol.u_opt));
             
         end
      

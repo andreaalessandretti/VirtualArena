@@ -1,4 +1,4 @@
-classdef ex5BasicConsensusController < Controller
+classdef ex05BasicConsensusController < Controller
     methods
         
         function u = computeInput(obj,t,x,readings)

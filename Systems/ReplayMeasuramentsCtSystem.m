@@ -15,6 +15,7 @@ classdef ReplayMeasuramentsCtSystem < CtSystem & InitDeinitObject
     
     timeLog
     measurementLog
+    
     end
     
     methods
@@ -24,7 +25,7 @@ classdef ReplayMeasuramentsCtSystem < CtSystem & InitDeinitObject
             
             obj = obj@CtSystem(varargin{:});
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             

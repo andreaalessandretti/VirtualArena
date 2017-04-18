@@ -1,7 +1,5 @@
 classdef ShiftAndAppendAuxLawWarmStart < WarmStart
-    %%WarmStart specifies  what to log during the simulation.
-    %
-    % See also AuxLawWarmStart, ShiftAndAppendZeroWarmStart, ShiftAndHoldWarmStart, WarmStart
+    %%ShiftAndAppendAuxLawWarmStart
     
     % This file is part of VirtualArena.
     %
@@ -33,18 +31,14 @@ classdef ShiftAndAppendAuxLawWarmStart < WarmStart
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-    
-    properties
-        auxiliaryLaw;
-        nextX;
-    end
+  
 
+    methods (Abstract)
+        auxiliaryLaw(obj,t,x);
+        nextX(obj,t,x,u);
+    end
     
     methods
-        function obj = ShiftAndAppendAuxLawWarmStart(auxiliaryLaw,nextX)
-            obj.auxiliaryLaw = auxiliaryLaw;
-            obj.nextX = nextX;
-        end
         
         function sol = generateWarmStarts(obj,t,previousSol)
             sol  = previousSol;

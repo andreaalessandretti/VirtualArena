@@ -20,14 +20,16 @@
 
 function fout =  symbolize(f,inSizes)
 
-
 x = getSymOfCell (inSizes,'x',0);
 
 symf = f(x{:});
 
-fout1 = matlabFunction(symf,'vars',getSymOfCell (inSizes,'x',1));
-
-fout = @(varargin)evaluateFunction(fout1,varargin);
+if isempty(symf)
+    fout = @(varargin)[];
+else
+    fout1 = matlabFunction(symf,'vars',getSymOfCell (inSizes,'x',1));
+    fout = @(varargin)evaluateFunction(fout1,varargin);
+end
 
 end
 

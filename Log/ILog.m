@@ -1,8 +1,8 @@
 
-classdef InlineLog < Log
-    %%InlineLog specifies  what to log during the simulation.
+classdef ILog < Log
+    %%ILog specifies  what to log during the simulation.
     %
-    % InlineLog(name,fun,varargin)
+    % ILog(name,fun,varargin)
     %
     % vectorToLog = fun(t,agent)      at initialization time t=0;
     % vectorToLog = fun(t,agent,u,z)  at the generic tiem t
@@ -52,7 +52,7 @@ classdef InlineLog < Log
     
     methods
         
-        function obj = InlineLog(name,fun,varargin)
+        function obj = ILog(name,fun,varargin)
             
             obj = obj@Log(name,varargin{:});
             

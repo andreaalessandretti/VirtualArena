@@ -1,38 +1,24 @@
-
 classdef AgentSensor < Sensor
-%% AgentSensor(funOfAgent)
-% AgentSensor senses a function of the neighboring agents.
-% e.g.,
-% to sense the sate use funOfAgent = @(agent)agent.x
-%
-% See also Sensor
-    
-    properties
-        funOfAgent
-    end
-    
-    methods 
-        function obj = AgentSensor(funOfAgent)
-            
-            obj.funOfAgent = funOfAgent;
-            
-        end
-        
-        function  ret = sense(obj,agentId,agent,detectableAgentsList,detectableAgentsIds)
-            
-            ret = {};
-            
-            nDetectables = length(detectableAgentsIds);
-            
-            for i = 1 : nDetectables
-                
-                ret{i} = obj.funOfAgent(detectableAgentsList{i});
 
-            end 
+    methods (Abstract)
+       sensingFunction(t,agentId,agent,sensedAgentId,sensedAgent);
+    end
+    methods 
+        
+        function ret = sense(obj,t,agentId,agent,detectableAgentsList,detectableAgentsIds)
+           
+            ret = {};
+            for i = 1:length(detectableAgentsIds)
+                sensedAgentId  = detectableAgentsIds(i);
+                sensedAgent    = detectableAgentsList{i};
+                ret{i}         = obj.sensingFunction(t,agentId,agent,sensedAgentId,sensedAgent);
+            end
+            
         end
         
- 
     end
+    
+ 
+    
     
 end
-

@@ -5,8 +5,8 @@ classdef EllipsoidalSet < GeneralSet
     %
     % The objects s1 and s2 defined as
     %
-    %   s1 = EllipticSet(P,b);
-    %   s2 = EllipticSet(P,b,c);
+    %   s1 = EllipsoidalSet(P,b);
+    %   s2 = EllipsoidalSet(P,b,c);
     %
     % denote the sets
     %
@@ -55,7 +55,6 @@ classdef EllipsoidalSet < GeneralSet
     
     methods
         
-        
         function obj = EllipsoidalSet(varargin)
             
             if nargin >= 2
@@ -92,8 +91,8 @@ classdef EllipsoidalSet < GeneralSet
         
         function ret = mtimes(arg1,arg2)
             
-            if not(isnumeric(arg1) && isa(arg2,'EllipticSet'))
-                error ('The product is defined for a pair Matrix*EllipticSet');
+            if not(isnumeric(arg1) && isa(arg2,'EllipsoidalSet'))
+                error ('The product is defined for a pair Matrix*EllipsoidalSet');
             end
             
             
@@ -102,7 +101,7 @@ classdef EllipsoidalSet < GeneralSet
             
             invA = inv(A);
             
-            ret = EllipticSet(invA'*set.P*invA,set.b);
+            ret = EllipsoidalSet(invA'*set.P*invA,set.b);
         end
         
     end

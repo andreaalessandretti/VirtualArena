@@ -1,12 +1,5 @@
-
-classdef  InlineControllerAdapter < ControllerAdapter
-    %
-    % ControllerAdapter(originalController)
-    %
-    % Abstract method:
-    %
-    % uOriginal2newU(obj,t,x,uOriginal)
-    %
+classdef IShiftAndAppendAuxLawWarmStart < ShiftAndAppendAuxLawWarmStart
+    %%IShiftAndAppendAuxLawWarmStart 
     
     % This file is part of VirtualArena.
     %
@@ -38,40 +31,30 @@ classdef  InlineControllerAdapter < ControllerAdapter
     % The views and conclusions contained in the software and documentation are those
     % of the authors and should not be interpreted as representing official policies,
     % either expressed or implied, of the FreeBSD Project.
-    properties
-        
-        originalU2newUFnc;
-        x2originalXFnc;
-    end
     
+
+    properties
+        hAuxiliaryLaw
+        hNextX
+    end
     
     methods
         
-        %%
-        %
-        % InlineControllerAdapter(originalU2newU,originalController,x2originalX)
-        % 
-        % originalX = x2originalX(obj,t,x);
-        % originalU = originalController.computeInput(t,originalX);
-        % u         = originalU2newU(obj,t,x,originalU);
-        %
-        %
-        function obj = InlineControllerAdapter(originalU2newU,originalController,x2originalX)
-            
-            obj = obj@ControllerAdapter(originalController);
-            
-            obj.originalU2newUFnc = originalU2newU;
-            obj.x2originalXFnc    = x2originalX;
-            
+        function obj = IShiftAndAppendAuxLawWarmStart(hAuxiliaryLaw,hNextX)
+            obj.hNextX        = hNextX;
+            obj.hAuxiliaryLaw = hAuxiliaryLaw;
         end
         
-        function  uNew = originalU2newU(obj,t,x,uOriginal)
-            uNew = obj.originalU2newUFnc(t,x,uOriginal);
+        function ret = auxiliaryLaw(obj,t,x)
+            ret = obj.hAuxiliaryLaw(t,x);
         end
         
-        function  originalX = x2originalX(obj,t,x)
-            originalX = obj.x2originalXFnc(t,x);
+        function  ret =nextX(obj,t,x,u)
+            ret = obj.hNextX(t,x,u);
         end
-        
+       
+     
     end
+    
 end
+

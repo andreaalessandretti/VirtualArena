@@ -50,7 +50,7 @@ classdef Sensor < handle
         
         % The sensor of agent agentId senses the agents
         % detectableAgents==1 of the list agentsList
-        sense(obj,agentId,agentsList,detectableAgents);
+        sense(obj,t,agentId,agentsList,detectableAgents);
         
     end
     

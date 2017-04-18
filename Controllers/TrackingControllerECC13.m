@@ -95,7 +95,7 @@ classdef TrackingControllerECC13 < Controller
             obj = obj@Controller();
             
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             

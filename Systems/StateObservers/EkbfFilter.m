@@ -63,13 +63,15 @@ classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
         system
         
         inputDependentOutput = 0;
-        
-        % To be changed for special errors, e.g., error between angles
-        innovationFnc = @(z,y)z-y;
+   
     end
     
     
     methods
+         % To be changed for special errors, e.g., error between angles
+        function inn = innovationFnc(obj,z,y)
+            inn = z-y;
+        end
         
         function obj = EkbfFilter(sys,varargin)
             
@@ -87,11 +89,12 @@ classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
             
             obj.system = sys;
             
-            obj.f      = @(t,xP,StUz)obj.ekbfEquations(t,StUz(1:sys.nu),xP,StUz(sys.nu+1:end));
+            %obj.f      = @(t,xP,StUz)obj.ekbfEquations(t,StUz(1:sys.nu),xP,StUz(sys.nu+1:end));
             
-            if isempty(obj.system.A) || isempty(obj.system.B) || isempty(obj.system.p) || isempty(obj.system.q) || isempty(obj.system.C) || isempty(obj.system.D)
-                disp('Warning: Linearization not found, computing linearization - ');
-                obj.system.computeLinearization();
+            if not(isa(obj.system,'LinearizedSystem'))
+                
+                disp('Warning: System should ba a ''LinearizedSystem''');
+                %obj.system.computeLinearization();
             end
             
             parameterPointer = 1;
@@ -130,15 +133,17 @@ classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
                 
             end
             
-            if nargin(obj.system.h)==3 
+            %if nargin(obj.system.h)==3 
                 obj.inputDependentOutput = 1;
-            end
+            %end
             
                 
         end
         
-        
-        function  xPDot = ekbfEquations(obj,t,u,xP,z) % Prediction-Update Form from i-1 to i
+        function xPDot = f(t,xP,StUz,varargin)
+            u = StUz(1:obj.system.nu);
+            xP = xP;
+            z = StUz(obj.system.nu+1:end);
             
             nx = obj.system.nx;
             ny = obj.system.ny;
@@ -156,16 +161,16 @@ classdef EkbfFilter < CtSystem & StateObserver & NoInitDeinitObject
             
             Q = obj.Qekf;
             R = obj.Rekf;
-            f = obj.system.f;
+            %f = obj.system.f;
             h = obj.system.h;
             
             K    = P*C'/R;
             
-            if nargin(h)==3 
+            %if nargin(h)==3 
                 y = h(t,x,u);
-            else
-                y = h(t,x);
-            end
+            %else
+            %    y = h(t,x);
+            %end
             
             fx = f(t,x,u);
             inn  = obj.innovationFnc(z,y);

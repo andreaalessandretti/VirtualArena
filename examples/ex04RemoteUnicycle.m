@@ -28,9 +28,8 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
         
         function obj = ex04RemoteUnicycle (varargin)
             
-            obj = obj@DtSystem(varargin{:});
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             
@@ -92,18 +91,16 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
             obj.nx = 1;
             obj.log.travelTime = [];
             obj.initialCondition = zeros(obj.nx,1);
-            obj.f = @(t,x,u)obj.fakeF(t,x,u,varargin);
-            obj.h = @(t,x)obj.fakeH();
             
         end
         
         
-        function xNext = fakeF(obj,t,x,u,varargin)
+        function xNext = f(obj,t,x,u)
             xNext = zeros(obj.nx,1);
             obj.lastu = u;
         end
         
-        function y = fakeH(obj)
+        function y = h(obj,t,x,u)
             srtime = tic;
             obj.send(obj.lastu);
             y = obj.recive();

@@ -1,11 +1,11 @@
-clc;clear all;close all;
+clc; clear all; close all;
 
 N = 5;
 
 for i = 1:N
     
-    v{i}                  = CtSystem('StateEquation',@(t,x,u)u,'nx',1,'nu',1);    
-    v{i}.controller       = ex5BasicConsensusController();
+    v{i}                  = ICtSystem('StateEquation',@(t,x,u,varargin)u,'nx',1,'nu',1);    
+    v{i}.controller       = ex05BasicConsensusController();
     v{i}.initialCondition = i;
     
 end
@@ -17,12 +17,18 @@ A            = zeros(N);
 A(1,4)       = 1;
 A(2:N,1:N-1) = eye(N-1);
 
-s1 = ex5StateSensor();
+s1 = IAgentSensor(@(t,agentId,agent,sensedAgentId,sensedAgent)sensedAgent.x);
+
+Ah = @(t) A;
 
 %% VirtualArena
 a = VirtualArena(v,...
     'StoppingCriteria'  , @(t,as)t>10,...
+<<<<<<< HEAD:examples/ex5runme_consensus.m
     'SensorsNetwork'    , {s1,@(t)A},...
+=======
+    'SensorsNetwork'    , {s1,Ah},...
+>>>>>>> InlineClasses:examples/ex05runme_consensus.m
     'DiscretizationStep', 0.1,...
     'PlottingStep'      , 1);
 

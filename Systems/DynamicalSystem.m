@@ -1,5 +1,5 @@
-classdef GeneralSystem < handle & InitDeinitObject
-    %GeneralSystem
+classdef DynamicalSystem < handle & InitDeinitObject & LinearizedSystem
+    %DynamicalSystem
     %
     % x' = f(t,x,u)
     % y  = h(t,x)/h(t,x,u)
@@ -13,7 +13,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %
     %  Use:
     % 
-    %  sys = GeneralSystem(par1,val1,par2,val2,...) % only by a subclass
+    %  sys = DynamicalSystem(par1,val1,par2,val2,...) % only by a subclass
     %
     %  where the parameters are chosen among the following
     %
@@ -21,7 +21,7 @@ classdef GeneralSystem < handle & InitDeinitObject
     %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
     %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
     %
-    % GeneralSystem properties:
+    % DynamicalSystem properties:
     %
     % nx,nu,ny     - dimension of vectors x,u, and y respectively
     % f,h          - function handles of f(x,u)/f(x,u,w) and h(x,u)/h(x,u,w)
@@ -83,10 +83,6 @@ classdef GeneralSystem < handle & InitDeinitObject
         
         ny % Dimension of the output space
         
-        f  % State equation ( function handle @(t,x,u) )
-        
-        h  % Output equation ( function handle @(t,x,u) )
-        
         % it is posible to specify different initial conditions for multiple
         % simulations. In this case initialCondition(:,i) containts the
         % ith initial condition to simulate
@@ -97,12 +93,6 @@ classdef GeneralSystem < handle & InitDeinitObject
         controller;      %controller used to drive the vehicle
         x;               %current state vector
         y;               %current output vector
-        
-        %% Linearization
-        % x(k+1)/dot(x) = A x(k) + B u(k) + p
-        % y(k)           = C x(k) + D u(k) + q
-        A,B,p,C,D,q
-        
         
         % changeOfCoordinate - Variable of the change of choordinates
         % x' = A x+b
@@ -133,20 +123,32 @@ classdef GeneralSystem < handle & InitDeinitObject
         
     end
     
-   
-    
-    methods
+   methods (Abstract) 
+        f(varargin)  % State equation ( function handle @(t,x,u) )
         
-        function obj = GeneralSystem (varargin)
+        %h(varargin)  % Output equation ( function handle @(t,x,u) )
+   end
+    
+   methods
+        
+       function newX = updateState(obj,t,x,u,varargin)
+           newX = x;
+       end
+       
+        function y =  h(obj,t,x,u)
+            y = x;
+        end
+        
+        function obj = DynamicalSystem (varargin)
             %
-            %       sys = GeneralSystem(par1,val1,par2,val2,...)
+            %       sys = DynamicalSystem(par1,val1,par2,val2,...)
             %  where the parameters are chosen among the following
             %
             %   'nx', 'nu', 'ny', 'InitialCondition', 'Q', 'R', 'Controller',
             %   'StateEquation', 'OutputEquation'  (See f and h, respectively, above)
             %   'LinearizationMatrices' (value: {A,B,p,C,D,q})
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             
@@ -172,18 +174,6 @@ classdef GeneralSystem < handle & InitDeinitObject
                         case 'ny'
                             
                             obj.ny = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
-                        case 'StateEquation'
-                            
-                            obj.f = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
-                        case 'OutputEquation'
-                            
-                            obj.h = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
                             
@@ -359,205 +349,13 @@ classdef GeneralSystem < handle & InitDeinitObject
             end
             
         end
-        
-        
-        function useSymbolicEvaluation(obj)
-            %%useSymbolicEvaluation evaluates the state and output equations
-            %   with symbolic variables, simplify them, and replace them with the
-            %   simplified version.
-            %
-            %   This can lead to a notable decrease of computation time for
-            %   the case of complex models.
-            
-            x = sym('x',[obj.nx,1]);
-            
-            u = sym('u',[obj.nu,1]);
-            
-            t = sym('t',[1,1]);
-            
-            if isempty(which('assume'))
-                x = sym(x,'real');
-                u = sym(u,'real');
-                t = sym(t,'real');
-            else
-                assume(x,'real');
-                assume(u,'real');
-                assume(t,'real');
-            end
-            
-            fprintf(getMessage('GeneralSystem:evaluation'));
-            
-            if not(isempty(obj.f))
-                obj.f = matlabFunction(simplify( obj.f(t,x,u) ) ,'vars',{t,x,u});
-            end
-            
-            if not(isempty(obj.h))
-                obj.h = matlabFunction(simplify( obj.h(t,x,u) ) ,'vars',{t,x,u});
-            end
-            
-            fprintf(getMessage('done'));
-        end
-        
-        
-        
-        function computeLinearization(obj,varargin)
-            %%computeLinearization
-            %   computeLinearization()
-            %   Computes the parametric matrices A, B, p, C, D, and q, with
-            %   parameters (xbar,ubar), associated with the linearized system
-            %
-            %   x(k+1)/dot(x) = A(tbar,xbar,ubar) x(k) + B(tbar,xbar,ubar) u(k) + p(t,tbar,xbar,ubar)
-            %   y(k)          = C(tbar,xbar,ubar) x(k) + D(tbar,xbar,ubar) u(k) + q(t,tbar,xbar,ubar)
-            %
-            %   By default these matrices are computed using the Symbolic
-            %   Toolbox of Matlab and stored in the object as function handles.
-            %
-            %   computeLinearization('Sampled')
-            %   In this case the matrices are computed using via sampling of
-            %   the function. This mode is advised when the computation of the
-            %   symbolic jacobians are prohibitive.
-            %
-            %   WARNING: At the moment this applies only to time invariant system
-            %            The linearization is evaluated at t=0
-            
-            methodNotSpecified = (nargin == 1);
-            
-            if methodNotSpecified
-                varargin{1} = 'Symbolic';
-                methodNotSpecified = 0;
-            end
-            
-            if not(methodNotSpecified) & ischar( varargin{1})
-                
-                switch varargin{1}
-                    case 'Sampled'
-                        
-                        %% Compute linearizations
-                        if isa(obj.f,'function_handle')
-                            
-                            fprintf(getMessage('GeneralSystem:LinearizingStateEquationS'));
-                            
-                            obj.A = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.f(tbar,x,ubar),xbar);
-                            obj.B = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.f(tbar,xbar,u),ubar);
-                            DtF   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.f(t,xbar,ubar),tbar);
-                            
-                            obj.p = @(t,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                        
-                        if isa(obj.h, 'function_handle')
-                            
-                            fprintf(getMessage('GeneralSystem:LinearizingOutputEquationS'));
-                            
-                            if nargin(obj.h)==2
-                                
-                                DtH   = @(tbar,xbar) jacobianSamples(@(t)obj.h(t,xbar),tbar);
-                                obj.C = @(tbar,xbar) jacobianSamples(@(x)obj.h(tbar,x),xbar);
-                                obj.q = @(t,tbar,xbar) ( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar] );
-                                
-                            elseif nargin(obj.h)==3
-                                
-                                DtH   = @(tbar,xbar,ubar) jacobianSamples(@(t)obj.h(t,xbar,ubar),tbar);
-                                obj.C = @(tbar,xbar,ubar) jacobianSamples(@(x)obj.h(tbar,x,ubar),xbar);
-                                obj.D = @(tbar,xbar,ubar) jacobianSamples(@(u)obj.h(tbar,xbar,u),ubar);
-                                
-                                obj.q = @(t,tbar,xbar,ubar) ( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                                
-                            end
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                        
-                        
-                    otherwise
-                        
-                        %% Compute linearizations
-                        t = sym('t',[1,1]);
-                        
-                        tbar = sym('tbar',[1,1]);
-                        
-                        xbar = sym('xbar',[obj.nx,1]);
-                        
-                        ubar = sym('ubar',[obj.nu,1]);
-                        
-                        
-                        if isempty(which('assume'))
-                            ubar = sym(ubar,'real');
-                            xbar = sym(xbar,'real');
-                            tbar = sym(tbar,'real');
-                            t    = sym(t,'real');
-                        else
-                            assume(ubar,'real');
-                            assume(xbar,'real');
-                            assume(tbar,'real');
-                            assume(t,'real');
-                        end
-                        
-                        
-                        
-                        if isa(obj.f,'function_handle')
-                            
-                            fprintf(getMessage('GeneralSystem:LinearizingStateEquation'));
-                            
-                            DtF   = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),tbar), 'vars', {tbar,xbar,ubar});
-                            
-                            obj.A = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),xbar), 'vars', {tbar,xbar,ubar});
-                            
-                            obj.B = matlabFunction(  jacobian(obj.f(tbar,xbar,ubar),ubar), 'vars', {tbar,xbar,ubar});
-                            
-                            %obj.p = @(t,x,u,tbar,xbar,ubar) ( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar);obj.A(tbar,xbar,ubar);obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar] );
-                            
-                            obj.p = matlabFunction( DtF(tbar,xbar,ubar)*t + obj.f(tbar,xbar,ubar) - [DtF(tbar,xbar,ubar),obj.A(tbar,xbar,ubar),obj.B(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                        
-                        if isa(obj.h, 'function_handle')
-                            
-                            fprintf(getMessage('GeneralSystem:LinearizingOutputEquation'));
-                            
-                            if nargin(obj.h)==2
-                                
-                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar),tbar)  ,'vars',{tbar,xbar});
-                                
-                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar),xbar)  ,'vars',{tbar,xbar});
-                                
-                                obj.q = matlabFunction( DtH(tbar,xbar)*t + obj.h(tbar,xbar) - [DtH(tbar,xbar),obj.C(tbar,xbar)]*[tbar;xbar]   ,'vars',{t,tbar,xbar});
-                                
-                            elseif nargin(obj.h)==3
-                                
-                                DtH   = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),tbar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.C = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),xbar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.D = matlabFunction(  jacobian(obj.h(tbar,xbar,ubar),ubar)  ,'vars',{tbar,xbar,ubar});
-                                
-                                obj.q = matlabFunction( DtH(tbar,xbar,ubar)*t + obj.h(tbar,xbar,ubar) - [DtH(tbar,xbar,ubar),obj.C(tbar,xbar,ubar),obj.D(tbar,xbar,ubar)]*[tbar;xbar;ubar]   ,'vars',{t,tbar,xbar,ubar});
-                                
-                            end
-                            
-                            
-                            fprintf(getMessage('done'));
-                            
-                        end
-                end
-            end
-        end
-        
-        
-        
+          
         function params = getParameters(obj)
             
             params = {...
                 'nx', obj.nx, ...
                 'nu', obj.nu, ...
                 'ny', obj.ny,...
-                'StateEquation', obj.f, ...
-                'OutputEquation',obj.h, ...
                 'InitialCondition',obj.initialCondition...
                 ...'LinearizationMatrices',{obj.A,obj.B,obj.p,obj.C,obj.D,obj.q}...
                 };
@@ -719,7 +517,7 @@ classdef GeneralSystem < handle & InitDeinitObject
         %     c2 = UniGoToPoint(-[1;1]);
         %
         %     v12 = [v1;v2];
-        %     v12.controller = InlineController(@(t,x) [c1.computeInput(t,x(1:3));
+        %     v12.controller = IController(@(t,x) [c1.computeInput(t,x(1:3));
         %                                               c2.computeInput(t,x(4:6)) ] );
         %     v12.initialCondition = [0;0;0;0;0;0];
         %     dt = 0.1;
@@ -738,8 +536,8 @@ classdef GeneralSystem < handle & InitDeinitObject
         % end
         function ret = vertcat(a,b)
             
-            if not(isa(a,'GeneralSystem') & isa(b,'GeneralSystem'))
-                error(getMessage('GeneralSystem:vercat'));
+            if not(isa(a,'DynamicalSystem') & isa(b,'DynamicalSystem'))
+                error(getMessage('DynamicalSystem:vercat'));
             end
             
             if isa(a,'CtSystem')
@@ -757,7 +555,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                     'nu',a.nu+b.nu,...
                     'StateEquation', @(t,x,u)  [a.f(t,x(1:a.nx),u(1:a.nu));b.f(t,x(a.nx+1:a.nx+b.nx),u(a.nu+1:a.nu+b.nu))]);
             else
-                error(getMessage('GeneralSystem:vercat2'));
+                error(getMessage('DynamicalSystem:vercat2'));
             end
             
             if not(isempty(a.h)) && not(isempty(b.h))
@@ -768,102 +566,7 @@ classdef GeneralSystem < handle & InitDeinitObject
                 ret.h =  @(t,x) b.h(t,x(a.nx+1:a.nx+b.nx));
             end
             
-            
         end
         
-        
-    end
-    
-     methods(Static)
-        function testComputeLinearization()
-            sys = CtSystem(...
-                'StateEquation', @(t,x,u) t+2*x+3*u,...
-                'OutputEquation',@(t,x,u) 4*t+5*x+6*u,...
-                'nx',1,'nu',1,'ny',1 ...
-                );
-            
-            
-            t    = 10*randn(1);
-            zbar = 10*randn(3,1);
-            
-            sys.computeLinearization('Sampled');
-            
-            A1 = sys.A(zbar(1),zbar(2),zbar(3));
-            B1 = sys.B(zbar(1),zbar(2),zbar(3));
-            C1 = sys.C(zbar(1),zbar(2),zbar(3));
-            D1 = sys.D(zbar(1),zbar(2),zbar(3));
-            
-            p1 = sys.p(t,zbar(1),zbar(2),zbar(3));
-            q1 = sys.q(t,zbar(1),zbar(2),zbar(3));
-            
-            
-            sys.computeLinearization();
-            
-            
-            A2 = sys.A(zbar(1),zbar(2),zbar(3));
-            B2 = sys.B(zbar(1),zbar(2),zbar(3));
-            C2 = sys.C(zbar(1),zbar(2),zbar(3));
-            D2 = sys.D(zbar(1),zbar(2),zbar(3));
-            
-            p2 = sys.p(t,zbar(1),zbar(2),zbar(3));
-            q2 = sys.q(t,zbar(1),zbar(2),zbar(3));
-            
-            A1
-            B1
-            C1
-            D1
-            p1
-            q1
-            A1-A2
-            B1-B2
-            C1-C2
-            D1-D2
-            p1-p2
-            q1-q2
-            
-            
-            
-            sys = CtSystem(...
-                'StateEquation', @(t,x,u) t+2*x+3*u,...
-                'OutputEquation',@(t,x) 4*t+5*x,...
-                'nx',1,'nu',1,'ny',1 ...
-                );
-            
-            
-            t    = 10*randn(1);
-            zbar = 10*randn(3,1);
-            
-            sys.computeLinearization('Sampled');
-            
-            A1 = sys.A(zbar(1),zbar(2),zbar(3));
-            B1 = sys.B(zbar(1),zbar(2),zbar(3));
-            C1 = sys.C(zbar(1),zbar(2));
-            
-            p1 = sys.p(t,zbar(1),zbar(2),zbar(3));
-            q1 = sys.q(t,zbar(1),zbar(2));
-            
-            
-            sys.computeLinearization();
-            
-            
-            A2 = sys.A(zbar(1),zbar(2),zbar(3));
-            B2 = sys.B(zbar(1),zbar(2),zbar(3));
-            C2 = sys.C(zbar(1),zbar(2));
-            
-            p2 = sys.p(t,zbar(1),zbar(2),zbar(3));
-            q2 = sys.q(t,zbar(1),zbar(2));
-            
-            A1
-            B1
-            C1
-            p1
-            q1
-            A1-A2
-            B1-B2
-            C1-C2
-            p1-p2
-            q1-q2
-            
-        end
-    end
+   end
 end

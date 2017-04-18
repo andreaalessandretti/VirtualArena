@@ -28,7 +28,7 @@ classdef RemoteSystem < DtSystem & InitDeinitObject
             
             obj = obj@DtSystem(varargin{:});
             
-            %% Retrive parameters for superclass GeneralSystem
+            %% Retrive parameters for superclass DynamicalSystem
             
             parameterPointer = 1;
             

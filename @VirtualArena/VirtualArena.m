@@ -351,11 +351,11 @@ classdef VirtualArena < handle
                 profile on
             end
             
-             
-            while not( obj.stoppingCriteria(timeInfo,obj.systemsList)  || obj.stoppingForced )
-               
-                
             
+            while not( obj.stoppingCriteria(timeInfo,obj.systemsList)  || obj.stoppingForced )
+                
+                
+                
                 
                 %% Compute time
                 if not(obj.discretizationStep==1) %TODO: remove this madness
@@ -375,11 +375,11 @@ classdef VirtualArena < handle
                         xToController = obj.systemsList{ia}.stateObserver.h(timeInfo,xObs);
                         x             = obj.systemsList{ia}.x;
                         
-                    elseif not(isempty(obj.systemsList{ia}.h)) % Output feedback
-                        
-                        x             = obj.systemsList{ia}.x;
-                        xToController = obj.systemsList{ia}.h(timeInfo,x);
-                        z             = xToController;
+                        %elseif not(isempty(obj.systemsList{ia}.h)) % Output feedback
+                        %
+                        %    x             = obj.systemsList{ia}.x;
+                        %    xToController = obj.systemsList{ia}.h(timeInfo,x);
+                        %    z             = xToController;
                         
                     else % State feedback
                         
@@ -387,7 +387,7 @@ classdef VirtualArena < handle
                         xToController = x;
                         
                     end
-                    
+                    z = obj.systemsList{ia}.h(timeInfo,x);
                     %% Classic vs Network control
                     if not(isempty(obj.sensorsNetwork))
                         
@@ -415,6 +415,8 @@ classdef VirtualArena < handle
                         
                         nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:}),xc,obj.discretizationStep);
                         
+                        nextXc = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
+                        
                         obj.systemsList{ia}.controller.x = nextXc;
                         
                         u = uSysCon(1:obj.systemsList{ia}.nu);
@@ -427,9 +429,11 @@ classdef VirtualArena < handle
                         
                         nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:});
                         
+                        nextXc = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
+                        
                         obj.systemsList{ia}.controller.x = nextXc;
                         
-                        u = uSysCon(1:obj.systemsList{ia}.nu); 
+                        u = uSysCon(1:obj.systemsList{ia}.nu);
                         
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
                         
@@ -469,9 +473,12 @@ classdef VirtualArena < handle
                         
                         nextX = obj.integrator.integrate( @(x)obj.systemsList{ia}.f(timeInfo,x,parameterF{:}),x,obj.discretizationStep);
                         
+                        nextX = obj.systemsList{ia}.updateState(timeInfo,nextX,parameterF{:});
+                        
                     elseif isa(obj.systemsList{ia},'DtSystem')
                         
                         nextX = obj.systemsList{ia}.f(timeInfo,x,parameterF{:});
+                        nextX = obj.systemsList{ia}.updateState(timeInfo,nextX,parameterF{:});
                         
                     else
                         error(getMessage('VirtualArena:UnknownSystemType'));
@@ -482,7 +489,7 @@ classdef VirtualArena < handle
                         end
                     end
                     
-                    if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
                         [z,xObsNext] = obj.manageObserver(timeInfo,netReadings,ia,x,u,nextX);
                         
@@ -491,9 +498,12 @@ classdef VirtualArena < handle
                     obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z,netReadings,uSysCon);
                     
                     nextXs{ia} = nextX;
+<<<<<<< HEAD
 
+=======
+>>>>>>> InlineClasses
                     
-                    if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
                         xObsNexts{ia} = xObsNext;
                     end
@@ -501,6 +511,7 @@ classdef VirtualArena < handle
                 end
                 
                 %% Update state objects
+<<<<<<< HEAD
 
 for ia = 1:length(obj.systemsList) % Main loop for a single system
 obj.systemsList{ia}.x = nextXs{ia};
@@ -510,6 +521,17 @@ if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
 obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
 end
 end
+=======
+                
+                for ia = 1:length(obj.systemsList) % Main loop for a single system
+                    obj.systemsList{ia}.x = nextXs{ia};
+                    
+                    if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
+                        
+                        obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
+                    end
+                end
+>>>>>>> InlineClasses
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
                     

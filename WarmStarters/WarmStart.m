@@ -1,6 +1,5 @@
 classdef WarmStart < handle
-    %%WarmStart specifies  what to log during the simulation.
-    %
+    %%WarmStart
     
     % This file is part of VirtualArena.
     %

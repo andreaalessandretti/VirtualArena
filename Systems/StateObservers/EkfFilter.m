@@ -3,22 +3,16 @@ classdef EkfFilter < DtSystem & StateObserver
     %
     % filter = EkfFiler(sys, 'Property1',PropertyValue1,'Property2',PropertyValue2,...)
     %
-    % where sys is the CtSystem used to design the filter.
+    % where sys is the DtSystem used to design the filter.
     %
     % Properties
     %
     % InitialStateEstimate
-    %
     % InitialCovarianceMatrix
     % StateNoiseMatrix
     % OutputNoiseMatrix
     %
-    %      obs = EkfFilter(dtVehicleModel,...
-    %        'StateNoiseMatrix'  , dt*Qobs,...
-    %        'OutputNoiseMatrix' , (1/dt)*Robs,...
-    %        'InitialCondition' , [2*ones(3,1);
-    %                               10*reshape(eye(3),9,1)]);
-    % demo: exStateObserver.m
+    % demo: examples/ex02runme_UnicycleWithEKF.m
     %
     %
     
@@ -65,14 +59,17 @@ classdef EkfFilter < DtSystem & StateObserver
         
         inputDependentOutput = 0;
         
-        % To be changed for special errors, e.g., error between angles
-        innovationFnc = @(t,z,y)z-y;
         
-        saturateUpdate = 0; % sat(K*innovation, -saturateUpdate,saturateUpdate)
+        saturateUpdate = 0;
     end
     
     
     methods
+        
+        % To be changed for special errors, e.g., error between angles
+        function inn = innovationFnc(obj,t,z,y)
+            inn = z-y;
+        end
         
         function obj = EkfFilter(sys,varargin)
             
@@ -83,15 +80,12 @@ classdef EkfFilter < DtSystem & StateObserver
             obj = obj@DtSystem(...
                 'nx',sys.nx+sys.nx^2,...
                 'nu',sys.ny,...
-                'ny',sys.nx,...
-                'OutputEquation',@(t,xP)xP(1:sys.nx),varargin{:});
+                'ny',sys.nx,varargin{:});
             
             obj.system = sys;
-            obj.f      = @(t,xP,StUz)obj.prediction(t,StUz(1:sys.nu),xP);
             
-            if isempty(obj.system.A)
-                disp('Warning: Linearization not found, computing linearization - ');
-                obj.system.computeLinearization();
+            if not(isa(obj.system,'DiscretizedSystem'))
+                disp('Only ''DiscretizedSystem'' supported.');
             end
             
             parameterPointer = 1;
@@ -116,12 +110,6 @@ classdef EkfFilter < DtSystem & StateObserver
                             
                             parameterPointer = parameterPointer+2;
                             
-                        case 'InnovationFnc'
-                            
-                            obj.innovationFnc = varargin{parameterPointer+1};
-                            
-                            parameterPointer = parameterPointer+2;
-                            
                         otherwise
                             
                             parameterPointer = parameterPointer+1;
@@ -136,27 +124,50 @@ classdef EkfFilter < DtSystem & StateObserver
                 
             end
             
-            if nargin(sys.h) == 3 % The output is input dependent
-                obj.inputDependentOutput = 1;
+            %% Check if the output is input dependent
+            
+            
+            t = sym('t',[1,1]);
+            
+            x = sym('x',[sys.nx,1]);
+            
+            u = sym('u',[sys.nu,1]);
+            
+            
+            if isempty(which('assume'))
+                u = sym(u,'real');
+                x = sym(x,'real');
+                t    = sym(t,'real');
+            else
+                assume(u,'real');
+                assume(x,'real');
+                assume(t,'real');
             end
+            
+            %if(sum(sum(sys.D(t,x,u) == 0)) == sys.nu*sys.ny)
+                obj.inputDependentOutput = 1;
+            %end
+            
             obj.lastInnovation = zeros(sys.ny,1);
             
             
         end
         
+        function xDot = f(obj,t,xP,StUz)
+            xDot = obj.prediction(t,StUz(1:obj.system.nu),xP);
+        end
         
+        function y = h(obj,t,xP)
+            y = xP(1:obj.system.nx);
+        end
         function  xNext = prediction(obj,t,u,xP)
             
-          
+            
             sysnx = obj.system.nx;
             xHat  = xP(1:sysnx);
-            h = obj.system.h;
+ 
             
-            if nargin(h)==3
-                y = h(t,xHat,u);
-            else
-                y = h(t,xHat);
-            end
+            y = obj.system.h(t,xHat,u);
             
             
             obj.lastY          = y;
@@ -176,7 +187,7 @@ classdef EkfFilter < DtSystem & StateObserver
             xNext(1:sysnx)               = xHat;
             xNext(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
             
-              if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0 
+            if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0
                 aa=1;
             end
             
@@ -251,7 +262,7 @@ classdef EkfFilter < DtSystem & StateObserver
                 newXObs(sysnx+1:sysnx+sysnx^2) = reshape(P,sysnx^2,1);
             end
             
-            if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0 
+            if norm(double( isnan(xHat) ))>0 || norm(double( isnan(P) ))>0
                 aa=1;
             end
         end

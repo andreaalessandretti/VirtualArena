@@ -64,7 +64,7 @@ classdef RangeFinder < Sensor
             
         end
         
-        function ret = sense(obj,agentId,agentsList,detectableAgents)
+        function ret = sense(obj,t,agentId,agentsList,detectableAgents)
             
             agent = agentsList{agentId};
             indexesDetectable = 1:length(detectableAgents);
@@ -84,7 +84,7 @@ classdef RangeFinder < Sensor
                 U = Inf;
                 for j = indexesDetectable
                     agentj = agentsList{j};
-                    set = agentj.occupancy;
+                    set = agentj.volume;
                     if not(isempty(set))
                         setShifted = set + agentj.x(1:2);
                         [Lj,Uj] = findClosestIntersectionWithAPolytope(agent.x(1:2),d,setShifted.A,setShifted.b);
