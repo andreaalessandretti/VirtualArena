@@ -499,7 +499,10 @@ classdef VirtualArena < handle
                     
                     nextXs{ia} = nextX;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> InlineClasses
 =======
 >>>>>>> InlineClasses
                     
@@ -512,6 +515,7 @@ classdef VirtualArena < handle
                 
                 %% Update state objects
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 for ia = 1:length(obj.systemsList) % Main loop for a single system
 obj.systemsList{ia}.x = nextXs{ia};
@@ -522,6 +526,8 @@ obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
 end
 end
 =======
+=======
+>>>>>>> InlineClasses
                 
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
                     obj.systemsList{ia}.x = nextXs{ia};
@@ -531,6 +537,9 @@ end
                         obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
                     end
                 end
+<<<<<<< HEAD
+>>>>>>> InlineClasses
+=======
 >>>>>>> InlineClasses
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0

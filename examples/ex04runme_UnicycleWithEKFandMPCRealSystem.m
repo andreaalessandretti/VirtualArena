@@ -13,7 +13,11 @@ sys = ICtSystem(...
     u(1)*sin(x(3));
     u(2)],...
 <<<<<<< HEAD
+<<<<<<< HEAD
     'OutputEquation', @(t,x) x(1:2), 'ny', 2,... %% <<< difference from ex01 ( e.g., GPS )
+=======
+    'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
+>>>>>>> InlineClasses
 =======
     'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
 >>>>>>> InlineClasses
@@ -30,6 +34,7 @@ realSystem = ex04RemoteUnicycle(...
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 realSystem.stateObserver = EkfFilter(DtSystem(sys,dt),... %% <<< the filter is applied to the real system  
                  'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...
                  'OutputNoiseMatrix' , diag(([0.1,0.1])/3)^2,...
@@ -37,6 +42,9 @@ realSystem.stateObserver = EkfFilter(DtSystem(sys,dt),... %% <<< the filter is a
                                         10*reshape(eye(3),9,1)]);  %P(0)
   
 mpcOp = CtMpcOp( ...
+=======
+mpcOp = ICtMpcOp( ...
+>>>>>>> InlineClasses
 =======
 mpcOp = ICtMpcOp( ...
 >>>>>>> InlineClasses
@@ -50,7 +58,10 @@ mpcOp = ICtMpcOp( ...
 dtMpcOp = DiscretizedMpcOp(mpcOp,dt);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> InlineClasses
 dtSys   = DiscretizedSystem(sys,dt);
 
 >>>>>>> InlineClasses

@@ -26,6 +26,9 @@ va = VirtualArena(sys,...
 
 <<<<<<< HEAD
 log = va.run();
+<<<<<<< HEAD
 =======
 log = va.run();
+>>>>>>> InlineClasses
+=======
 >>>>>>> InlineClasses

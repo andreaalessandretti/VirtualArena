@@ -2,7 +2,11 @@
 <div align="center"><img src=".\logo.jpg" width="200 align="middle"> </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 VirtualArena is Object-Oriented Matlab toolkit for Control Design and System Simulation.
+=======
+VirtualArena is Object-Oriented Matlab Toolkit for Control Design and System Simulation.
+>>>>>>> InlineClasses
 =======
 VirtualArena is Object-Oriented Matlab Toolkit for Control Design and System Simulation.
 >>>>>>> InlineClasses

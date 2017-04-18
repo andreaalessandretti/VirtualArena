@@ -10,7 +10,10 @@ function readings = senseNetworkToAgent(obj,timeInfo,systemId)
                 LsensorH = obj.sensorsNetwork{(i-1)*2+2};
                 Lsensor = LsensorH(timeInfo);
 <<<<<<< HEAD
+<<<<<<< HEAD
                 
+=======
+>>>>>>> InlineClasses
 =======
 >>>>>>> InlineClasses
                 detectableAgents  = Lsensor(systemId,:);

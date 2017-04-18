@@ -23,6 +23,7 @@ desiredPosition      = [0;0];
 %% <<< BEGIN difference from ex01   
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 realSystem = CtSystem(...
     'StateEquation', @(t,x,u) [
     u(1)*cos(x(3));
@@ -31,6 +32,9 @@ realSystem = CtSystem(...
     'OutputEquation', @(t,x) x(1:2), 'ny', 2,...
     'nx',3,'nu',2 ...
 );
+=======
+dtSys   = DiscretizedSystem(sys,dt);
+>>>>>>> InlineClasses
 =======
 dtSys   = DiscretizedSystem(sys,dt);
 >>>>>>> InlineClasses

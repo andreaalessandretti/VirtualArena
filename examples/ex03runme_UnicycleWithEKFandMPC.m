@@ -11,7 +11,11 @@ sys = ICtSystem(...
     u(1)*sin(x(3));
     u(2)],...
 <<<<<<< HEAD
+<<<<<<< HEAD
     'OutputEquation', @(t,x) x(1:2), 'ny', 2,... %% <<< difference from ex01 ( e.g., GPS )
+=======
+    'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
+>>>>>>> InlineClasses
 =======
     'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
 >>>>>>> InlineClasses
@@ -52,8 +56,11 @@ mpcOp = ICtMpcOp( ...
 dtMpcOp = DiscretizedMpcOp(mpcOp,dt);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 realSystem.controller = MpcController(...
 =======
+=======
+>>>>>>> InlineClasses
 dtSys   = DiscretizedSystem(sys,dt);
 
 dtSys.controller = MpcController(...

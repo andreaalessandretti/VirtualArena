@@ -119,12 +119,18 @@ classdef MpcOpTrackingECC13 < CtMpcOp
                 obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
                 
 <<<<<<< HEAD
+<<<<<<< HEAD
                 obj.stageCost    = @obj.myStageCost;
                 obj.terminalCost = @obj.myTerminalCost;
             
         end
         
         function cost = myStageCost(obj,t,x,u,varargin)
+=======
+        end
+        
+        function cost = stageCost(obj,t,x,u,varargin)
+>>>>>>> InlineClasses
 =======
         end
         
@@ -138,7 +144,11 @@ classdef MpcOpTrackingECC13 < CtMpcOp
         end
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         function cost = myTerminalCost(obj,t,x,varargin)
+=======
+        function cost = terminalCost(obj,t,x,varargin)
+>>>>>>> InlineClasses
 =======
         function cost = terminalCost(obj,t,x,varargin)
 >>>>>>> InlineClasses
