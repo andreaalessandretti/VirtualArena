@@ -5,7 +5,7 @@ N = 5;
 for i = 1:N
     
     v{i}                  = ICtSystem('StateEquation',@(t,x,u,varargin)u,'nx',1,'nu',1);    
-    v{i}.controller       = ex5BasicConsensusController();
+    v{i}.controller       = ex05BasicConsensusController();
     v{i}.initialCondition = i;
     
 end
