@@ -498,13 +498,7 @@ classdef VirtualArena < handle
                     obj.appendLogs(obj.systemsList{ia},u,ia,i,timeInfo,z,netReadings,uSysCon);
                     
                     nextXs{ia} = nextX;
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> InlineClasses
-=======
->>>>>>> InlineClasses
                     
                     if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
@@ -514,20 +508,7 @@ classdef VirtualArena < handle
                 end
                 
                 %% Update state objects
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-for ia = 1:length(obj.systemsList) % Main loop for a single system
-obj.systemsList{ia}.x = nextXs{ia};
-
-if isa(obj.systemsList{ia}.stateObserver,'GeneralSystem')
-
-obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
-end
-end
-=======
-=======
->>>>>>> InlineClasses
                 
                 for ia = 1:length(obj.systemsList) % Main loop for a single system
                     obj.systemsList{ia}.x = nextXs{ia};
@@ -537,10 +518,7 @@ end
                         obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
                     end
                 end
-<<<<<<< HEAD
->>>>>>> InlineClasses
-=======
->>>>>>> InlineClasses
+
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
                     

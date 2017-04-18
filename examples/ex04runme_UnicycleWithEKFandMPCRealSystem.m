@@ -12,15 +12,7 @@ sys = ICtSystem(...
     u(1)*cos(x(3));
     u(1)*sin(x(3));
     u(2)],...
-<<<<<<< HEAD
-<<<<<<< HEAD
-    'OutputEquation', @(t,x) x(1:2), 'ny', 2,... %% <<< difference from ex01 ( e.g., GPS )
-=======
     'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
->>>>>>> InlineClasses
-=======
-    'OutputEquation', @(t,x,u) x(1:2),'ny',2, ... % GPS
->>>>>>> InlineClasses
     'nx',3,'nu',2 ...
 );
 
@@ -32,22 +24,7 @@ realSystem = ex04RemoteUnicycle(...
             'LocalIp' ,'127.0.0.1','LocalPort',20002);
 %% <<< END difference from ex03 
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-realSystem.stateObserver = EkfFilter(DtSystem(sys,dt),... %% <<< the filter is applied to the real system  
-                 'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...
-                 'OutputNoiseMatrix' , diag(([0.1,0.1])/3)^2,...
-                 'InitialCondition'  , [[1;-1;0];                  %xHat(0)
-                                        10*reshape(eye(3),9,1)]);  %P(0)
-  
-mpcOp = CtMpcOp( ...
-=======
 mpcOp = ICtMpcOp( ...
->>>>>>> InlineClasses
-=======
-mpcOp = ICtMpcOp( ...
->>>>>>> InlineClasses
     'System'               , sys,...
     'HorizonLength'        , 0.5,...
     'StageConstraints'     , BoxSet( -[1;pi/4],4:5,[1;pi/4],4:5,5),... % on the variable z=[x;u];
@@ -57,14 +34,8 @@ mpcOp = ICtMpcOp( ...
 
 dtMpcOp = DiscretizedMpcOp(mpcOp,dt);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> InlineClasses
 dtSys   = DiscretizedSystem(sys,dt);
 
->>>>>>> InlineClasses
 realSystem.controller = MpcController(...  %% <<< the controller is applied to the real system 
     'MpcOp'       , dtMpcOp ,...
     'MpcOpSolver' , FminconMpcOpSolver('MpcOp', dtMpcOp) ...

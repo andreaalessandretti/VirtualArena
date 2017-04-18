@@ -24,11 +24,4 @@ va = VirtualArena(sys,...
     'StepPlotFunction'  , @ex01StepPlotFunction ...
     );
 
-<<<<<<< HEAD
 log = va.run();
-<<<<<<< HEAD
-=======
-log = va.run();
->>>>>>> InlineClasses
-=======
->>>>>>> InlineClasses

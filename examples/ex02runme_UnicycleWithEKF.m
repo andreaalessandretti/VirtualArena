@@ -22,24 +22,10 @@ desiredPosition      = [0;0];
 
 %% <<< BEGIN difference from ex01   
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-realSystem = CtSystem(...
-    'StateEquation', @(t,x,u) [
-    u(1)*cos(x(3));
-    u(1)*sin(x(3));
-    u(2)] + [0.1*randn(2,1);randn(1,1)*pi/8],...
-    'OutputEquation', @(t,x) x(1:2), 'ny', 2,...
-    'nx',3,'nu',2 ...
-);
-=======
-dtSys   = DiscretizedSystem(sys,dt);
->>>>>>> InlineClasses
-=======
-dtSys   = DiscretizedSystem(sys,dt);
->>>>>>> InlineClasses
 
-realSystem.stateObserver = EkfFilter(DtSystem(sys,dt),...
+dtSys   = DiscretizedSystem(sys,dt);
+
+sys.stateObserver = EkfFilter(dtSys,...
                  'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...
                  'OutputNoiseMatrix' , diag(([0.1,0.1])/3)^2,...
                  'InitialCondition'  , repmat({[[1;-1;0];                  %xHat(0)
