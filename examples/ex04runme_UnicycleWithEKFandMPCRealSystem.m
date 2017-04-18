@@ -2,7 +2,7 @@
 %Before running this file run in the terminal the python system:
 %python ex04RealSystem.py 
 
-clc;close all;clear all;
+clc; close all; clear all;
 
 dt = 0.1;
 
@@ -16,13 +16,13 @@ sys = ICtSystem(...
     'nx',3,'nu',2 ...
 );
 
-desiredPosition      = [0;0];
-
 %% <<< BEGIN difference from ex03                                  
 realSystem = ex04RemoteUnicycle(...
             'RemoteIp','127.0.0.1','RemotePort',20001,...
             'LocalIp' ,'127.0.0.1','LocalPort',20002);
 %% <<< END difference from ex03 
+
+desiredPosition = [0;0];
 
 mpcOp = ICtMpcOp( ...
     'System'               , sys,...
@@ -38,12 +38,18 @@ dtSys   = DiscretizedSystem(sys,dt);
 
 realSystem.controller = MpcController(...  %% <<< the controller is applied to the real system 
     'MpcOp'       , dtMpcOp ,...
-    'MpcOpSolver' , FminconMpcOpSolver('MpcOp', dtMpcOp) ...
+    'MpcOpSolver' , FminconMpcOpSolver('MpcOp', dtMpcOp,'UseSymbolicEvaluation',1) ...
     );
 realSystem.controller.mpcOpSolver.symbolizeProblem(dtMpcOp);
 
+realSystem.stateObserver = EkfFilter(dtSys,... %% <<< the filter is applied to the real system  
+                 'StateNoiseMatrix'  , diag(([0.1,0.1,pi/4])/3)^2,...
+                 'OutputNoiseMatrix' , diag(([0.1,0.1])/3)^2,...
+                 'InitialCondition'  , [[1;-1;0];                  %xHat(0)
+                                        10*reshape(eye(3),9,1)]);  %P(0)
+  
 va = VirtualArena(realSystem,...%% <<< difference from ex03
-    'StoppingCriteria'  , @(t,sysList)norm(sysList{1}.stateObserver.x(1:2)-desiredPosition)<0.01,...
+    'StoppingCriteria'  , @(t,sysList)norm(sysList{1}.stateObserver.x(1:2)-desiredPosition)<0.1,...
     'DiscretizationStep', dt,...
     'ExtraLogs'         , {MeasurementsLog(sys.ny)},... %% <<< difference from ex03
     'StepPlotFunction'  , @ex04StepPlotFunction ...
@@ -51,5 +57,8 @@ va = VirtualArena(realSystem,...%% <<< difference from ex03
 
 log = va.run();
 
+log{1}
+
+hold on 
 
 plot(log{1}.measurements(1,:),log{1}.measurements(2,:),'o')

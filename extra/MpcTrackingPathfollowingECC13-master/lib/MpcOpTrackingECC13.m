@@ -117,7 +117,8 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
              parss = {varargin{:},'Vehicle',obj.system};
                 obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
-                  end
+                
+        end
         
         function cost = stageCost(obj,t,x,u,varargin)
             
@@ -126,9 +127,9 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             cost = e'*obj.Q*e + (u-uAux)'*obj.O*(u-uAux);
             
         end
-
+        
         function cost = terminalCost(obj,t,x,varargin)
-
+            
             e = obj.auxiliaryLaw.computeError(t,x);
             K = obj.auxiliaryLaw.Ke;
             lyap_const = [2,0.5,0.5,min(real(eigs(K)))];
