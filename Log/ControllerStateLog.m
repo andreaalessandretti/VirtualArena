@@ -44,7 +44,7 @@ classdef ControllerStateLog < Log
         end
         
         function v =  getVectorToLog(obj,t,agent,u,z,varargin)
-            v = sys.controller.x;
+            v = agent.controller.x;
         end
         
     end

@@ -343,12 +343,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 error(getMessage('AcadoMpcOpSolver:SizeMismatch'));
             end
             
-            if not(isempty(obj.mpcOp.terminalCost))
-                msym = obj.mpcOp.terminalCost(tsym,x);
-            else
-                msym=[];
-            end
-            %--------------------------------------------------------------
+            msym = obj.mpcOp.terminalCost(tsym,x);
             
             
             if ct
@@ -568,10 +563,7 @@ classdef AcadoMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 tsym = sym('t','real');
                 
-                
-                
-                
-                if strcmp(str,'') && con.nx == nx+ nu
+                if strcmp(str,'') && con.nx == nx + nu
                     
                     fx = con.f([x;u]);
                     

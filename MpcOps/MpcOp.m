@@ -4,11 +4,11 @@
 % optimization problem consists in finding the optimal control trajectory
 % u^*([0,T]), defined in the interval [0,T], that solves
 %
-% J_T^*(t0,x0) = min_u([t0,t0+T])   J_T(x0,t0,u([t0,t0+T]))
+% J_T^*(t0,x0) = min_u([t0,t0+T])   J_T(t0,x0,u([t0,t0+T]))
 % s.t. dot{x}=f(t,x,u) ( or x+ =f(t,x,u) )
 %      x(t0) = x0
+%      (x(tau)u(tau)) \in X(t) x  U(t) for tau in [t0,t0+T]
 %      x(t0+T) \in X_a(t)
-%      x(tau) \in X(t) and u(tau)\in U(t) for tau in [t0,t0+T]
 %
 % with
 %
@@ -26,25 +26,15 @@
 %
 % 'System'              : CtSytem (or DtSytem)
 % 'HorizonLength'       : positive real (or integer)
-% 'StageConstraints'    : some set on the [x;u] space (child of GeneralSet)
+% 'StageConstraints'    : some set on the [x;u] space (subclass of GeneralSet)
 %                         or [t;x;u] space
 %                         e.g. GeneralSet, PolytopicSet, BoxSet
-% 'TerminalConstraints' : some set on the [x] space (child of GeneralSet)
+% 'TerminalConstraints' : some set on the [x] space (subclass of GeneralSet)
 %                         or [t;x] space
 %                       : e.g. GeneralSet, PolytopicSet, BoxSet
-% 'StageCost'           : function handle @(t,x,u) stage cost l(t,x,u)
-% 'TerminalCost'        : function handle @(t,x) terminal cost m(t,x)
-%
-%
-% e.g.
-% mpcOp = CtMpcOp( ...
-%     'System'              , v1,...
-%     'HorizonLength'       , 0.5,...
-%     'StageConstraints'    , BoxSet( -[1;pi/4],4:5,[1;pi/4],4:5,5),... % on the variable z=[x;u];
-%     'StageCost'           , @(t,x,u) x(1:2)'*x(1:2) + u'*u,...
-%     'TerminalCost'        , @(t,x) 10*x(1:2)'*x(1:2),...
-%     'TerminalConstraints' , BoxSet( -100*ones(3,1),1:3,100*ones(3,1),1:3,3)... % on the variable x(T);
-%     );
+% Abstract Methods:
+% l = stageCost(obj,t,x,u,varargin)
+% m = terminalCost(obj,t,x,varargin)
 %
 % see also GeneralSet, PolytopicSet, BoxSet, CtMpcOp, DtMpcOp
 
@@ -247,9 +237,9 @@ classdef MpcOp < handle
             %                error('MpcOp:RequiredParametersMissing',getMessage('MpcOp:RequiredParametersMissing'))
             %            end
             
-            if isempty(obj.system)
-                error('Parameter ''System'' required.')
-            end
+            %if isempty(obj.system)
+            %    error('Parameter ''System'' required.')
+            %end
             if isempty(obj.horizonLength)
                 error('Parameter ''HorizonLength'' required.')
             end

@@ -130,6 +130,11 @@ classdef DynamicalSystem < handle & InitDeinitObject & LinearizedSystem
    end
     
    methods
+        
+       function newX = updateState(obj,t,x,u,varargin)
+           newX = x;
+       end
+       
         function y =  h(obj,t,x,u)
             y = x;
         end

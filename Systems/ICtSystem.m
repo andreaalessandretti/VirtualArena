@@ -63,7 +63,7 @@ classdef ICtSystem < CtSystem
     
     properties
         StateEquation
-        OutputEquation
+        OutputEquation = @(varargin)varargin{2}; % x
     end
     
     methods

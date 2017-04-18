@@ -118,12 +118,9 @@ classdef MpcOpTrackingECC13 < CtMpcOp
              parss = {varargin{:},'Vehicle',obj.system};
                 obj.auxiliaryLaw = TrackingControllerECC13(parss{:});
                 
-                obj.stageCost    = @(t,x,u)obj.myStageCost(t,x,u);
-                obj.terminalCost = @(t,x)obj.myTerminalCost(t,x);
-            
         end
         
-        function cost = myStageCost(obj,t,x,u)
+        function cost = stageCost(obj,t,x,u,varargin)
             
             e    = obj.auxiliaryLaw.computeError(t,x);
             uAux = obj.auxiliaryLaw.computeInput(t,x);
@@ -131,7 +128,7 @@ classdef MpcOpTrackingECC13 < CtMpcOp
             
         end
         
-        function cost = myTerminalCost(obj,t,x)
+        function cost = terminalCost(obj,t,x,varargin)
             
             e = obj.auxiliaryLaw.computeError(t,x);
             K = obj.auxiliaryLaw.Ke;

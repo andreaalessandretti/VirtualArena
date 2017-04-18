@@ -72,7 +72,7 @@ classdef IDtSystem < DtSystem
     
     properties
         StateEquation
-        OutputEquation
+        OutputEquation = @(varargin)varargin(2); %x
     end
     
     methods

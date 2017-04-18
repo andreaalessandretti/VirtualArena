@@ -1,4 +1,4 @@
-clc;clear all;close all;
+clc; clear all; close all;
 
 N = 5;
 
@@ -17,7 +17,7 @@ A            = zeros(N);
 A(1,4)       = 1;
 A(2:N,1:N-1) = eye(N-1);
 
-s1 = ex5StateSensor();
+s1 = IAgentSensor(@(t,agentId,agent,sensedAgentId,sensedAgent)sensedAgent.x);
 
 Ah = @(t) A;
 

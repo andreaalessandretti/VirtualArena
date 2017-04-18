@@ -1,26 +1,27 @@
 classdef Log < handle
     %%Log specifies  what to log during the simulation.
     %
-    % Objects of class Log are given to VirtualArena to define what data to
-    % log during the simulation.
-    %
     % These objects are used i) once at the beginning of the simulations 
     % and ii) at the end of every simulation step.
     %
-    % You can create an object of this kind as follows:
+    % Abstract method to implement:
     %
-    %   l = Log(name,fun)
+    % vectorToLog = getVectorToLog(t,agent,varargin)
     %
-    %   l = Log(name,fun,par1,val1,par2,val2,...)
+    % that is called as
     %
-    %   where par1, par2, ... are chosen among: 'Initialization', 'Shift'
+    % vectorToLog = getVectorToLog(t,sys)      at initialization time t=0;
+    % vectorToLog = getVectorToLog(t,sys,u,z)  at the generic tiem t
     %
-    % i ) At the beginning of the simulation the stored data is l.fun(t0,sys),
-    %     where sys is the generic simulated system, or the value associated 
-    %     with 'Initialization', if any.
+    % t: time, sys:system, u:input, z: measurement (state or output)
     %
-    % ii) At the end of every simulation step the stored data is 
-    %     l.fun(t,system,u,z), where u is the input of sys.
+    % Costructor:
+    % l = Log(name,par1,val1,par2,val2,...) 
+    % where par1, par2, ... are chosen among: 'Initialization', 'Shift'
+    %
+    % At the beginning of the simulation VA calls getVectorToLog(t,sys),
+    % where sys is the generic simulated system, or the value associated 
+    % with 'Initialization', if any.
     %
     % The parameter 'Shift' can be used to shift the simulation time where
     % the data is stored.
@@ -30,15 +31,8 @@ classdef Log < handle
     %
     % va   = VirtualArena(..., 'ExtraLogs',{l} );
     % ret  = va.run();
-    % data = ret{nInitialCondition}{nAgent}.name;
+    % data = ret{nInitialCondition}{nAgent}.logName;
     %
-    % Log Properties:
-    % 
-    % name            - name of the vectro to log
-    % fun             - function @(agent,u) to compute the value to log
-    % initialization  - facultative initialization value different form 
-    %                   fun(agent), which is the default value.
-    % shift           - simulation step shift
     %
     
     % This file is part of VirtualArena.

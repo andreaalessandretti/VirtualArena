@@ -213,7 +213,7 @@ classdef UnderactuatedVehicle < Vehicle
             %% Build Kinematic Component of the state vector including attitude parametrization
             if(obj.n == 2)
                 
-                fk  = @(t,x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                %fk  = @(t,x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                 nxk = 3;
                 
             elseif(obj.n==3)
@@ -223,12 +223,12 @@ classdef UnderactuatedVehicle < Vehicle
                     case 'Quaternion' % Quaternions
                         
                         nxk = 7;
-                        fk  = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        %fk  = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                         
                     case 'RotationMatrix' % Rotation matrix
                         
                         nxk = 12;
-                        fk  = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        %fk  = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                         
                     otherwise
                         
@@ -238,31 +238,31 @@ classdef UnderactuatedVehicle < Vehicle
                 
             end
             
-            obj.fk   = fk;
+%            obj.fk   = fk;
             
             nuk = obj.nwk + obj.nvk;
             nd  = obj.nwd + obj.nvd;
             
-            %% Compose f (merge kinematic and dynamic)
-            if nd >0
-                
-                ff = @(t,x,u)[fk(t,x,u); obj.fd(t,x,u(1:nuk))];
-                
-                if not(isempty(obj.Gd))
-                    ff = @(t,x,u)ff(t,x,u)+[zeros(nxk,1);obj.Gd*u(nuk+1:nuk+size(obj.Gd,2))];
-                end
-                
-            else
-                
-                ff = @(t,x,u)fk(t,x,u);
-                
-            end
+%             %% Compose f (merge kinematic and dynamic)
+%             if nd >0
+%                 
+%                 ff = @(t,x,u)[fk(t,x,u); obj.fd(t,x,u(1:nuk))];
+%                 
+%                 if not(isempty(obj.Gd))
+%                     ff = @(t,x,u)ff(t,x,u)+[zeros(nxk,1);obj.Gd*u(nuk+1:nuk+size(obj.Gd,2))];
+%                 end
+%                 
+%             else
+%                 
+%                 ff = @(t,x,u)fk(t,x,u);
+%                 
+%             end
             
-            obj.f = @(varargin)UnderactuatedVehicle.dotX(ff,varargin);
+            %obj.f = @(varargin)UnderactuatedVehicle.dotX(ff,varargin);
             
             %% InputTransformation
-            ff      = obj.f;
-            obj.f   = @(t,x,u)ff(t,x,obj.Phi(t,x,u));
+            %ff      = obj.f;
+            %obj.f   = @(t,x,u)ff(t,x,obj.Phi(t,x,u));
             obj.nd  = nd;
             obj.nxk = nxk;
             obj.nx  = obj.nxk + obj.nd;
@@ -275,6 +275,75 @@ classdef UnderactuatedVehicle < Vehicle
             
             
         end
+        
+        function xDot =  f(obj,t,x,u,varargin)
+            
+            
+            %% Build Kinematic Component of the state vector including attitude parametrization
+            if(obj.n == 2)
+                
+                fk  = UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                nxk = 3;
+                
+            elseif(obj.n==3)
+                
+                switch obj.attitudeRepresentation
+                    
+                    case 'Quaternion' % Quaternions
+                        
+                        nxk = 7;
+                        fk  =  UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        
+                    case 'RotationMatrix' % Rotation matrix
+                        
+                        nxk = 12;
+                        fk  = UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
+                        
+                    otherwise
+                        
+                        error('Given AttitudeRepresentation not supported.');
+                        
+                end
+                
+            end
+            
+            
+            nuk = obj.nwk + obj.nvk;
+            nd  = obj.nwd + obj.nvd;
+            
+            %% Compose f (merge kinematic and dynamic)
+            if nd >0
+                
+                ff =[fk; obj.fd(t,x,u(1:nuk))];
+                
+                if not(isempty(obj.Gd))
+                    ff = ff+[zeros(nxk,1);obj.Gd*u(nuk+1:nuk+size(obj.Gd,2))];
+                end
+                
+            else
+                
+                ff = fk;
+                
+            end
+            
+            %f = UnderactuatedVehicle.dotX(ff,varargin);
+            
+            %% InputTransformation
+            f = ff;
+            %f   = ff(t,x,obj.Phi(t,x,u));
+            %obj.nd  = nd;
+            %obj.nxk = nxk;
+            %obj.nx  = obj.nxk + obj.nd;
+            
+            %if isempty(obj.RealNu())
+            %    obj.nu = obj.nwk + obj.nvk + size(obj.Gd,2);
+            %else
+            %    obj.nu = obj.RealNu();
+            %end
+            
+            xDot = f;
+        end
+        
         
         function hP = plot(obj,varargin)
             

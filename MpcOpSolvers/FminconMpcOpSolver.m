@@ -47,7 +47,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 case 0
                     %Number of iterations exceeded options.
                     %MaxIter or number of function evaluations exceeded options.MaxFunEvals.
-                    OK = 0;
+                    OK = 1;
                 case -1
                     %The output function terminated the algorithm.
                     OK = 0;

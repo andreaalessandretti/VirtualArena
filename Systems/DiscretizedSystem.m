@@ -28,6 +28,8 @@ classdef DiscretizedSystem < DtSystem
             
             obj = obj@DtSystem(superClassParameters{:});
             
+            obj.controller       = sys.controller;
+            obj.initialCondition = sys.initialCondition;
             obj.OriginalCtSystem = sys;
             
             obj.Dt = dt;
