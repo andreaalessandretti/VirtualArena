@@ -18,7 +18,9 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
         log
         iLog = 1;
         
-        lastu;
+        lastu = [0;0];
+        lasty;
+        lasty_t;
         
     end
     
@@ -95,18 +97,25 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
         end
         
         
-        function xNext = f(obj,t,x,u)
+        function xNext = f(obj,t,x,u,varargin)
             xNext = zeros(obj.nx,1);
             obj.lastu = u;
         end
         
-        function y = h(obj,t,x,u)
-            srtime = tic;
-            obj.send(obj.lastu);
-            y = obj.recive();
+        function y = h(obj,t,varargin)
+            if isempty(obj.lasty_t) || not(obj.lasty_t==t)
+                srtime = tic;
+                obj.send(obj.lastu);
+                y = obj.recive();
+
+                obj.appendVectorToLog(toc(srtime),'travelTime',obj.iLog);
+                obj.iLog = obj.iLog +1;
+                obj.lasty_t=t;
+                obj.lasty = y;
+            else
+                y = obj.lasty;
+            end
             
-            obj.appendVectorToLog(toc(srtime),'travelTime',obj.iLog);
-            obj.iLog = obj.iLog +1;
         end
         
         function closeConnection(obj)
@@ -150,13 +159,6 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
             
         end
         
-        function init(obj)
-            
-            obj.udpObj = udp(obj.remoteIp, obj.remotePort, 'LocalPort', obj.localPort,'timeout',30,'OutputBufferSize',2048,'InputBufferSize',2048);
-            fopen(obj.udpObj);
-            
-        end
-        
         function appendVectorToLog(obj,v,fildname,i)
             
             if i>=size(obj.log.(fildname),2) % Allocate memory
@@ -171,12 +173,13 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
         
         function initSimulation(obj)
             
+            initSimulation@DtSystem(obj);
             
             obj.udpObj = udp(obj.remoteIp, obj.remotePort, 'LocalPort', obj.localPort,'timeout',30,'OutputBufferSize',2048,'InputBufferSize',2048);
             
-            fopen(obj.udpObj)
+            fopen(obj.udpObj);
             
-            disp('Connection open')
+            disp('Connection open');
             
         end
         

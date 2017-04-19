@@ -31,6 +31,7 @@ classdef DiscretizedSystem < DtSystem
             obj.controller       = sys.controller;
             obj.initialCondition = sys.initialCondition;
             obj.OriginalCtSystem = sys;
+            obj.stateObserver    = sys.stateObserver;
             
             obj.Dt = dt;
             

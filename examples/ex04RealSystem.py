@@ -10,7 +10,7 @@ sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP
 
 #Initial condition
-x = np.matrix("1;1;0");
+x = np.matrix("10;10;0");
 
 sock.bind((IP, MY_PORT))
 
@@ -44,7 +44,7 @@ while True:
 
     xDot = np.vstack((R*v,u[1]))
 
-    x = x + 0.1*xDot
+    x = x + 0.2*xDot
     
     print 'x :'
 

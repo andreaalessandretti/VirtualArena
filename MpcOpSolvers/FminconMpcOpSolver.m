@@ -280,7 +280,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         function symbolizeProblem(obj,dtMpcOp)
             
-            
             if obj.useSymbolicEvaluation
                 
                 sprintf('Computing symbolic evaluation of the cost...');

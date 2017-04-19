@@ -1,24 +1,26 @@
 clc; close all; clear all;
 
-dt = 0.1;
+dt = 0.05;
 
 %% Unicycle Model
 sys = ICtSystem(...
-    'StateEquation', @(t,x,u) [
+    'StateEquation', @(t,x,u,varargin) [
     u(1)*cos(x(3));
     u(1)*sin(x(3));
     u(2)],...
     'nx',3,'nu',2 ...
 );
 
-desiredPosition      = [0;0];
+sys.initialCondition = {[15;15;-pi/2],-[15;15;-pi/2],[15;-15;pi],[-15;15;-pi/2]};
 
-sys.controller       = UniGoToPoint(desiredPosition);
-
-sys.initialCondition = [1;1;0];
+sys.controller = TrackingController_ECC13(...
+    @(t) 10*[sin(0.1*t); cos(0.1*t)] , ... % c
+    @(t)    [cos(0.1*t);-sin(0.1*t)] , ... % cDot
+    eye(2)                           , ... % K
+    [1;0] );
 
 va = VirtualArena(sys,...
-    'StoppingCriteria'  , @(t,sysList)norm(sysList{1}.x(1:2)-desiredPosition)<0.1,...
+    'StoppingCriteria'  , @(t,sysList)t>70,...
     'DiscretizationStep', dt,...
     'PlottingStep'      , 1, ...
     'StepPlotFunction'  , @ex01StepPlotFunction ...

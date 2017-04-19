@@ -355,8 +355,6 @@ classdef VirtualArena < handle
             while not( obj.stoppingCriteria(timeInfo,obj.systemsList)  || obj.stoppingForced )
                 
                 
-                
-                
                 %% Compute time
                 if not(obj.discretizationStep==1) %TODO: remove this madness
                     timeInfo = obj.initialTime + (i-1)*obj.discretizationStep;
