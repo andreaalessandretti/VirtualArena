@@ -7,7 +7,7 @@ $
 \omega &  0 
 \end{pmatrix}\nonumber.
 $
-The kinematic model of the body frame satisfies
+The kinematic model of the body frame satisfieddds
 $$
 \dot{p}(t) &= R(t)v(t),& \dot{R}(t) = R(t)\Omega(\omega(t)).
 $$
