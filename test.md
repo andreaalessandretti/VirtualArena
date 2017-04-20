@@ -10,7 +10,7 @@ $
 The kinematic model of the body frame satisfies
 $$
 \dot{p}(t) &= R(t)v(t),& \dot{R}(t) = R(t)\Omega(\omega(t)).
-$
+$$
 The underactuation of the UAV is captured by choosing the control input 
 \begin{align}
 u(t) := \begin{pmatrix} v_{1}(t)& \omega(t)\end{pmatrix}' \label{eq:constraints},
@@ -19,4 +19,4 @@ u(t) := \begin{pmatrix} v_{1}(t)& \omega(t)\end{pmatrix}' \label{eq:constraints}
 with $
 v(t)~=~\begin{pmatrix}~v_{1}(t)& 0\end{pmatrix}'~\in~\mathbb{R}^2, \nonumber
 $
-that only consists of forward and angular velocity. The planar model \eqref{eq:constrained_model} captures the under-actuated nature of a wide range of vehicles and is often used for the control of a set of UAV moving in at 2-D plane, i.e., relying on an on-board inner controller for altitude stabilization. 
+that only consists of forward and angular velocity. The planar model \eqref{eq:constraints} captures the under-actuated nature of a wide range of vehicles and is often used for the control of a set of UAV moving in at 2-D plane, i.e., relying on an on-board inner controller for altitude stabilization. 
