@@ -107,7 +107,9 @@ classdef ex04RemoteUnicycle < DtSystem & InitDeinitObject
                 srtime = tic;
                 obj.send(obj.lastu);
                 y = obj.recive();
-
+                if rand<0.8
+                    y = [nan;nan];
+                end
                 obj.appendVectorToLog(toc(srtime),'travelTime',obj.iLog);
                 obj.iLog = obj.iLog +1;
                 obj.lasty_t=t;
