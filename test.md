@@ -389,54 +389,52 @@ vaInstall(URL)
 \subsection{Implemented control-oriented common functions}
 There are many common components/procedures required in the simulation/design of control systems (e.g., discretization procedures, linearization procedures, EKF design, data logging architecture, etc.). VirtualaArena comes with an increasing number of predefined functionalities devoted to making the development process easier. Next, a list the main functionalities currently available in VirtualArena are presented. We refer to the on-line/function documentation for the use of specific functions.
 
-\subsubsection{Simulation}
+###Simulation
 The first set of features regards tools for the simulation of the control architecture.
-\begin{itemize}
-\item Time discretization methods. VirtualArena comes with different time discretization methods build-in such as `EulerForward`, `RK4`, `MatlabSolver`, that build on the `ode` solvers of MATLAB. Each discretization methods is defined as a subclass of `Integrator`. Other, and possible custom, discretisation methods can be created extending the latter class. 
-\item Logging management system. Easy-to-use logging management system with custom logging modules subclass of the abstract class `Log`. Implemented logs are `TimeLog`, `StateLog`, `ObserverStateLog`, `MeasurementsLog`, `InputLog`, `ControllerStateLog`, `ILog`.
-\item Multiple simulations. Easy-to-use system to run multiple simulations with different initial conditions and initial settings (e.g., different initial conditions, different controller parameters, etc.) implementing the abstract class `MultiRun`.
-\item Multi-agent systems. Simulation of a communication/sensor network for multi-agent systems implementing the abstract class `Sensor`: `RangeFinder`, `AgentSensor`, `IAgentSensor`.
-\item Simultaneous simulation of a network of multiple vehicles.
-\end{itemize}
+- Time discretization methods. VirtualArena comes with different time discretization methods build-in such as `EulerForward`, `RK4`, `MatlabSolver`, that build on the `ode` solvers of MATLAB. Each discretization methods is defined as a subclass of `Integrator`. Other, and possible custom, discretisation methods can be created extending the latter class. 
+- Logging management system. Easy-to-use logging management system with custom logging modules subclass of the abstract class `Log`. Implemented logs are `TimeLog`, `StateLog`, `ObserverStateLog`, `MeasurementsLog`, `InputLog`, `ControllerStateLog`, `ILog`.
+- Multiple simulations. Easy-to-use system to run multiple simulations with different initial conditions and initial settings (e.g., different initial conditions, different controller parameters, etc.) implementing the abstract class `MultiRun`.
+- Multi-agent systems. Simulation of a communication/sensor network for multi-agent systems implementing the abstract class `Sensor`: `RangeFinder`, `AgentSensor`, `IAgentSensor`.
+- Simultaneous simulation of a network of multiple vehicles.
 
-\subsubsection{System definition and manipulation}
+###System definition and manipulation
 VirtualArena contains a set of interfaces to define dynamical systems provides a set of methods to manipulate these systems.
-\begin{itemize} 
-\item Definition. Each system is defined as subclass of `GenericSystem`. The two main implementations of the dynamical systems are `CtSystem` and `DtSystem`.
-\item A `CtSystem` can be automatically discretized to create a `DtSystem`.
-\item A `DynamicalSystem`, either `CtSystem` or `DtSystem`, can be automatically linearized, where the computation of the jacobian matrices required for the linearization are automatically computed via Symbolic MATLAB or via sampling.\end{itemize}
+ 
+- Definition. Each system is defined as subclass of `GenericSystem`. The two main implementations of the dynamical systems are `CtSystem` and `DtSystem`.
+- A `CtSystem` can be automatically discretized to create a `DtSystem`.
+- A `DynamicalSystem`, either `CtSystem` or `DtSystem`, can be automatically linearized, where the computation of the jacobian matrices required for the linearization are automatically computed via Symbolic MATLAB or via sampling.
 
-\subsubsection{State estimation}
+###State estimation
 As illustrated in Section \ref{sec:ex2} and using the linearization methods described above, VirtualArena provides automatic generation and simulations of state observers.
-\begin{itemize}
-\item Automatic generation of Extended Kalman Filter for discrete-time dynamical systems in `EkfFilter`.
-\item Automatic generation of Extended Kalman-Bucy Filter for continuous-time dynamical systems in `EkbfFilter`
-\item Support for custom observers.
-\end{itemize}
 
-\subsubsection{Model predictive control}
+- Automatic generation of Extended Kalman Filter for discrete-time dynamical systems in `EkfFilter`.
+- Automatic generation of Extended Kalman-Bucy Filter for continuous-time dynamical systems in `EkbfFilter`
+- Support for custom observers.
+
+
+###Model predictive control
 A set of functionalities is provided to define and customize MPC controllers.
-\begin{itemize}
-\item Definition of continuous-time and discrete-time MPC optimization problem, `CtMpcOp` and `DtMpcOp` respectively, subclasses of `MpcOp`.
-\item Definition of abstract class for MPC solver `MpcOpSolver` and warm-start strategies `WarmStart`.
-\item Implementation of a discrete-time MPC solver using `fmincon` in `FminconMpcOpSolver` (subclass of `MpcOpSolver`).
-\item Implementation of different warm-start strategies `ZerosWarmStart`, `ShiftAndAppendZeroWarmStart`, `AuxLawWarmStart`, `ShiftAndHoldWarmStart`,  and `ShiftAndAppendAuxLawWarmStart`.
-\end{itemize}
 
-\subsubsection{Motion control of underactuated vehicle}
+- Definition of continuous-time and discrete-time MPC optimization problem, `CtMpcOp` and `DtMpcOp` respectively, subclasses of `MpcOp`.
+- Definition of abstract class for MPC solver `MpcOpSolver` and warm-start strategies `WarmStart`.
+- Implementation of a discrete-time MPC solver using `fmincon` in `FminconMpcOpSolver` (subclass of `MpcOpSolver`).
+- Implementation of different warm-start strategies `ZerosWarmStart`, `ShiftAndAppendZeroWarmStart`, `AuxLawWarmStart`, `ShiftAndHoldWarmStart`,  and `ShiftAndAppendAuxLawWarmStart`.
+
+
+###Motion control of underactuated vehicle
 On the modelling of dynamical system, VirtualArena provides some models of underactuated vehicle with different state-space representations.
-\begin{itemize}
-\item Generic dynamical model representing `Unicycle` and the 3-D version `UAV` subclasses of `UnderactuatedVehicle`.
-\item Different representations of attitude using quaternions and rotation matrices available in `UnderactuatedVehicle`.
-\end{itemize}
 
-\subsubsection{Supported controller}
+- Generic dynamical model representing `Unicycle` and the 3-D version `UAV` subclasses of `UnderactuatedVehicle`.
+- Different representations of attitude using quaternions and rotation matrices available in `UnderactuatedVehicle`.
+
+
+###Supported controller
 Both state-less controller and controller with internal dynamical model are supported.
-\begin{itemize}
-\item Controller without internal dynamical model subclass of `Controller`.
-\item Discrete time controller with internal dynamical model, subclass of  `DtSytem`
-\item Continuous time controller with internal dynamical model, subclass of  `CtSytem`
-\end{itemize}
+
+- Controller without internal dynamical model subclass of `Controller`.
+- Discrete time controller with internal dynamical model, subclass of  `DtSytem`
+- Continuous time controller with internal dynamical model, subclass of  `CtSytem`
+
 
 \begin{figure}
 \begin{center}
@@ -450,6 +448,3 @@ Both state-less controller and controller with internal dynamical model are supp
 This paper introduced the VirtualArena toolbox highlighting main features, keys benefits, and illustrating by example the use of the toolbox for the simulation and single-agent/multi-agent systems and evaluation of control schemes via simulations.
 
 Future works consider further extensions of the toolkit in the direction of multi-agent control and estimation as well as the production of interfaces for existing third-party toolbox of interest, such as, e.g., fast solver for MPC optimization problem.
-\bibliographystyle{abbrv} 
-\bibliography{mybib}
-\end{document}
