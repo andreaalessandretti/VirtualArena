@@ -222,6 +222,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             end
             %cons = @(U) obj.getNonlinearConstraints(mpcOp,k0,x0,U,netReadings);
             tic
+            
             [Uopt,fval,exitflag,output,lambda,grad,hessian] = fmincon(...
                 cost,...
                 initVal,...
@@ -231,9 +232,10 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 options...
                 );
             
+            
             %% Check Exit Flag
             fprintf('exitflag: %i\n',  exitflag);
-            
+            fprintf('violations: %i\n',  sum(cons(Uopt)>0));
             OK = FminconMpcOpSolver.isOK(exitflag);
             
             if not(OK)

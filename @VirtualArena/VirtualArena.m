@@ -294,6 +294,7 @@ classdef VirtualArena < handle
             logAll = obj.recursiveRun(obj.multiruns);
             
             obj.logAll = logAll;
+            
             obj.callFunctionOnSystemsOnList('deinitSimulations','InitDeinitObject')
             
         end
@@ -474,7 +475,7 @@ classdef VirtualArena < handle
                         nextX = obj.systemsList{ia}.updateState(timeInfo,nextX,parameterF{:});
                         
                     elseif isa(obj.systemsList{ia},'DtSystem')
-                        
+               
                         nextX = obj.systemsList{ia}.f(timeInfo,x,parameterF{:});
                         nextX = obj.systemsList{ia}.updateState(timeInfo,nextX,parameterF{:});
                         
@@ -570,7 +571,7 @@ classdef VirtualArena < handle
             
             if ischar(obj.videoName)
                 
-                aviobj = close(aviobj);
+                close(aviobj);
                 
             end
             

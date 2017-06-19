@@ -45,6 +45,8 @@ realSystem.controller = TrackingController_ECC13(... % <<< attached to the realS
     eye(2)                           , ... % K
     [1;0] );
 
+e = @(t,x)realSystem.controller.computeError(t,x);
+
 va = VirtualArena(realSystem,... % <<< simulate the realSystem
     'StoppingCriteria'  , @(t,sysList)t>70,...
     'DiscretizationStep', dt,...

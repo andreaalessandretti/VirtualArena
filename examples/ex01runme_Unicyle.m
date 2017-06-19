@@ -1,6 +1,6 @@
 clc; close all; clear all;
 
-dt = 0.05;
+dt = 0.01;
 
 %% Unicycle Model
 sys = ICtSystem(...

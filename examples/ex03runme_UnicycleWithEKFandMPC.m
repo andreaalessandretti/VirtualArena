@@ -13,7 +13,7 @@ sys = ICtSystem(...
 );
 
 % System with state and input noise
-Q = diag(([0.1,0.1,pi/4])/3)^2;
+Q = diag(([0.1,0.1,pi/16])/3)^2;
 R = diag(([0.1,0.1])/3)^2;
  
 realSystem = ICtSystem(...
@@ -51,7 +51,7 @@ mpcOp = ICtMpcOp( ...
     'System'               , sys,...
     'HorizonLength'        , 2*dt,...
     'StageConstraints'     , BoxSet( -[1.1;1.1],4:5,[1.1;1.1],4:5,5),... % on the variable z=[x;u];
-    'StageCost'            , @(t,x,u,varargin) e(t,x)'* e(t,x),...
+    'StageCost'            , @(t,x,u,varargin) e(t,x)'* e(t,x) + auxiliaryControlLaw.computeInput(t,x)'*auxiliaryControlLaw.computeInput(t,x),...
     'TerminalCost'         , @(t,x,varargin) 0.3333*(e(t,x)'* e(t,x))^(3/2)...
     );
 
@@ -74,9 +74,3 @@ va = VirtualArena(dtRealSystem,... % <<< Discrete time simulation
     );
 
 log = va.run();
-
-figure; grid on;xlabel('time [s]');ylabel('Estimated V(t)'); hold on
-for ii = 1:length(log)
-    plot(log{ii}{1}.time*dt,0.5*sum(log{ii}{1}.e.*log{ii}{1}.e)); 
-end
-a = axis; a(2)=70; axis(a);
