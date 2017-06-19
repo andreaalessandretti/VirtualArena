@@ -16,8 +16,9 @@ addPathsOfVirtualarena;
 
 The folder `VirtualArena/exampels` presents a list of examples that are described in the paper 
 
->[Alessandretti, A., Aguiar, A. P., & Jones, C. N. (2017). VirtualArena : An Object-Oriented MATLAB Toolkit for Control System Design and Simulation. In Proc. of the 2017 International Conference on Unmanned Aircraft Systems (ICUAS). Miami, USA.](./docs/ICUAS17.pdf)
+>[Alessandretti, A., Aguiar, A. P., & Jones, C. N. (2017). VirtualArena : An Object-Oriented MATLAB Toolkit for Control System Design and Simulation. In Proc. of the 2017 International Conference on Unmanned Aircraft Systems (ICUAS). Miami, USA.](./docs/ICUAS17_VirtualArena.pdf)
 
+and in the slides [here](./docs/ICUAS17_slides.pdf).
 
 The following BibTeX entry can be used to cite the toolkit:
 
