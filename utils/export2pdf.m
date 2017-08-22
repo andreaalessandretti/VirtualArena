@@ -26,6 +26,7 @@
 %       graphical changes without exporting the pdf
 % 'FontSize' (Default 9) Size font x-y-z-labels
 % 'FontSizeTitle' (Default 10) Size font title
+% 'FontName' 
 
 
 

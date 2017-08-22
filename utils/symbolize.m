@@ -4,7 +4,7 @@
 % f    = @(p1,p2) (p1+p2{1})*(p2{2}'*p2{2});
 %
 % inSizes = {2,{2,4}};
-% 
+%
 % % i.e., the first input is a vector of dimension [2,1] and the second
 % % input is a cell containing two vectors, one of dimension [2,1] and the
 % % other of dimension [4,1].
@@ -17,8 +17,9 @@
 %
 % out2 = symf(inTest{:})
 %
+%
 
-function fout =  symbolize(f,inSizes)
+function fout =  symbolize(f,inSizes,fileName)
 
 x = getSymOfCell (inSizes,'x',0);
 
@@ -27,15 +28,13 @@ symf = f(x{:});
 if isempty(symf)
     fout = @(varargin)[];
 else
-    fout1 = matlabFunction(symf,'vars',getSymOfCell (inSizes,'x',1));
-    fout = @(varargin)evaluateFunction(fout1,varargin);
+    if (nargin == 3 && ischar(fileName))
+        fout1 = matlabFunction(symf,'vars',getSymOfCell (inSizes,'x',1),'File',fileName);
+    else
+        fout1 = matlabFunction(symf,'vars',getSymOfCell (inSizes,'x',1));
+    end
+    fout = @(varargin)symbolizeEvaluateFunction(fout1,varargin);
 end
-
-end
-
-function ret = evaluateFunction(f,inputs)
-expInp = expandInputs (inputs);
-ret    = f(expInp{:});
 end
 
 
@@ -61,7 +60,7 @@ for i = 1:nInpuuts
             symCell = {symCell{:},xi};
         end
     else
-            error('Error: check the help for the correct use of the function.');
+        error('Error: check the help for the correct use of the function.');
     end
     
     
@@ -71,27 +70,3 @@ end
 end
 
 
-
-
-function symCell = expandInputs (in)
-
-nInpuuts = length(in);
-symCell = {};
-
-for i = 1:nInpuuts
-    if isnumeric(in{i}) % base case
-        
-        symCell = {symCell{:},in{i}};
-        
-    elseif iscell(in{i})
-        xi = expandInputs (in{i});
-        symCell = {symCell{:},xi{:}};
-        
-    else
-            error('Error: check the help for the correct use of the function.');
-    end
-    
-    
-end
-
-end

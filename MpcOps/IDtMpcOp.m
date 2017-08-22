@@ -135,6 +135,14 @@ classdef IDtMpcOp < DtMpcOp
                 
             end
             
+            if isempty(obj.TerminalCostFnc)
+                obj.TerminalCostFnc= @(varargin)0;
+            end
+            
+            if isempty(obj.StageCostFnc)
+                obj.StageCostFnc= @(varargin)0;
+            end
+            
         end
         
         

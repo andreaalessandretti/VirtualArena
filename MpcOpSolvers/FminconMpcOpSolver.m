@@ -31,6 +31,9 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         dimNet
         fminconCostSym
         fminconConSym
+        
+        useSymbolicExternalFiles = 0;
+        
         symCons
         
         solverTime =0;
@@ -114,9 +117,19 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                             end
                             
                             
-                            parameterPointer = parameterPointer+2;
+                            if nargin >= parameterPointer+2 && strcmp(varargin{parameterPointer+2},'UseExternalFiles')
+                                obj.useSymbolicExternalFiles = 1;
+                                parameterPointer = parameterPointer+3;
+                            elseif nargin >= parameterPointer+2 && strcmp(varargin{parameterPointer+2},'UsePrecomputedExternalFiles')
+                                obj.useSymbolicExternalFiles = 2;
+                                parameterPointer = parameterPointer+3;
+                            else
+                                parameterPointer = parameterPointer+2;
+                            end
                             
                         otherwise
+                            
+                            fprintf('FminconMpcOpSolver: Unknown parameter %s',varargin{parameterPointer});
                             
                             parameterPointer = parameterPointer+1;
                             
@@ -213,6 +226,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             A = []; b = []; Aeq = []; beq = [];
             
             if obj.useSymbolicEvaluation
+                
                 cost = @(U) obj.fminconCostSym(k0,x0,U,netReadings);
                 cons = @(U) obj.fminconConSym2(k0,x0,U,netReadings);
                 
@@ -292,17 +306,42 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 inputSizes = {1,sizeX0,sizeU,netDims};
                 
-                obj.fminconCostSym = symbolize(...
-                    @(k0,x0,U,netReadings)obj.fminconCost(dtMpcOp,k0,x0,U,netReadings),...
-                    inputSizes...
-                    );
-                
-                
-                obj.fminconConSym = symbolize(...
-                    @(k0,x0,U,netReadings) obj.getNonlinearConstraints(dtMpcOp,k0,x0,U,netReadings),...
-                    inputSizes...
-                    );
-                
+                if obj.useSymbolicExternalFiles == 1
+                    
+                    if not(exist('./gen_FminconMpcOpSolver', 'dir') == 7)
+                        mkdir ./gen_FminconMpcOpSolver;
+                    end
+                    addpath './gen_FminconMpcOpSolver';
+                    
+                    obj.fminconCostSym = symbolize(...
+                        @(k0,x0,U,netReadings)obj.fminconCost(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes,...
+                        './gen_FminconMpcOpSolver/cost'...
+                        );
+                    
+                    obj.fminconConSym = symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraints(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes,...
+                        './gen_FminconMpcOpSolver/cons'...
+                        );
+                    
+                elseif obj.useSymbolicExternalFiles == 2 % Pre-computed external files
+                    
+                    obj.fminconCostSym = @(varargin)symbolizeEvaluateFunction(str2func('cost'),varargin);
+                    
+                    obj.fminconConSym = @(varargin)symbolizeEvaluateFunction(str2func('cons'),varargin);
+      
+                else
+                    obj.fminconCostSym = symbolize(...
+                        @(k0,x0,U,netReadings)obj.fminconCost(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes...
+                        );
+                    
+                    obj.fminconConSym = symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraints(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes...
+                        );
+                end
                 sprintf('done.\n');
                 
             end
@@ -731,8 +770,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             for ii = 1:length(kk)
                 
                 k     = kk(ii);
-                
-                
                 
                 %Extract Local Info
                 H_jj     = mpcOp_jj.horizonLength;

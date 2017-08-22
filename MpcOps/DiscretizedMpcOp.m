@@ -52,12 +52,12 @@ classdef DiscretizedMpcOp < DtMpcOp
             obj = obj@DtMpcOp(ctMpcOpParams{:});
             
             obj.originalCtMpcOp = ctOP;
+            
             obj.dtDiscretization = dt;
             
             obj.horizonLength = floor(obj.originalCtMpcOp.horizonLength/dt);
             
             obj.system = DiscretizedSystem(obj.originalCtMpcOp.system,dt);
-            
             
             % StageConstraints Discretization
             stConst = obj.originalCtMpcOp.stageConstraints;

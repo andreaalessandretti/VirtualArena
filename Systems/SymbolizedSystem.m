@@ -14,7 +14,6 @@ classdef SymbolizedSystem < handle
         
         function obj = SymbolizedSystem (sys)
             
-            
             t = sym('t',[1,1]);
             x = sym('x',[sys.nx,1]);
             u = sym('u',[sys.nu,1]);
