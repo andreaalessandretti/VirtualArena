@@ -2,7 +2,7 @@ title: Virtualarena
 description: 
 google_analytics: 
 show_downloads: true
-theme: jekyll-theme-cayman
+theme: jekyll-theme-modernist
 
 gems:
   - jekyll-mentions
