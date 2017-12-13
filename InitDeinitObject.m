@@ -53,6 +53,7 @@ classdef InitDeinitObject < handle
         function initSimulations(obj)
             
             obj.executeOnFieldsIfInitDeinitObject('initSimulations');
+            
         end
         
         %%initSimulation system initialization (every initial condition)

@@ -11,7 +11,6 @@ sys = ICtSystem(...
     'nx',3,'nu',2 ...
     );
 
-
 cdes    = @(t) 10*[sin(0.1*t); cos(0.1*t)] ;
 cdesDot = @(t)    [cos(0.1*t);-sin(0.1*t)] ;
 K     = eye(2);

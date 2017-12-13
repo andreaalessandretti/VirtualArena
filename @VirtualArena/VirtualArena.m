@@ -414,9 +414,9 @@ classdef VirtualArena < handle
                         
                         nextXc = obj.integrator.integrate( @(xc)obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:}),xc,obj.discretizationStep);
                         
-                        nextXc = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
+                        nextXcs{ia} = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
                         
-                        obj.systemsList{ia}.controller.x = nextXc;
+                        %.systemsList{ia}.controller.x = nextXc; %DOTO: batch update like system for networksystems
                         
                         u = uSysCon(1:obj.systemsList{ia}.nu);
                         
@@ -428,18 +428,13 @@ classdef VirtualArena < handle
                         
                         nextXc = obj.systemsList{ia}.controller.f(timeInfo,xc,uSysCon,controllerFParams{:});
                         
-                        nextXc = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
+                        nextXcs{ia} = obj.systemsList{ia}.controller.updateState(timeInfo,nextXc,uSysCon,controllerFParams{:});
                         
-                        obj.systemsList{ia}.controller.x = nextXc;
+                        %obj.systemsList{ia}.controller.x = nextXc;  %DOTO: batch update like system for networksystems
                         
                         u = uSysCon(1:obj.systemsList{ia}.nu);
                         
                     elseif isa(obj.systemsList{ia}.controller,'Controller') %Memoryless Controller
-                        
-                        %% TO DO: to fix this exception
-                        if isa(obj.systemsList{ia}.controller,'ControllerAdapter')
-                            u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{1});
-                        else
                             
                             nInputController = nargin(sprintf('%s>%s.%s',class(obj.systemsList{ia}.controller),class(obj.systemsList{ia}.controller),'computeInput'))-1;
                             
@@ -448,7 +443,7 @@ classdef VirtualArena < handle
                             else
                                 u = obj.systemsList{ia}.controller.computeInput(timeInfo,controllerFParams{:});
                             end
-                        end
+                     
                         
                     elseif isempty(obj.systemsList{ia}.controller) && (isempty(obj.systemsList{ia}.nu) || obj.systemsList{ia}.nu == 0 ) %Automnomus System
                         
@@ -483,7 +478,7 @@ classdef VirtualArena < handle
                         error(getMessage('VirtualArena:UnknownSystemType'));
                     end
                     
-                    if not(obj.discretizationStep==1)&& obj.realTime
+                    if not(obj.discretizationStep==1) && obj.realTime
                         while toc(simTimeTic)<timeInfo*obj.realTime
                         end
                     end
@@ -501,6 +496,7 @@ classdef VirtualArena < handle
                     if isa(obj.systemsList{ia}.stateObserver,'DynamicalSystem')
                         
                         xObsNexts{ia} = xObsNext;
+                        
                     end
                     
                 end
@@ -514,6 +510,11 @@ classdef VirtualArena < handle
                         
                         obj.systemsList{ia}.stateObserver.x = xObsNexts{ia};
                     end
+                    
+                    if not(isempty(obj.systemsList{ia}.controller)) && ( isa(obj.systemsList{ia}.controller,'DtSystem') || isa(obj.systemsList{ia}.controller,'CtSystem') )
+                        obj.systemsList{ia}.controller.x = nextXcs{ia};
+                    end
+                    
                 end
                 %% Plots
                 if isa(obj.stepPlotFunction,'function_handle') && mod(timeInfo,obj.plottingStep)==0
@@ -618,13 +619,18 @@ classdef VirtualArena < handle
         end
         
         function appendVectorToLog(obj,v,iAgent,fildname,i)
-            
+               
             if i>=size(obj.log{iAgent}.(fildname),2) % Allocate memory
                 
                 obj.log{iAgent}.(fildname) =  [obj.log{iAgent}.(fildname),zeros(size(v,1),obj.blockSizeAllocation)];
                 
             end
+            try
             obj.log{iAgent}.(fildname)(:,i) = v;
+           
+            catch
+                aa = 11;
+            end
             
         end
         

@@ -111,6 +111,9 @@ classdef MpcOp < handle
         
         cA, cb, cC, cd, ce, cf %Change of coordinate
         
+        nExtraOpVars = 0;
+        
+        nParameters = 0;
     end
     
     methods (Abstract)
@@ -217,6 +220,17 @@ classdef MpcOp < handle
                             obj.auxiliaryLaw = varargin{parameterPointer+1};
                             
                             parameterPointer = parameterPointer+2;
+                       
+                        case 'nExtraOpVars'
+                            
+                            obj.nExtraOpVars = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
+                        case 'nParameters'
+                            
+                            obj.nParameters = varargin{parameterPointer+1};
+                            
+                            parameterPointer = parameterPointer+2;
                             
                             
                         otherwise
@@ -249,6 +263,7 @@ classdef MpcOp < handle
             params = {...
                 'System'                 , obj.system, ...
                 'HorizonLength'          , obj.horizonLength,...
+                'nExtraOpVars'           , obj.nExtraOpVars,...
                 'np'                     , obj.np,...
                 'StageConstraints'       , obj.stageConstraints,...
                 'TerminalConstraints'    , obj.terminalConstraints,...

@@ -83,7 +83,7 @@ classdef CtSystem < DynamicalSystem
         
         
         
-        function x = getStateTrajectory(obj,t0,x0,u,dt)
+        function x = getStateTrajectory(obj,t0,x0,u,dt,varargin)
             %getStateTrajectory Compute a solution
             %
             % Returns the state trajectory with the form [x0,x1,...]
@@ -99,8 +99,14 @@ classdef CtSystem < DynamicalSystem
             x(:,1) = x0;
             t = t0;
             for i =1:size(u,2)
-                 x(:,i+1) = RK4.integrate(@(y)obj.f(t,y,u(:,i)),x(:,i),dt); 
-                 t = t + dt;
+                if nargin ==6
+                   x(:,i+1) = varargin{1}.integrate(@(y)obj.f(t,y,u(:,i)),x(:,i),dt); 
+                  t = t + dt;
+                else
+                   x(:,i+1) = RK4.integrate(@(y)obj.f(t,y,u(:,i)),x(:,i),dt); 
+                  t = t + dt;
+                end
+                 
             end
             
             if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0

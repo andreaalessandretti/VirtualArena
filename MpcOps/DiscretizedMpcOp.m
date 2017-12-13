@@ -59,9 +59,10 @@ classdef DiscretizedMpcOp < DtMpcOp
             
             obj.system = DiscretizedSystem(obj.originalCtMpcOp.system,dt);
             
+            %% Constraints Discretization
             % StageConstraints Discretization
             stConst = obj.originalCtMpcOp.stageConstraints;
-            ctSys = obj.originalCtMpcOp.system;
+            ctSys   = obj.originalCtMpcOp.system;
             for i = 1:length(stConst)
                 stConsti = stConst{i};
                 if stConsti.nx == ctSys.nx +ctSys.nu +1
@@ -71,28 +72,20 @@ classdef DiscretizedMpcOp < DtMpcOp
             
             obj.stageConstraints = stConst;
             
-            
-            
             % TerminalConstraints Discretization
             
             teConst =  obj.originalCtMpcOp.terminalConstraints;
             
             for i = 1:length(teConst)
                 teConsti = teConst{i};
-                if teConsti.nx == ctSys.nx +ctSys.nu +1
+                if teConsti.nx == ctSys.nx + 1
                     teConst{i} = GeneralSet(@(x)teConsti.f([dt*x(1);x(2:end)]),teConsti.nx,teConsti.nf);
                 end
             end
             
             obj.terminalConstraints = teConst;
             
-            
-            
-            
-            
-            
-            
-            % PerformanceConstraints Discretization
+            %% PerformanceConstraints Discretization
             
             pConst = obj.originalCtMpcOp.performanceConstraints;
             
@@ -132,7 +125,7 @@ classdef DiscretizedMpcOp < DtMpcOp
             dt = obj.dtDiscretization;
             %% I explicit the case 2 and 3 so nargin works on teCost
             if nargin ==3
-                m =  obj.originalCtMpcOp.terminalCost(dt*k,x);
+                m = obj.originalCtMpcOp.terminalCost(dt*k,x);
             else
                 m = obj.originalCtMpcOp.terminalCost(dt*k,x,varargin{:});
             end

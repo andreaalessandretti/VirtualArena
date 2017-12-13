@@ -30,27 +30,37 @@ classdef VelocityAgentSensor < Sensor
         end
         
         function  ret = sense(obj,t, agentId,agent,detectableAgentsList,detectableAgentsIds)
-            ret = {};
-            nDetectables = length(detectableAgentsIds);
             
+            ret = {};
+            
+            nDetectables = length(detectableAgentsIds);
             
             for i = 1 : nDetectables
                 
+                var = obj.fOfAgent(detectableAgentsList{i}); % Variable to differentiate
+                nVar = length(var);
                 if isempty(obj.lastReadings) || length(obj.lastReadings)<agentId
-                    ny = length(obj.fOfAgent(detectableAgentsList{i}));
+                    
                     obj.firstComputationOfDerivative{agentId}{i} = 1;
-                    ret{i} = zeros(ny,1);
-                    obj.lastReadings{agentId}{i}=zeros(ny,1);
+                    
+                    ret{i} = zeros(nVar,1);
+                    
+                    obj.lastReadings{agentId}{i}=var;
+                    
                 else
+                    
                     if obj.firstComputationOfDerivative{agentId}{i} 
-                        ny = length(obj.fOfAgent(detectableAgentsList{i}));
+                        
                         obj.firstComputationOfDerivative{agentId}{i} = 0;
-                        ret{i} = zeros(ny,1);
+                        
+                        ret{i} = zeros(nVar,1);
+                        
                     else
-                        ret{i} = (obj.fOfAgent(detectableAgentsList{i})-obj.lastReadings{agentId}{i})/obj.dt;
+                        ret{i} = (var-obj.lastReadings{agentId}{i})/obj.dt;
                     end
                     
-                    obj.lastReadings{agentId}{i}=obj.fOfAgent(detectableAgentsList{i});
+                    obj.lastReadings{agentId}{i}=var;
+                    
                 end
                 
 

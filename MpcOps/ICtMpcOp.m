@@ -80,11 +80,21 @@ classdef ICtMpcOp < CtMpcOp
         end
         
         function l = stageCost(obj,varargin)
-            l = obj.StageCostFnc(varargin{:});
+            
+            if not(isempty(obj.StageCostFnc))
+                l = obj.StageCostFnc(varargin{:});
+            else
+                l=0;
+            end
         end
         
         function m = terminalCost(obj,varargin)
-            m = obj.TerminalCostFnc(varargin{:});
+            if not(isempty(obj.TerminalCostFnc))
+                m = obj.TerminalCostFnc(varargin{:});
+            else
+                m=0;
+            end
+            
         end
         
     end

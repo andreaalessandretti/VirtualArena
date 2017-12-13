@@ -48,6 +48,9 @@ classdef UniGoToPointPid < DtSystem
 % of the authors and should not be interpreted as representing official policies, 
 % either expressed or implied, of the FreeBSD Project.
     properties
+        point
+        kpid = [1,1,1];
+        uSet = BoxSet([-inf;-inf],1:2,[inf;inf],1:2,2);
     end
     
     methods
@@ -67,10 +70,7 @@ classdef UniGoToPointPid < DtSystem
             %
             %   See also BoxSet
             
-            kpid = [1,1,1];
-            uSet = BoxSet([-inf;-inf],1:2,[inf;inf],1:2,2);
-            
-            parameterPointer = 2;
+             parameterPointer = 2;
             
             hasParameters = length(varargin)-parameterPointer>=0;
             
@@ -106,23 +106,17 @@ classdef UniGoToPointPid < DtSystem
                 
             end
             
-            obj = obj@DtSystem(...
-                'StateEquation',@(t,xc,u,z)UniGoToPointPid.nextX(xc,z,point), ...
-                'OutputEquation',@(t,xc,z)UniGoToPointPid.computeInput(xc,z,point,kpid,uSet), ...
-                'nx',2,'nu',3,'ny',2,varargin{:});
-            
+            obj = obj@DtSystem('nx',2,'nu',3,'ny',2,varargin{:});
+            obj.point = point;
             
         end
         
-    end
-    
-    methods(Static)
-        
-        function nextXc = nextX(xc,z,point)
+        function nextXc = f(obj,t,xc,uSysCon,z,varargin)
             
+            point = obj.point;
             
             R = [cos(z(3)),-sin(z(3));
-                sin(z(3)), cos(z(3))];
+                 sin(z(3)), cos(z(3))];
             
             err = R'*(point - z(1:2));
             
@@ -131,11 +125,14 @@ classdef UniGoToPointPid < DtSystem
             
             nextXc = [0,0;
                       1,0]*xc + [1;0]*thetaErr;
-            
+                  
         end
         
-        function u = computeInput(xc,z,point,kpid,uSet)
+        function u = h(obj,t,xc,z,varargin)
             
+            point = obj.point;
+            kpid  = obj.kpid;
+            uSet  = obj.uSet;
             
             R = [cos(z(3)),-sin(z(3));
                 sin(z(3)), cos(z(3))];
@@ -155,6 +152,8 @@ classdef UniGoToPointPid < DtSystem
             
         end
         
+
     end
+    
     
 end

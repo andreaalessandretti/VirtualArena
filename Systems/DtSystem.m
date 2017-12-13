@@ -121,5 +121,32 @@ classdef DtSystem < DynamicalSystem
         end
         
         
+        function [x,u] = getClosedLoopTrajectories(obj,k0,x0,controller,nSteps)
+            
+            if isnumeric(x0) %Could be symbolic
+                x = zeros(obj.nx,nSteps+1);
+                u = zeros(obj.nu,nSteps);
+            end
+            
+            x(:,1) = x0;
+            k = k0;
+            for i =1:nSteps
+                u(:,i) = controller.computeInput(k,x(:,i));
+                x(:,i+1) = obj.f(k,x(:,i),u(:,i));
+                k = k+1;
+            end
+            
+            x = x(:,1:end-1);
+            
+            if sum(sum(isnan(x)))>0 || sum(sum(isinf(x)))>0
+                error('inf or nan prediction');
+            end
+            
+            if sum(sum(isnan(u)))>0 || sum(sum(isinf(u)))>0
+                error('inf or nan prediction');
+            end
+            
+        end
+        
     end
 end

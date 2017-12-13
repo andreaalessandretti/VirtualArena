@@ -126,23 +126,23 @@ classdef EkfFilter < DtSystem & StateObserver
             
             %% Check if the output is input dependent
             
-            
-            t = sym('t',[1,1]);
-            
-            x = sym('x',[sys.nx,1]);
-            
-            u = sym('u',[sys.nu,1]);
-            
-            
-            if isempty(which('assume'))
-                u = sym(u,'real');
-                x = sym(x,'real');
-                t    = sym(t,'real');
-            else
-                assume(u,'real');
-                assume(x,'real');
-                assume(t,'real');
-            end
+%             
+%             t = sym('t',[1,1]);
+%             
+%             x = sym('x',[sys.nx,1]);
+%             
+%             u = sym('u',[sys.nu,1]);
+%             
+%             
+%             if isempty(which('assume'))
+%                 u = sym(u,'real');
+%                 x = sym(x,'real');
+%                 t    = sym(t,'real');
+%             else
+%                 assume(u,'real');
+%                 assume(x,'real');
+%                 assume(t,'real');
+%             end
             
             %if(sum(sum(sys.D(t,x,u) == 0)) == sys.nu*sys.ny)
                 obj.inputDependentOutput = 1;
@@ -207,14 +207,8 @@ classdef EkfFilter < DtSystem & StateObserver
                 
                 xHat    = xP(1:sysnx);
                 P       = reshape( xP(sysnx+1:sysnx+sysnx^2),sysnx,sysnx);
-                
-                h = obj.system.h;
-                
-                if nargin(h)==3
-                    y = h(t, xHat,u);
-                else
-                    y = h(t, xHat);
-                end
+        
+                y = obj.system.h(t, xHat);
                 
                 inn = obj.innovationFnc(t,z,y);
                 

@@ -30,7 +30,8 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         useSymbolicEvaluation = 0;
         dimNet
         fminconCostSym
-        fminconConSym
+        fminconConCSym
+        fminconConCeqSym
         
         useSymbolicExternalFiles = 0;
         
@@ -104,12 +105,15 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                         case 'UseSymbolicEvaluation'
                             
                             if iscell(varargin{parameterPointer+1})
+
                                 obj.useSymbolicEvaluation = 1;
+
                                 obj.dimNet = varargin{parameterPointer+1};
                                 
                             elseif varargin{parameterPointer+1} == 1
                                 
                                 obj.useSymbolicEvaluation = 1;
+                                
                                 obj.dimNet = {1};
                                 
                             else
@@ -172,7 +176,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 
                 %% Multi-mpp folmulation mpcOps = {mpcOp1,delta1,...}
                 mpcOps = mpcOp;
-                Nmpcs = length(mpcOps);
+                Nmpcs  = length(mpcOps);
                 
                 nOptVars = 0;
                 
@@ -194,7 +198,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                     for i=1:Nmpcs
                         mpcOpi  = mpcOps{i};
                         initVal = [initVal;
-                            0.1*randn( mpcOpi.system.nu*mpcOpi.horizonLength,1)];
+                                   0.1*randn( mpcOpi.system.nu*mpcOpi.horizonLength,1)];
                     end
                 end
             else
@@ -214,12 +218,8 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 nu = mpcOp.system.nu;
                 
                 %% Warm start
-                if not(isempty(warmStart))
-                    initVal = reshape(warmStart.u_opt,N*nu,1);
-                else
-                    initVal = 0.1*randn(mpcOp.system.nu*mpcOp.horizonLength,1);
-                end
-                
+                initVal = obj.getInitialCondition(warmStart,mpcOp);
+               
             end
             
             %% Solve
@@ -228,7 +228,7 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             if obj.useSymbolicEvaluation
                 
                 cost = @(U) obj.fminconCostSym(k0,x0,U,netReadings);
-                cons = @(U) obj.fminconConSym2(k0,x0,U,netReadings);
+                cons = @(U) obj.fminconConCSym2(k0,x0,U,netReadings);
                 
             else
                 cost = @(U) obj.fminconCost(mpcOp,k0,x0,U,netReadings);
@@ -245,7 +245,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 cons,...
                 options...
                 );
-            
             
             %% Check Exit Flag
             fprintf('exitflag: %i\n',  exitflag);
@@ -283,22 +282,32 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
             obj.solverTime = ret.solverTime;
         end
         
-        function [C,Ceq] = fminconConSym2(obj,k0,x0,U,netReadings)
-            C = obj.fminconConSym(k0,x0,U,netReadings);
-            Ceq = [];
+        function initVal = getInitialCondition(obj,warmStart,mpcOp)
+            N = mpcOp.horizonLength;
+            nu = mpcOp.system.nu;
+            
+                if not(isempty(warmStart))
+                    initVal = reshape(warmStart.u_opt,N*nu,1);
+                else
+                    initVal = 0.1*randn(N*nu,1);
+                end
+        end
+        
+        function [C,Ceq] = fminconConCSym2(obj,k0,x0,U,netReadings)
+            C   = obj.fminconConCSym(k0,x0,U,netReadings);
+            Ceq = obj.fminconConCeqSym(k0,x0,U,netReadings);
         end
         
         function initSimulation(obj)
             
-            mpcOp = obj.mpcOp;
-            obj.symbolizeProblem(mpcOp);
+            obj.symbolizeProblem(obj.mpcOp);
         end
         
         function symbolizeProblem(obj,dtMpcOp)
             
             if obj.useSymbolicEvaluation
                 
-                sprintf('Computing symbolic evaluation of the cost...');
+
                 
                 netDims = obj.dimNet;
                 sizeU   = obj.getSizeOptimizer();
@@ -312,37 +321,64 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                         mkdir ./gen_FminconMpcOpSolver;
                     end
                     addpath './gen_FminconMpcOpSolver';
-                    
-                    obj.fminconCostSym = symbolize(...
+
+fprintf('Computing symbolic evaluation of the cost...');
+
+                    obj.fminconCostSym = Symbolizer.symbolize(...
                         @(k0,x0,U,netReadings)obj.fminconCost(dtMpcOp,k0,x0,U,netReadings),...
                         inputSizes,...
                         './gen_FminconMpcOpSolver/cost'...
                         );
-                    
-                    obj.fminconConSym = symbolize(...
-                        @(k0,x0,U,netReadings) obj.getNonlinearConstraints(dtMpcOp,k0,x0,U,netReadings),...
+fprintf('done.\n');
+                    fprintf('Computing symbolic evaluation of the consC...');
+                    obj.fminconConCSym = Symbolizer.symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraintsC(dtMpcOp,k0,x0,U,netReadings),...
                         inputSizes,...
-                        './gen_FminconMpcOpSolver/cons'...
+                        './gen_FminconMpcOpSolver/consC'...
                         );
+fprintf('done.\n');
+                    fprintf('Computing symbolic evaluation of the consCeq...');
+                    obj.fminconConCeqSym = Symbolizer.symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraintsCeq(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes,...
+                        './gen_FminconMpcOpSolver/consCeq'...
+                        );
+fprintf('done.\n');
                     
                 elseif obj.useSymbolicExternalFiles == 2 % Pre-computed external files
                     
-                    obj.fminconCostSym = @(varargin)symbolizeEvaluateFunction(str2func('cost'),varargin);
+                    %addpath './gen_FminconMpcOpSolver/':
                     
-                    obj.fminconConSym = @(varargin)symbolizeEvaluateFunction(str2func('cons'),varargin);
+                    obj.fminconCostSym = @(varargin)Symbolizer.symbolizeEvaluateFunction(str2func('cost'),varargin);
+                    
+                    obj.fminconConCSym = @(varargin)Symbolizer.symbolizeEvaluateFunction(str2func('consC'),varargin);
       
+                    obj.fminconConCeqSym = @(varargin)Symbolizer.symbolizeEvaluateFunction(str2func('consCeq'),varargin);
+      
+                    
                 else
-                    obj.fminconCostSym = symbolize(...
+                    fprintf('Computing symbolic evaluation of the cost...');
+                    obj.fminconCostSym = Symbolizer.symbolize(...
                         @(k0,x0,U,netReadings)obj.fminconCost(dtMpcOp,k0,x0,U,netReadings),...
                         inputSizes...
                         );
-                    
-                    obj.fminconConSym = symbolize(...
-                        @(k0,x0,U,netReadings) obj.getNonlinearConstraints(dtMpcOp,k0,x0,U,netReadings),...
+fprintf('done.\n');
+
+                    fprintf('Computing symbolic evaluation of the consC...');
+                    obj.fminconConCSym = Symbolizer.symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraintsC(dtMpcOp,k0,x0,U,netReadings),...
                         inputSizes...
                         );
+fprintf('done.\n');
+
+                    fprintf('Computing symbolic evaluation of the consCeq...');
+                    obj.fminconConCeqSym = Symbolizer.symbolize(...
+                        @(k0,x0,U,netReadings) obj.getNonlinearConstraintsCeq(dtMpcOp,k0,x0,U,netReadings),...
+                        inputSizes...
+                        );
+fprintf('done.\n');
                 end
-                sprintf('done.\n');
+
                 
             end
             
@@ -359,9 +395,19 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
         
         function [C,Ceq] = getNonlinearConstraints(obj,mpcOp,k0,x0,U,netReadings)
             
+            C   = obj.getNonlinearConstraintsC(mpcOp,k0,x0,U,netReadings);
+            Ceq = obj.getNonlinearConstraintsCeq(mpcOp,k0,x0,U,netReadings);
             
+        end
+        
+        function C = getNonlinearConstraintsC(obj,mpcOp,k0,x0,U,netReadings)
             [kk,xx,uu] = obj.getStateTrajectoriesMultiMpc(mpcOp,k0,x0,U,netReadings);
             C = obj.evaluateConstraintsTrajectories(mpcOp,kk,xx,uu,netReadings);
+            
+        end
+        
+        function Ceq = getNonlinearConstraintsCeq(obj,mpcOp,k0,x0,U,netReadings)
+            
             Ceq = [];
             
         end
@@ -613,7 +659,6 @@ classdef FminconMpcOpSolver < MpcOpSolver & InitDeinitObject
                 xx(:,ii+1) = x;
                 kk(ii+1)   = k;
             end
-            
             
         end
         
