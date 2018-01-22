@@ -55,12 +55,17 @@ classdef PolytopicSet < GeneralSet
         
         function obj = PolytopicSet(A,b)
             
-            obj = obj@GeneralSet(@(x) A*x-b ,size(A,2),size(A,1));
+            obj = obj@GeneralSet();
             
             obj.A = A;
             
             obj.b = b;
             
+            obj.f = @(x) obj.A*x-obj.b ;
+            
+            obj.nx = size(obj.A,2);
+            
+            obj.nf = size(obj.A,1);
         end
         
         % Let AA be the set {x:f(x)<0}

@@ -54,8 +54,6 @@ classdef MultiRun < handle
         
         n       %number of runs
         
-        initFun %@(VirtualArenaObj,i)
-        
         
     end
     
@@ -63,12 +61,16 @@ classdef MultiRun < handle
     
     methods
         
-        function obj = MultiRun(n,initFun)
+        function obj = MultiRun(n)
             
             obj.n       = n;
-            obj.initFun = initFun;
             
         end
         
     end
+    
+    methods(Abstract)
+        initFun(obj,va,i);
+    end
+    
 end

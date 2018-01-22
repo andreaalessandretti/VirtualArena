@@ -61,12 +61,13 @@ classdef GeneralSet < handle
         
         
         function obj = GeneralSet(f,nx,nf)
-            
-            obj.f = f;
-            
-            obj.nx = nx;
-            
-            obj.nf = nf;
+            if nargin > 0
+                obj.f = f;
+
+                obj.nx = nx;
+
+                obj.nf = nf;
+            end
             
         end
         

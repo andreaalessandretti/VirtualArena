@@ -212,6 +212,7 @@ classdef MpcController < Controller & InitDeinitObject
   
         
         function deinitSimulation(obj)
+            deinitSimulation@InitDeinitObject(obj);
             obj.lastSolution = [];
         end
         

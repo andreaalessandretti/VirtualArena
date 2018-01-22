@@ -85,6 +85,8 @@ classdef  BoxSet < PolytopicSet
         lowerBounds
         indexesLowerBounds
         spaceDimension
+        
+        enableSetCheck = 0;
     end
     
     methods
@@ -104,13 +106,13 @@ classdef  BoxSet < PolytopicSet
                 upperBounds        = varargin{2};
                 indexesUpperBounds = 1:length(lowerBounds);
                 spaceDimension     = length(lowerBounds);
-
+                
                 
                 [A,b] = BoxSet.cosGetAb(lowerBounds,indexesLowerBounds,upperBounds,indexesUpperBounds,spaceDimension);
                 
             elseif nargin == 5
                 [A,b] = BoxSet.cosGetAb(varargin{:});
-
+                
                 lowerBounds        = varargin{1};
                 indexesLowerBounds = varargin{2};
                 upperBounds        = varargin{3};
@@ -125,41 +127,48 @@ classdef  BoxSet < PolytopicSet
                 indexesUpperBounds = 1:spaceDimension;
                 lowerBounds =  inf*ones(spaceDimension,1);
                 upperBounds = -inf*ones(spaceDimension,1);
-
+                
                 for i = 1:size(points,2)
                     point = points(:,i);
                     for j = 1:spaceDimension
                         lowerBounds(j) = min(lowerBounds(j),point(j));
                         upperBounds(j) = max(upperBounds(j),point(j));
                     end
-
+                    
                 end
                 [A,b] = BoxSet.cosGetAb(lowerBounds,indexesLowerBounds,upperBounds,indexesUpperBounds,spaceDimension);
             end
             
             
-                obj = obj@PolytopicSet(A,b);
-
-                obj.upperBounds = upperBounds;
-
-                obj.indexesUpperBounds = indexesUpperBounds;
-
-                obj.lowerBounds = lowerBounds;
-
-                obj.indexesLowerBounds = indexesLowerBounds;
-
-                obj.spaceDimension = spaceDimension;
-
-                if not(size(obj.upperBounds,2)==1)
-                    obj.upperBounds = obj.upperBounds';
-                end
-
-                if not(size(obj.lowerBounds,2)==1)
-                    obj.lowerBounds = obj.lowerBounds';
-                end
-
+            obj = obj@PolytopicSet(A,b);
+            
+            obj.upperBounds = upperBounds;
+            
+            obj.indexesUpperBounds = indexesUpperBounds;
+            
+            obj.lowerBounds = lowerBounds;
+            
+            obj.indexesLowerBounds = indexesLowerBounds;
+            
+            obj.spaceDimension = spaceDimension;
+            
+            if not(size(obj.upperBounds,2)==1)
+                obj.upperBounds = obj.upperBounds';
+            end
+            
+            if not(size(obj.lowerBounds,2)==1)
+                obj.lowerBounds = obj.lowerBounds';
+            end
+            
+            obj.enableSetCheck = 1;
             
         end
+        function updatePolytope(obj)
+            [A,b] = BoxSet.cosGetAb(obj.lowerBounds,obj.indexesLowerBounds,obj.upperBounds,obj.indexesUpperBounds,obj.spaceDimension);
+            obj.A = A;
+            obj.b = b;
+        end
+        
         
         
         
@@ -298,22 +307,22 @@ classdef  BoxSet < PolytopicSet
             
         end
         
-   
-
+        
+        
         function ret = plusMinkowski(obj,boxSet1,boxSet2)
-        %% plusMinkowski
-        % Example:             
-        %         clc; close all; clear all
-        %         b1 = BoxSet([1,2],[3,4]);
-        %         b2 = BoxSet(-[0.3,0.4] , [0.5,0.6]);
-        %         b3 = b1 + b2;
-        %         b1.plot('Color','r'); hold on ;
-        %         
-        %         b2.plot('Color','g');hold on ;
-        %         b3.plot('Color','b');hold on ;
-        %         grid on    
+            %% plusMinkowski
+            % Example:
+            %         clc; close all; clear all
+            %         b1 = BoxSet([1,2],[3,4]);
+            %         b2 = BoxSet(-[0.3,0.4] , [0.5,0.6]);
+            %         b3 = b1 + b2;
+            %         b1.plot('Color','r'); hold on ;
+            %
+            %         b2.plot('Color','g');hold on ;
+            %         b3.plot('Color','b');hold on ;
+            %         grid on
             if sum( boxSet1.indexesLowerBounds==boxSet2.indexesLowerBounds) ~= length(boxSet1.indexesLowerBounds) || ...
-                sum( boxSet1.indexesUpperBounds==boxSet2.indexesUpperBounds) ~= length(boxSet1.indexesUpperBounds)
+                    sum( boxSet1.indexesUpperBounds==boxSet2.indexesUpperBounds) ~= length(boxSet1.indexesUpperBounds)
                 error('set sum implemented only for set with same index sets (i.e, indexesUpperBounds, indexesLowerBounds).');
             end
             
@@ -325,17 +334,17 @@ classdef  BoxSet < PolytopicSet
         end
         
         function ret = plusMinkowskiEllipsoidalSet(obj,bSet,eSet)
-        %% plusMinkowski
-        % Example:             
-        %         clc; close all; clear all
-        %         b1 = BoxSet([1,2],[3,4]);
-        %         b2 = Ellip(-[0.3,0.4] , [0.5,0.6]);
-        %         b3 = b1 + b2;
-        %         b1.plot('Color','r'); hold on ;
-        %         
-        %         b2.plot('Color','g');hold on ;
-        %         b3.plot('Color','b');hold on ;
-        %         grid on    
+            %% plusMinkowski
+            % Example:
+            %         clc; close all; clear all
+            %         b1 = BoxSet([1,2],[3,4]);
+            %         b2 = Ellip(-[0.3,0.4] , [0.5,0.6]);
+            %         b3 = b1 + b2;
+            %         b1.plot('Color','r'); hold on ;
+            %
+            %         b2.plot('Color','g');hold on ;
+            %         b3.plot('Color','b');hold on ;
+            %         grid on
             
             if ( bSet.nx  ~= eSet.nx )
                 error('The sets should have the same nx.');
@@ -343,8 +352,8 @@ classdef  BoxSet < PolytopicSet
             
             
             boxEll = BoxSet(boxSet1.lowerBounds + boxSet2.lowerBounds, boxSet1.indexesLowerBounds,...
-                            boxSet1.upperBounds + boxSet2.upperBounds ,boxSet1.indexesUpperBounds,...
-                            boxSet1.spaceDimension);
+                boxSet1.upperBounds + boxSet2.upperBounds ,boxSet1.indexesUpperBounds,...
+                boxSet1.spaceDimension);
             
         end
         
@@ -384,7 +393,7 @@ classdef  BoxSet < PolytopicSet
             
             if length(val)==1 && strcmp(val.type,'()')
                 indexes = val.subs{:};
-
+                
                 ret = BoxSet(arg.lowerBounds(indexes),1:length(indexes),arg.upperBounds(indexes),1:length(indexes),length(indexes));
             else
                 ret =  builtin('subsref', arg,val);
@@ -545,6 +554,36 @@ classdef  BoxSet < PolytopicSet
         %         end
         
         
+        function set.upperBounds(obj,val)
+            obj.upperBounds = val;
+            if obj.enableSetCheck
+                obj.updatePolytope();
+            end
+        end
+        
+        function set.indexesUpperBounds(obj,val)
+            obj.indexesUpperBounds = val;
+            if obj.enableSetCheck
+                obj.updatePolytope();
+            end
+        end
+        
+        function set.lowerBounds(obj,val)
+            obj.lowerBounds = val;
+            if obj.enableSetCheck
+                obj.updatePolytope();
+            end
+        end
+        
+        function set.indexesLowerBounds(obj,val)
+            obj.indexesLowerBounds = val;
+            if obj.enableSetCheck
+                obj.updatePolytope();
+            end
+        end
+        
+        
+        
     end
     
     methods (Static)
@@ -552,25 +591,25 @@ classdef  BoxSet < PolytopicSet
         
         function [A,b]=cosGetAb(varargin)
             
-                lowerBounds        = varargin{1};
-                indexesLowerBounds = varargin{2};
-                upperBounds        = varargin{3};
-                indexesUpperBounds = varargin{4};
-                spaceDimension     = varargin{5};
-                
-                
-                if not((length(indexesLowerBounds) == length(lowerBounds)) &&(length(indexesUpperBounds) == length(upperBounds)))
-                    error('The dimension of the indexes vector does not match with the bound vector ');
-                end
-
-
-                I = eye(spaceDimension);
-
-                A = [I(indexesUpperBounds,:);
-                    -I(indexesLowerBounds,:)];
-
-                b =  [upperBounds;
-                    -lowerBounds];
+            lowerBounds        = varargin{1};
+            indexesLowerBounds = varargin{2};
+            upperBounds        = varargin{3};
+            indexesUpperBounds = varargin{4};
+            spaceDimension     = varargin{5};
+            
+            
+            if not((length(indexesLowerBounds) == length(lowerBounds)) &&(length(indexesUpperBounds) == length(upperBounds)))
+                error('The dimension of the indexes vector does not match with the bound vector ');
+            end
+            
+            
+            I = eye(spaceDimension);
+            
+            A = [I(indexesUpperBounds,:);
+                -I(indexesLowerBounds,:)];
+            
+            b =  [upperBounds;
+                -lowerBounds];
         end
         
         function testContains

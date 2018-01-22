@@ -90,7 +90,6 @@ classdef UnderactuatedVehicle < Vehicle
         v      = [];
         omega  = [];
         
-        
         attitudeRepresentation = 'RotationMatrix'; %0 = quaternion, 1 = rotation matrix
         
         
@@ -215,6 +214,7 @@ classdef UnderactuatedVehicle < Vehicle
                 
                 %fk  = @(t,x,u) UnderactuatedVehicle.fk2D(x(3),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
                 nxk = 3;
+                obj.stateName = {'p_1','p_1','\theta'};
                 
             elseif(obj.n==3)
                 
@@ -224,18 +224,30 @@ classdef UnderactuatedVehicle < Vehicle
                         
                         nxk = 7;
                         %fk  = @(t,x,u) UnderactuatedVehicle.fk3DQuaternion(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
-                        
+                         obj.stateName = {'p_1','p_1','p_3','q_1','q_2','q_3','q_4'};
+                         
                     case 'RotationMatrix' % Rotation matrix
                         
                         nxk = 12;
                         %fk  = @(t,x,u) UnderactuatedVehicle.fk3DRotMat(x(4:nxk),obj.v(t,x,u,obj.getd(x)),obj.omega(t,x,u,obj.getd(x)));
-                        
+                        obj.stateName = {'p_1','p_1','p_3',...
+                            'R_11','R_21','R_31',...
+                            'R_12','R_22','R_32',...
+                            'R_13','R_23','R_33'};
+                         
                     otherwise
                         
                         error('Given AttitudeRepresentation not supported.');
                         
                 end
                 
+            end
+            
+            for i=1:obj.nvd
+                obj.stateName{nxk+i}=sprintf('v_{\\zeta,%i}',i);
+            end
+            for i=1:obj.nwd
+                obj.stateName{nxk+obj.nvd+i}=sprintf('\omega_{\\zeta,%i}',i);
             end
             
 %            obj.fk   = fk;

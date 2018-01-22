@@ -259,7 +259,7 @@ classdef VirtualArena < handle
             end
             
             if isempty(obj.multiruns)
-                obj.multiruns = { MultiRun(1,@(i,va)1==1) }; % Just do the classic simulation without modifications
+                obj.multiruns = { IMultiRun(1,@(i,va)1==1) }; % Just do the classic simulation without modifications
             end
             
         end
@@ -619,17 +619,17 @@ classdef VirtualArena < handle
         end
         
         function appendVectorToLog(obj,v,iAgent,fildname,i)
-               
+               try
             if i>=size(obj.log{iAgent}.(fildname),2) % Allocate memory
                 
                 obj.log{iAgent}.(fildname) =  [obj.log{iAgent}.(fildname),zeros(size(v,1),obj.blockSizeAllocation)];
                 
             end
-            try
+            
             obj.log{iAgent}.(fildname)(:,i) = v;
            
-            catch
-                aa = 11;
+               catch e
+                error('Error logging variable ''%s'':\n%s',fildname,e.message);
             end
             
         end

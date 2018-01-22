@@ -8,8 +8,13 @@ classdef MinMaxKeeper < handle
     methods 
     
         function add(obj,val)
-            obj.addMax(val);
-            obj.addMin(val);
+            if length(val)==1
+                obj.addMax(val);
+                obj.addMin(val);
+            else
+                obj.addMax(max(val));
+                obj.addMin(min(val));
+            end
         end
         
         function addMax(obj,val)
@@ -23,6 +28,11 @@ classdef MinMaxKeeper < handle
         function ret = getMax(obj)
             ret = obj.maxVal;
         end
+        
+        function ret = getSpan(obj)
+            ret = obj.maxVal-obj.minVal;
+        end
+        
         function ret = getMin(obj)
             ret = obj.minVal;
         end
