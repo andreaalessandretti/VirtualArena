@@ -1,7 +1,7 @@
 
 <div align="center"><img src=".\logo.jpg" width="200 align="middle"> </div>
 
-VirtualArena is Object-Oriented Matlab Toolkit for Control Design and System Simulation.
+VirtualArena is an Object-Oriented Matlab Toolkit for Control Design and System Simulation.
 
 ## Getting Started
 To install the tollkit, open Matlab on the folder where you want to create the VirtualArena folder and run the following code
